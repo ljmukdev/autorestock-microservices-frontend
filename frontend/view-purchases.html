@@ -464,18 +464,7 @@ CHANGES: Fixed API calls, added proper error handling, integrated staging workfl
             showLoading();
             
             try {
-                // Test API connectivity first
-                console.log('🔍 Testing API connectivity...');
-                const testResponse = await fetch('/api/purchases/test');
-                
-                if (!testResponse.ok) {
-                    throw new Error(`API test failed: ${testResponse.status}`);
-                }
-                
-                const testData = await testResponse.json();
-                console.log('✅ API connectivity test:', testData);
-                
-                // Now load actual purchases
+                // Load purchases directly
                 console.log('📊 Fetching purchases data...');
                 const response = await fetch('/api/purchases');
                 
@@ -483,7 +472,11 @@ CHANGES: Fixed API calls, added proper error handling, integrated staging workfl
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 
-                const purchases = await response.json();
+                const data = await response.json();
+                console.log('📊 API Response:', data);
+                
+                // Handle the API response structure
+                const purchases = data.purchases || data;
                 console.log(`📊 Loaded ${purchases.length} purchases`);
                 
                 currentPurchases = purchases;
@@ -546,19 +539,19 @@ CHANGES: Fixed API calls, added proper error handling, integrated staging workfl
             }
             
             const purchaseCards = purchases.map(purchase => {
-                const timeAgo = getTimeAgo(new Date(purchase.purchase_date));
-                const platformEmoji = getPlatformEmoji(purchase.platform);
+                const timeAgo = getTimeAgo(new Date(purchase.orderDate || purchase.purchase_date || purchase.createdAt));
+                const platformEmoji = getPlatformEmoji(purchase.platform || 'Unknown');
                 
                 return `
-                    <div class="purchase-card" data-id="${purchase.id}">
+                    <div class="purchase-card" data-id="${purchase._id || purchase.id}">
                         <div class="purchase-icon">${platformEmoji}</div>
-                        <div class="purchase-text" onclick="showPurchaseDetails(${purchase.id})">
-                            <div><strong>${purchase.brand || 'Unknown'} ${purchase.model || 'Item'}</strong></div>
+                        <div class="purchase-text" onclick="showPurchaseDetails('${purchase._id || purchase.id}')">
+                            <div><strong>${purchase.supplier || purchase.brand || 'Unknown'} ${purchase.items?.[0]?.productName || purchase.model || 'Item'}</strong></div>
                             <div style="font-size: 11px; color: #666; margin-top: 2px;">
                                 ${purchase.platform || 'Unknown'} • ${timeAgo} • ${purchase.category || 'Uncategorized'}
                             </div>
                         </div>
-                        <div class="purchase-amount">£${parseFloat(purchase.total_paid || 0).toFixed(2)}</div>
+                        <div class="purchase-amount">£${parseFloat(purchase.totalAmount || purchase.total_paid || 0).toFixed(2)}</div>
                         <div class="staging-controls">
                             <button class="staging-btn stage" onclick="stagePurchase(${purchase.id})" title="Move to staging area">
                                 🔍 Stage
