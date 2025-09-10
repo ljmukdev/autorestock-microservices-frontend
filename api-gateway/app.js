@@ -76,7 +76,7 @@ app.use('/api/purchases', createProxyMiddleware({
   target: microservices.purchases,
   changeOrigin: true,
   pathRewrite: {
-    '^/api/purchases': '/api'
+    '^/api/purchases': '/api/purchases'
   },
   onError: (err, req, res) => {
     console.error('Purchases service error:', err.message);
