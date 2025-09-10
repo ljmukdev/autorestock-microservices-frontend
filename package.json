@@ -1,0 +1,17 @@
+{
+  "name": "stockpilot-frontend",
+  "version": "1.0.0",
+  "description": "StockPilot Frontend with API Gateway",
+  "main": "api-gateway/app.js",
+  "scripts": {
+    "start": "cd api-gateway && npm start",
+    "build": "cd api-gateway && npm install",
+    "dev": "cd api-gateway && npm run dev"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": ["stockpilot", "frontend", "api-gateway", "microservices"],
+  "author": "ljmukdev",
+  "license": "MIT"
+}
