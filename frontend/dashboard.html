@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='UTF-8' />
+  <title>StockPilot Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    h1 { margin-bottom: 10px; }
+    h2 { margin-top: 30px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background-color: #f4f4f4; }
+    .error { color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>?? StockPilot Dashboard</h1>
+  <div id='error' class='error'></div>
+
+  <h2>?? Recent Sales</h2>
+  <table id='recentSalesTable'>
+    <thead>
+      <tr>
+        <th>Date</th><th>Platform</th><th>Item</th><th>Price</th><th>Profit</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    fetch('http://localhost:3001/api/sales')
+      .then(res => {
+        if (!res.ok) throw new Error(Server responded with );
+        return res.json();
+      })
+      .then(data => {
+        const tbody = document.querySelector('#recentSalesTable tbody');
+        const recent = data.slice(0, 5);
+        recent.forEach(s => {
+          const row = document.createElement('tr');
+          row.innerHTML = 
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>£</td>
+            <td>£</td>
+          ;
+          tbody.appendChild(row);
+        });
+      })
+      .catch(err => {
+        document.getElementById('error').textContent = 'Error fetching data: ' + err.message;
+        console.error(err);
+      });
+  </script>
+</body>
+</html>

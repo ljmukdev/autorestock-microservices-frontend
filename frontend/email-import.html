@@ -1,0 +1,1497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockPilot - Email Import Management</title>
+    <style>
+        /* Research-Based Email Import Theme */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #5D6AAF 0%, #4A5A9E 100%);
+            min-height: 100vh;
+        }
+
+        /* Main Container with Integrated Navigation */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(93, 106, 175, 0.15);
+            overflow: hidden;
+        }
+
+        /* Navigation Tabs - Integrated into container */
+        .nav-tabs-container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 30px 0;
+            position: relative;
+        }
+
+        .nav-tabs-container::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #5D6AAF;
+            z-index: 1;
+        }
+
+        .nav-tabs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 2px;
+            background: transparent;
+            padding: 0;
+            margin: 0;
+            list-style: none;
+        }
+
+        .nav-tab {
+            background: linear-gradient(135deg, #F5F7FA, #E2E8F0);
+            border: none;
+            padding: 12px 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: #2D3748;
+            font-weight: 500;
+            font-size: 13px;
+            border-radius: 12px 12px 0 0;
+            position: relative;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .nav-tab:hover {
+            text-decoration: none;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(93, 106, 175, 0.2);
+        }
+
+        .nav-tab.active {
+            transform: translateY(0);
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.8);
+        }
+
+        .nav-tab.home {
+            background: linear-gradient(135deg, #8E9AAE, #718096);
+            color: white;
+        }
+
+        .nav-tab.purchases {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            color: white;
+        }
+
+        .nav-tab.inventory {
+            background: linear-gradient(135deg, #4A90E2, #357ABD);
+            color: white;
+        }
+
+        .nav-tab.consumables {
+            background: linear-gradient(135deg, #A67C5A, #8B6F3F);
+            color: white;
+        }
+
+        .nav-tab.log-sale {
+            background: linear-gradient(135deg, #48BB78, #38A169);
+            color: white;
+        }
+
+        .nav-tab.sales {
+            background: linear-gradient(135deg, #8B7EC8, #7B6CB8);
+            color: white;
+        }
+
+        .nav-tab.email-import {
+            background: linear-gradient(135deg, #5D6AAF, #4A5A9E);
+            color: white;
+        }
+
+        .nav-tab.settings {
+            background: linear-gradient(135deg, #2D3748, #1A202C);
+            color: white;
+        }
+
+        /* Content Area */
+        .content-area {
+            padding: 30px;
+            background: #F8FAFC;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 30px 10px 30px;
+        }
+
+        .header h1 {
+            color: #2D3748;
+            margin-bottom: 5px;
+            font-size: 1.8em;
+        }
+
+        .header p {
+            margin: 0;
+            font-size: 0.9em;
+            color: #8E9AAE;
+        }
+
+        /* Connection Status */
+        .connection-status {
+            background: #E3F2FD;
+            color: #1565C0;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #BBDEFB;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .connection-status.online {
+            background: #E8F5E8;
+            color: #2E7D32;
+            border-color: #C8E6C9;
+        }
+
+        .connection-status.offline {
+            background: #FFF3E0;
+            color: #EF6C00;
+            border-color: #FFCC80;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #5D6AAF, #4A5A9E);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(93, 106, 175, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(93, 106, 175, 0.4);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: white;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: white;
+        }
+
+        .form-section {
+            background: #FFFFFF;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(93, 106, 175, 0.08);
+            margin-bottom: 20px;
+        }
+
+        .form-section-header {
+            background: #2D3748;
+            color: white;
+            padding: 15px 20px;
+            font-weight: 600;
+            font-size: 1.1em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .form-section-content {
+            padding: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #5D6AAF 0%, #4A5A9E 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(93, 106, 175, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #48BB78 0%, #38A169 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ED8936 0%, #DD6B20 100%);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(237, 137, 54, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #E53E3E 0%, #C53030 100%);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(229, 62, 62, 0.3);
+        }
+
+        .btn-purple {
+            background: linear-gradient(135deg, #8B7EC8 0%, #7B6CB8 100%);
+            color: white;
+        }
+
+        .btn-purple:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(139, 126, 200, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2D3748;
+        }
+
+        .form-group input, 
+        .form-group textarea, 
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #E2E8F0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus, 
+        .form-group textarea:focus, 
+        .form-group select:focus {
+            outline: none;
+            border-color: #5D6AAF;
+            box-shadow: 0 0 0 3px rgba(93, 106, 175, 0.1);
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .import-card {
+            background: #F8FAFC;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 5px solid #5D6AAF;
+            box-shadow: 0 2px 10px rgba(93, 106, 175, 0.05);
+            transition: all 0.3s ease;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .import-card:hover {
+            box-shadow: 0 4px 20px rgba(93, 106, 175, 0.1);
+            transform: translateX(5px);
+        }
+
+        .import-card.selected {
+            background: linear-gradient(135deg, rgba(93, 106, 175, 0.1), rgba(74, 90, 158, 0.1));
+            border-left-color: #5D6AAF;
+            box-shadow: 0 4px 20px rgba(93, 106, 175, 0.2);
+        }
+
+        .import-card.high-confidence {
+            border-left-color: #48BB78;
+        }
+
+        .import-card.medium-confidence {
+            border-left-color: #ED8936;
+        }
+
+        .import-card.low-confidence {
+            border-left-color: #E53E3E;
+        }
+
+        .import-checkbox {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .import-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding-right: 40px;
+        }
+
+        .import-id {
+            font-weight: bold;
+            color: #2D3748;
+        }
+
+        .confidence-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .high { background: #D4EDDA; color: #155724; }
+        .medium { background: #FFF3CD; color: #856404; }
+        .low { background: #F8D7DA; color: #721C24; }
+
+        .platform-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            background: #E3F2FD;
+            color: #1976D2;
+        }
+
+        .platform-badge.vinted {
+            background: #C8E6C9;
+            color: #2E7D32;
+        }
+
+        .platform-badge.ebay {
+            background: #FFF3E0;
+            color: #F57C00;
+        }
+
+        .platform-badge.amazon {
+            background: #FFECB3;
+            color: #F9A825;
+        }
+
+        .import-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .detail-row {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #E2E8F0;
+        }
+
+        .detail-label {
+            font-weight: bold;
+            color: #8E9AAE;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            color: #2D3748;
+            font-size: 1rem;
+        }
+
+        .import-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-approve {
+            background: #48BB78;
+            color: white;
+        }
+
+        .btn-edit {
+            background: #ED8936;
+            color: white;
+        }
+
+        .btn-split {
+            background: #8B7EC8;
+            color: white;
+        }
+
+        .btn-reject {
+            background: #E53E3E;
+            color: white;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .selection-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .selection-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .bulk-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .selected-indicator {
+            background: #5D6AAF;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .no-imports {
+            text-align: center;
+            padding: 40px;
+            color: #8E9AAE;
+            font-size: 1.1rem;
+        }
+
+        .no-imports h3 {
+            color: #2D3748;
+            margin-bottom: 15px;
+        }
+
+        .message {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: 500;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        .message-success {
+            background: linear-gradient(135deg, #D4EDDA 0%, #C3E6CB 100%);
+            color: #155724;
+            border: 1px solid #C3E6CB;
+        }
+
+        .message-error {
+            background: linear-gradient(135deg, #F8D7DA 0%, #F5C6CB 100%);
+            color: #721C24;
+            border: 1px solid #F5C6CB;
+        }
+
+        .message-info {
+            background: linear-gradient(135deg, #F0F2FF 0%, #E6EAFF 100%);
+            color: #3D4A7A;
+            border: 1px solid #D1D9FF;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #8E9AAE;
+        }
+
+        .spinner {
+            border: 3px solid #E2E8F0;
+            border-top: 3px solid #5D6AAF;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .nav-tabs-container {
+                padding: 10px 15px 0;
+            }
+            
+            .content-area {
+                padding: 20px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .button-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .selection-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .selection-buttons,
+            .bulk-actions {
+                justify-content: center;
+            }
+            
+            .import-header {
+                flex-direction: column;
+                align-items: flex-start;
+                padding-right: 20px;
+            }
+            
+            .import-checkbox {
+                position: static;
+                margin-bottom: 10px;
+            }
+            
+            .import-details {
+                grid-template-columns: 1fr;
+            }
+            
+            .import-actions {
+                justify-content: center;
+            }
+
+            .nav-tab {
+                font-size: 11px;
+                padding: 10px 12px;
+                min-width: 70px;
+            }
+        }
+
+        .text-center { text-align: center; }
+        .text-muted { color: #8E9AAE; }
+        .p-5 { padding: 3rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Page Header -->
+        <div class="header">
+            <h1>&#128231; StockPilot Email Import</h1>
+            <p>Automate purchase receipt importing from Gmail</p>
+        </div>
+
+        <!-- Navigation Tabs - REORDERED TO MATCH OTHER PAGES -->
+        <div class="nav-tabs-container">
+            <div class="nav-tabs">
+                <a href="/" class="nav-tab home">
+                    &#127968; Home
+                </a>
+                <a href="view-purchases.html" class="nav-tab purchases">
+                    &#128722; Purchases
+                </a>
+                <a href="view-inventory.html" class="nav-tab inventory">
+                    &#128230; Inventory
+                </a>
+                <a href="view-consumables.html" class="nav-tab consumables">
+                    &#129520; Consumables
+                </a>
+                <a href="log-sale.html" class="nav-tab log-sale">
+                    &#128176; Log Sale
+                </a>
+                <a href="view-sales.html" class="nav-tab sales">
+                    &#128200; View Sales
+                </a>
+                <a href="email-import.html" class="nav-tab email-import active">
+                    &#128231; Email Import
+                </a>
+                <a href="reports.html" class="nav-link">?? Reports</a>
+                    <a href="settings.html" class="nav-tab settings">
+                    &#128295; Settings
+                </a>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            <!-- Connection Status -->
+            <div id="connectionStatus" class="connection-status">
+                <span>🔄</span> Checking connection...
+            </div>
+
+            <!-- Statistics Dashboard -->
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="stat-number" id="pendingCount">-</div>
+                    <div class="stat-label">Pending Imports</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="approvedCount">-</div>
+                    <div class="stat-label">Approved Today</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalCount">-</div>
+                    <div class="stat-label">Total Imported</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="avgConfidence">-%</div>
+                    <div class="stat-label">Avg Confidence</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="selectedCount">-</div>
+                    <div class="stat-label">Selected Items</div>
+                </div>
+            </div>
+
+            <!-- Control Panel -->
+            <div class="form-section">
+                <div class="form-section-header">
+                    <span>&#127951; Control Panel</span>
+                </div>
+                <div class="form-section-content">
+                    <div class="button-grid">
+                        <button class="btn btn-primary" onclick="checkNewEmails()">
+                            &#128231; Check New Emails
+                        </button>
+                        <button class="btn btn-success" onclick="approveAllHigh()">
+                            &#9989; Approve All High Confidence
+                        </button>
+                        <button class="btn btn-warning" onclick="refreshImports()">
+                            &#128260; Refresh Imports
+                        </button>
+                        <button class="btn btn-danger" onclick="clearRejected()">
+                            &#128465; Clear Rejected
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bulk Selection Controls -->
+            <div class="form-section">
+                <div class="form-section-header">
+                    &#128280; Bulk Selection & Actions
+                </div>
+                <div class="form-section-content">
+                    <div class="selection-row">
+                        <div class="selection-buttons">
+                            <button class="btn btn-primary" onclick="selectAll()">
+                                &#10003; Select All
+                            </button>
+                            <button class="btn btn-warning" onclick="deselectAll()">
+                                &#10007; Deselect All
+                            </button>
+                            <button class="btn btn-success" onclick="selectHighConfidence()">
+                                &#11088; Select High Confidence
+                            </button>
+                        </div>
+                        <div class="bulk-actions">
+                            <div class="selected-indicator" id="selectedIndicator">0 selected</div>
+                            <button class="btn btn-purple" id="bulkApproveBtn" onclick="bulkApprove()" disabled>
+                                &#128640; Approve Selected (<span id="approveCount">0</span>)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manual Email Import -->
+            <div class="form-section">
+                <div class="form-section-header">
+                    &#128221; Manual Email Import
+                </div>
+                <div class="form-section-content">
+                    <div class="form-group">
+                        <label for="emailSubject">Email Subject:</label>
+                        <input type="text" id="emailSubject" placeholder="e.g., Vinted Receipt - Order VIN-123456">
+                    </div>
+                    <div class="form-group">
+                        <label for="emailContent">Email Content:</label>
+                        <textarea id="emailContent" placeholder="Paste the full email content here..."></textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="parseManualEmail()">
+                        &#128269; Parse Email Content
+                    </button>
+                </div>
+            </div>
+
+            <!-- Import Results -->
+            <div class="form-section">
+                <div class="form-section-header">
+                    &#128229; Pending Imports
+                </div>
+                <div class="form-section-content">
+                    <div id="importsContainer">
+                        <div class="text-center text-muted p-5 loading">
+                            <div class="spinner"></div>
+                            &#128260; Loading imports...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <div id="messageContainer"></div>
+
+    <script>
+        let pendingImports = [];
+        let stats = {};
+        let selectedImports = new Set();
+        let emailAPIAvailable = false;
+
+        const API_CONFIG = {
+            emailImport: '/api/email-import'
+        };
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 StockPilot Email Import initialized');
+            checkAPIs();
+            loadStats();
+            loadPendingImports();
+        });
+
+        async function checkAPIs() {
+            try {
+                const response = await fetch('/api/email-import/stats');
+                if (response.ok || response.status === 404) {
+                    emailAPIAvailable = true;
+                    updateConnectionStatus(true);
+                    console.log('✅ Email Import API available');
+                } else {
+                    throw new Error('API not responding');
+                }
+            } catch (error) {
+                emailAPIAvailable = false;
+                updateConnectionStatus(false);
+                console.log('⚠️ Email Import API not available:', error.message);
+            }
+        }
+
+        function updateConnectionStatus(online) {
+            const statusEl = document.getElementById('connectionStatus');
+            if (online) {
+                statusEl.className = 'connection-status online';
+                statusEl.innerHTML = '<span>✅</span> Connected to API - Email import available';
+            } else {
+                statusEl.className = 'connection-status offline';
+                statusEl.innerHTML = '<span>⚠️</span> Offline mode - Email import not available';
+            }
+        }
+
+        // Load statistics
+        async function loadStats() {
+            try {
+                if (!emailAPIAvailable) {
+                    // Show offline stats
+                    stats = { pending: 0, approvedToday: 0, totalImported: 0, avgConfidence: 0 };
+                    updateStatsDisplay();
+                    return;
+                }
+
+                const response = await fetch('/api/email-import/stats');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        stats = data.stats;
+                        updateStatsDisplay();
+                    }
+                } else {
+                    throw new Error('Failed to load stats');
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                // Show default stats on error
+                stats = { pending: 0, approvedToday: 0, totalImported: 0, avgConfidence: 0 };
+                updateStatsDisplay();
+            }
+        }
+
+        // Update statistics display
+        function updateStatsDisplay() {
+            document.getElementById('pendingCount').textContent = stats.pending || 0;
+            document.getElementById('approvedCount').textContent = stats.approvedToday || 0;
+            document.getElementById('totalCount').textContent = stats.totalImported || 0;
+            document.getElementById('avgConfidence').textContent = `${stats.avgConfidence || 0}%`;
+            document.getElementById('selectedCount').textContent = selectedImports.size;
+        }
+
+        // Load pending imports
+        async function loadPendingImports() {
+            try {
+                if (!emailAPIAvailable) {
+                    displayImports();
+                    return;
+                }
+
+                const response = await fetch('/api/email-import/pending');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        pendingImports = data.imports || [];
+                        selectedImports.clear(); // Clear selections when reloading
+                        displayImports();
+                        updateSelectionUI();
+                    } else {
+                        showError('Failed to load imports: ' + data.error);
+                    }
+                } else {
+                    throw new Error('Failed to load imports');
+                }
+            } catch (error) {
+                console.error('Error loading imports:', error);
+                pendingImports = [];
+                displayImports();
+            }
+        }
+
+        // Display imports
+        function displayImports() {
+            const container = document.getElementById('importsContainer');
+            
+            if (!emailAPIAvailable) {
+                container.innerHTML = `
+                    <div class="no-imports">
+                        <h3>&#128237; Email Import Not Available</h3>
+                        <p>Email import functionality requires API connection.</p>
+                        <button class="btn btn-warning" onclick="checkAPIs()">&#128260; Retry Connection</button>
+                    </div>
+                `;
+                return;
+            }
+            
+            if (!pendingImports || pendingImports.length === 0) {
+                container.innerHTML = `
+                    <div class="no-imports">
+                        <h3>&#128237; No Pending Imports</h3>
+                        <p>All emails have been processed or no receipt emails found.</p>
+                        <button class="btn btn-primary" onclick="checkNewEmails()">&#128231; Check for New Emails</button>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            pendingImports.forEach(importItem => {
+                html += createImportCard(importItem);
+            });
+            
+            container.innerHTML = html;
+
+            // Add event listeners for checkboxes and cards
+            document.querySelectorAll('.import-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', handleCheckboxChange);
+            });
+
+            document.querySelectorAll('.import-card').forEach(card => {
+                card.addEventListener('click', handleCardClick);
+            });
+        }
+
+        // Create import card HTML
+        function createImportCard(importItem) {
+            const purchaseData = importItem.purchase_data || {};
+            const extractionData = importItem.extractionData || {};
+            const isSelected = selectedImports.has(importItem.id);
+            
+            return `
+                <div class="import-card ${importItem.confidence === 'high' ? 'high-confidence' : importItem.confidence === 'medium' ? 'medium-confidence' : 'low-confidence'} ${isSelected ? 'selected' : ''}" data-import-id="${importItem.id}">
+                    <input type="checkbox" class="import-checkbox" data-import-id="${importItem.id}" ${isSelected ? 'checked' : ''}>
+                    
+                    <div class="import-header">
+                        <div class="import-id">Import #${importItem.id}</div>
+                        <div class="platform-badge ${importItem.platform?.toLowerCase() || 'unknown'}">${importItem.platform || 'Unknown'}</div>
+                        <div class="confidence-badge ${importItem.confidence || 'low'}">${(importItem.confidence || 'low').toUpperCase()} CONFIDENCE</div>
+                    </div>
+                    
+                    <div class="import-details">
+                        <div class="detail-row">
+                            <div class="detail-label">Item</div>
+                            <div class="detail-value">${purchaseData.item || extractionData.item || 'Not detected'}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Seller</div>
+                            <div class="detail-value">${purchaseData.seller || extractionData.seller || 'Not detected'}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Price</div>
+                            <div class="detail-value">${purchaseData.price || purchaseData.estimated_price || extractionData.price || extractionData.estimated_price || 'Not detected'}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Order ID</div>
+                            <div class="detail-value">${purchaseData.orderId || extractionData.orderId || 'Not detected'}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Date</div>
+                            <div class="detail-value">${new Date(importItem.created_at).toLocaleDateString()}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Email Subject</div>
+                            <div class="detail-value">${importItem.raw_email_data?.subject || 'N/A'}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="import-actions">
+                        <button class="action-btn btn-approve" onclick="approveImport('${importItem.id}')">
+                            &#9989; Approve
+                        </button>
+                        <button class="action-btn btn-edit" onclick="editImport('${importItem.id}')">
+                            &#9999; Edit
+                        </button>
+                        <button class="action-btn btn-split" onclick="approveAndSplit('${importItem.id}')">
+                            &#128230; Approve & Split
+                        </button>
+                        <button class="action-btn btn-reject" onclick="rejectImport('${importItem.id}')">
+                            &#10060; Reject
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Handle checkbox change
+        function handleCheckboxChange(event) {
+            event.stopPropagation();
+            const importId = event.target.dataset.importId;
+            
+            if (event.target.checked) {
+                selectedImports.add(importId);
+            } else {
+                selectedImports.delete(importId);
+            }
+            
+            updateSelectionUI();
+            updateCardSelection(importId);
+        }
+
+        // Handle card click (anywhere on card selects/deselects)
+        function handleCardClick(event) {
+            // Don't trigger if clicking on buttons or checkbox
+            if (event.target.tagName === 'BUTTON' || event.target.type === 'checkbox') {
+                return;
+            }
+            
+            const importId = event.currentTarget.dataset.importId;
+            const checkbox = event.currentTarget.querySelector('.import-checkbox');
+            
+            checkbox.checked = !checkbox.checked;
+            
+            if (checkbox.checked) {
+                selectedImports.add(importId);
+            } else {
+                selectedImports.delete(importId);
+            }
+            
+            updateSelectionUI();
+            updateCardSelection(importId);
+        }
+
+        // Update card visual selection state
+        function updateCardSelection(importId) {
+            const card = document.querySelector(`[data-import-id="${importId}"]`);
+            if (card) {
+                if (selectedImports.has(importId)) {
+                    card.classList.add('selected');
+                } else {
+                    card.classList.remove('selected');
+                }
+            }
+        }
+
+        // Update selection UI elements
+        function updateSelectionUI() {
+            const selectedCount = selectedImports.size;
+            
+            document.getElementById('selectedCount').textContent = selectedCount;
+            document.getElementById('selectedIndicator').textContent = `${selectedCount} selected`;
+            document.getElementById('approveCount').textContent = selectedCount;
+            
+            const bulkApproveBtn = document.getElementById('bulkApproveBtn');
+            bulkApproveBtn.disabled = selectedCount === 0 || !emailAPIAvailable;
+        }
+
+        // Select all imports
+        function selectAll() {
+            selectedImports.clear();
+            pendingImports.forEach(imp => selectedImports.add(imp.id));
+            
+            document.querySelectorAll('.import-checkbox').forEach(checkbox => {
+                checkbox.checked = true;
+            });
+            
+            document.querySelectorAll('.import-card').forEach(card => {
+                card.classList.add('selected');
+            });
+            
+            updateSelectionUI();
+        }
+
+        // Deselect all imports
+        function deselectAll() {
+            selectedImports.clear();
+            
+            document.querySelectorAll('.import-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            document.querySelectorAll('.import-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            updateSelectionUI();
+        }
+
+        // Select only high confidence imports
+        function selectHighConfidence() {
+            selectedImports.clear();
+            
+            pendingImports.forEach(imp => {
+                if (imp.confidence === 'high') {
+                    selectedImports.add(imp.id);
+                }
+            });
+            
+            document.querySelectorAll('.import-checkbox').forEach(checkbox => {
+                const importId = checkbox.dataset.importId;
+                const imp = pendingImports.find(i => i.id === importId);
+                
+                if (imp && imp.confidence === 'high') {
+                    checkbox.checked = true;
+                    checkbox.closest('.import-card').classList.add('selected');
+                } else {
+                    checkbox.checked = false;
+                    checkbox.closest('.import-card').classList.remove('selected');
+                }
+            });
+            
+            updateSelectionUI();
+        }
+
+        // Bulk approve selected imports
+        async function bulkApprove() {
+            if (selectedImports.size === 0 || !emailAPIAvailable) return;
+            
+            const selectedIds = Array.from(selectedImports);
+            
+            if (!confirm(`Are you sure you want to approve ${selectedIds.length} selected imports?`)) {
+                return;
+            }
+            
+            const bulkApproveBtn = document.getElementById('bulkApproveBtn');
+            const originalText = bulkApproveBtn.innerHTML;
+            
+            try {
+                bulkApproveBtn.disabled = true;
+                bulkApproveBtn.innerHTML = '&#8987; Approving...';
+                
+                // Use the bulk approve endpoint
+                const response = await fetch('/api/email-import/approve-selected', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        importIds: selectedIds
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage(`✅ Successfully approved ${data.approved} imports! Purchase records created!`, 'success');
+                    
+                    if (data.failed > 0) {
+                        showMessage(`⚠️ ${data.failed} imports failed to approve`, 'error');
+                    }
+                } else {
+                    showError('Failed to complete bulk approval: ' + data.error);
+                }
+                
+                selectedImports.clear();
+                updateSelectionUI();
+                loadStats();
+                loadPendingImports();
+                
+            } catch (error) {
+                console.error('Error in bulk approve:', error);
+                showError('Failed to complete bulk approval');
+            } finally {
+                bulkApproveBtn.disabled = false;
+                bulkApproveBtn.innerHTML = originalText;
+            }
+        }
+
+        // Check for new emails
+        async function checkNewEmails() {
+            if (!emailAPIAvailable) {
+                showError('Email import API not available');
+                return;
+            }
+
+            showMessage('📧 Checking for new emails...', 'info');
+            
+            try {
+                const response = await fetch('/api/email-import/check', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        dateRange: 'recent' 
+                    })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage(`✅ Found ${data.newImports} new imports from ${data.totalEmails} emails checked!`, 'success');
+                    loadStats();
+                    loadPendingImports();
+                } else {
+                    showError('Failed to check emails: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error checking emails:', error);
+                showError('Failed to check emails. Please try again.');
+            }
+        }
+
+        // Individual import actions (stubs for API not available)
+        async function approveImport(importId) {
+            if (!emailAPIAvailable) {
+                showError('Email import API not available');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/email-import/${importId}/approve`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('✅ Import approved and added to purchases!', 'success');
+                    removeImportCard(importId);
+                    selectedImports.delete(importId);
+                    updateSelectionUI();
+                    loadStats();
+                } else {
+                    showError('Failed to approve import: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error approving import:', error);
+                showError('Failed to approve import. Please try again.');
+            }
+        }
+
+        async function rejectImport(importId) {
+            if (!emailAPIAvailable) {
+                showError('Email import API not available');
+                return;
+            }
+            
+            if (!confirm('Are you sure you want to reject this import?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/email-import/${importId}/reject`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('❌ Import rejected and removed.', 'info');
+                    removeImportCard(importId);
+                    selectedImports.delete(importId);
+                    updateSelectionUI();
+                    loadStats();
+                } else {
+                    showError('Failed to reject import: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error rejecting import:', error);
+                showError('Failed to reject import. Please try again.');
+            }
+        }
+
+        function editImport(importId) {
+            showMessage('✏️ Edit functionality coming soon! For now, you can reject and re-import manually.', 'info');
+        }
+
+        async function approveAndSplit(importId) {
+            if (!emailAPIAvailable) {
+                showError('Email import API not available');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/email-import/${importId}/approve`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('✅ Import approved! Redirecting to split view...', 'success');
+                    setTimeout(() => {
+                        window.location.href = `view-purchases.html?split=${data.purchaseId}`;
+                    }, 1500);
+                } else {
+                    showError('Failed to approve import: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error approving import:', error);
+                showError('Failed to approve import. Please try again.');
+            }
+        }
+
+        async function parseManualEmail() {
+            if (!emailAPIAvailable) {
+                showError('Email import API not available');
+                return;
+            }
+            
+            const subject = document.getElementById('emailSubject').value.trim();
+            const content = document.getElementById('emailContent').value.trim();
+            
+            if (!subject || !content) {
+                showError('Please enter both email subject and content.');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/email-import/parse', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        subject: subject,
+                        content: content
+                    })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('✅ Email parsed successfully! Added to pending imports.', 'success');
+                    document.getElementById('emailSubject').value = '';
+                    document.getElementById('emailContent').value = '';
+                    loadStats();
+                    loadPendingImports();
+                } else {
+                    showError('Failed to parse email: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error parsing email:', error);
+                showError('Failed to parse email. Please try again.');
+            }
+        }
+
+        async function approveAllHigh() {
+            if (!emailAPIAvailable) {
+                showError('Email import API not available');
+                return;
+            }
+            
+            const highConfidenceImports = pendingImports.filter(imp => imp.confidence === 'high');
+            
+            if (highConfidenceImports.length === 0) {
+                showMessage('ℹ️ No high confidence imports to approve.', 'info');
+                return;
+            }
+            
+            if (!confirm(`Approve ${highConfidenceImports.length} high confidence imports?`)) {
+                return;
+            }
+            
+            try {
+                const importIds = highConfidenceImports.map(imp => imp.id);
+                
+                const response = await fetch('/api/email-import/approve-selected', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        importIds: importIds
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage(`✅ Approved ${data.approved} high confidence imports! Purchase records created!`, 'success');
+                } else {
+                    showError('Failed to approve high confidence imports: ' + data.error);
+                }
+                
+                loadStats();
+                loadPendingImports();
+                
+            } catch (error) {
+                console.error('Error approving high confidence imports:', error);
+                showError('Failed to approve high confidence imports.');
+            }
+        }
+
+        function refreshImports() {
+            showMessage('🔄 Refreshing imports...', 'info');
+            loadStats();
+            loadPendingImports();
+        }
+
+        function clearRejected() {
+            if (!emailAPIAvailable) {
+                showError('Email import API not available');
+                return;
+            }
+            showMessage('ℹ️ Rejected imports are automatically cleaned up.', 'info');
+        }
+
+        // Remove import card from display
+        function removeImportCard(importId) {
+            const card = document.querySelector(`[data-import-id="${importId}"]`);
+            if (card) {
+                card.style.opacity = '0';
+                card.style.transform = 'translateX(-100%)';
+                setTimeout(() => {
+                    card.remove();
+                    pendingImports = pendingImports.filter(imp => imp.id !== importId);
+                    selectedImports.delete(importId);
+                    updateSelectionUI();
+                    if (pendingImports.length === 0) {
+                        displayImports();
+                    }
+                }, 300);
+            }
+        }
+
+        // Show message
+        function showMessage(message, type = 'info') {
+            const container = document.getElementById('messageContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type === 'success' ? 'message message-success' : 
+                                   type === 'error' ? 'message message-error' : 'message message-info';
+            messageDiv.innerHTML = message;
+            messageDiv.style.position = 'fixed';
+            messageDiv.style.top = '20px';
+            messageDiv.style.right = '20px';
+            messageDiv.style.zIndex = '1000';
+            messageDiv.style.minWidth = '300px';
+            
+            container.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.style.opacity = '0';
+                setTimeout(() => {
+                    if (messageDiv.parentNode) {
+                        messageDiv.parentNode.removeChild(messageDiv);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // Show error message
+        function showError(message) {
+            showMessage(message, 'error');
+        }
+    </script>
+</body>
+</html>

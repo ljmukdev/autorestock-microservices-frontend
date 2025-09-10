@@ -1,0 +1,60 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Manual Purchase Entry</title>
+</head>
+<body>
+  <h2>Enter a New Purchase</h2>
+  <form id="purchaseForm">
+    <label>Platform: <input name="platform" required /></label><br />
+    <label>Seller Username: <input name="seller_username" /></label><br />
+    <label>Manual Collection: <input type="checkbox" name="manual_collection" /></label><br />
+    <label>Category: <input name="category" required /></label><br />
+    <label>Brand: <input name="brand" required /></label><br />
+    <label>Model: <input name="model" required /></label><br />
+    <label>Generation: <input name="generation" /></label><br />
+    <label>Listing Title: <input name="listing_title" /></label><br />
+    <label>Purchase Price: <input type="number" name="purchase_price" step="0.01" /></label><br />
+    <label>Shipping Cost: <input type="number" name="shipping_cost" step="0.01" /></label><br />
+    <label>Total Paid: <input type="number" name="total_paid" step="0.01" /></label><br />
+    <label>Currency: <input name="currency" value="GBP" /></label><br />
+    <label>Order ID: <input name="order_id" /></label><br />
+    <label>Tracking Number: <input name="tracking_number" /></label><br />
+    <label>Courier: <input name="courier" /></label><br />
+    <label>Dispatch Date: <input type="date" name="dispatch_date" /></label><br />
+    <label>Delivery Date: <input type="date" name="delivery_date" /></label><br />
+    <label>Delivery Status: <input name="delivery_status" /></label><br />
+    <label>Listing URL: <input name="listing_url" /></label><br />
+    <label>Invoice URL: <input name="invoice_url" /></label><br />
+    <label>Will Be Parted Out: <input type="checkbox" name="will_be_parted_out" /></label><br />
+    <label>Number of Parts: <input type="number" name="number_of_parts" /></label><br />
+    <label>Notes: <textarea name="notes"></textarea></label><br />
+    <label>Tags: <input name="tags" /></label><br /><br />
+    <button type="submit">Submit Purchase</button>
+  </form>
+
+  <script>
+    document.getElementById('purchaseForm').addEventListener('submit', async function(event) {
+      event.preventDefault();
+      const form = event.target;
+      const data = Object.fromEntries(new FormData(form).entries());
+      data.manual_collection = form.manual_collection.checked;
+      data.will_be_parted_out = form.will_be_parted_out.checked;
+
+      try {
+        const res = await fetch('http://localhost:3001/api/purchases', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        const result = await res.json();
+        alert('Purchase saved with ID: ' + result.id);
+        form.reset();
+      } catch (err) {
+        alert('Failed to save purchase: ' + err.message);
+      }
+    });
+  </script>
+</body>
+</html>

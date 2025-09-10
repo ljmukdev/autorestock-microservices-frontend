@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Import Debug</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .debug-container {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .status-card {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        .status-card.success { border-left-color: #28a745; }
+        .status-card.error { border-left-color: #dc3545; }
+        .status-card.warning { border-left-color: #ffc107; }
+        
+        .test-section {
+            margin: 20px 0;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 8px;
+            font-size: 14px;
+        }
+        .btn:hover { background: #0056b3; }
+        .btn.danger { background: #dc3545; }
+        .btn.danger:hover { background: #c82333; }
+        .btn.success { background: #28a745; }
+        .btn.success:hover { background: #1e7e34; }
+        
+        .log-output {
+            background: #1e1e1e;
+            color: #f8f8f2;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin-top: 16px;
+        }
+        .api-test {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .endpoint-test {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .endpoint-test h4 {
+            margin-top: 0;
+            color: #495057;
+        }
+        select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-container">
+        <h1>🔍 Email Import Debug Center</h1>
+        
+        <div class="status-grid">
+            <div class="status-card" id="apiStatus">
+                <strong>API Status</strong>
+                <div id="apiStatusText">Testing...</div>
+            </div>
+            <div class="status-card" id="tokenStatus">
+                <strong>Gmail Token</strong>
+                <div id="tokenStatusText">Checking...</div>
+            </div>
+            <div class="status-card" id="searchStatus">
+                <strong>Search Function</strong>
+                <div id="searchStatusText">Ready to test</div>
+            </div>
+            <div class="status-card" id="parserStatus">
+                <strong>Email Parser</strong>
+                <div id="parserStatusText">Ready to test</div>
+            </div>
+        </div>
+
+        <div class="api-test">
+            <div class="endpoint-test">
+                <h4>📊 Test Email Stats API</h4>
+                <button class="btn" onclick="testEmailStats()">Test Stats Endpoint</button>
+                <div id="statsResult"></div>
+            </div>
+
+            <div class="endpoint-test">
+                <h4>🔍 Test Email Search</h4>
+                <select id="dateRange">
+                    <option value="recent">Recent (30 days)</option>
+                    <option value="oneMonth">One Month</option>
+                    <option value="threeMonths">Three Months</option>
+                    <option value="sixMonths">Six Months</option>
+                    <option value="oneYear">One Year</option>
+                    <option value="allTime">All Time</option>
+                </select>
+                <button class="btn" onclick="testEmailSearch()">Test Search</button>
+                <div id="searchResult"></div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🛠️ Advanced Debugging</h3>
+            <button class="btn" onclick="testGmailConnection()">Test Gmail Connection</button>
+            <button class="btn" onclick="debugSearchQuery()">Debug Search Query</button>
+            <button class="btn danger" onclick="clearLogs()">Clear Logs</button>
+        </div>
+
+        <div class="log-output" id="debugLog">Ready for debugging...</div>
+    </div>
+
+    <script>
+        let logContainer = document.getElementById('debugLog');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const typeEmoji = {
+                'info': 'ℹ️',
+                'success': '✅',
+                'error': '❌',
+                'warning': '⚠️'
+            };
+            
+            const logEntry = `[${timestamp}] ${typeEmoji[type]} ${message}\n`;
+            logContainer.textContent += logEntry;
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function updateStatus(elementId, text, status) {
+            const element = document.getElementById(elementId);
+            element.className = `status-card ${status}`;
+            document.getElementById(elementId + 'Text').textContent = text;
+        }
+
+        async function testEmailStats() {
+            log('Testing email stats API...', 'info');
+            try {
+                const response = await fetch('/api/email-import/stats');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log(`Stats API Success: ${JSON.stringify(data, null, 2)}`, 'success');
+                    updateStatus('apiStatus', 'Working ✅', 'success');
+                    document.getElementById('statsResult').innerHTML = `
+                        <div style="margin-top: 8px; font-size: 12px;">
+                            Total: ${data.stats.totalImported}<br>
+                            Pending: ${data.stats.pending}<br>
+                            Approved: ${data.stats.approved}
+                        </div>
+                    `;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${data.message || 'Unknown error'}`);
+                }
+            } catch (error) {
+                log(`Stats API Error: ${error.message}`, 'error');
+                updateStatus('apiStatus', 'Failed ❌', 'error');
+                document.getElementById('statsResult').innerHTML = `<div style="color: red; margin-top: 8px; font-size: 12px;">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testEmailSearch() {
+            const dateRange = document.getElementById('dateRange').value;
+            log(`Testing email search with dateRange: ${dateRange}...`, 'info');
+            
+            try {
+                const response = await fetch('/api/email-import/check', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ dateRange })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log(`Search Success: Found ${data.pendingImports?.length || 0} emails`, 'success');
+                    updateStatus('searchStatus', 'Working ✅', 'success');
+                    document.getElementById('searchResult').innerHTML = `
+                        <div style="margin-top: 8px; font-size: 12px;">
+                            Found: ${data.pendingImports?.length || 0} emails<br>
+                            Range: ${dateRange}
+                        </div>
+                    `;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${data.message || 'Unknown error'}`);
+                }
+            } catch (error) {
+                log(`Search Error: ${error.message}`, 'error');
+                updateStatus('searchStatus', 'Failed ❌', 'error');
+                document.getElementById('searchResult').innerHTML = `<div style="color: red; margin-top: 8px; font-size: 12px;">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testGmailConnection() {
+            log('Testing Gmail connection...', 'info');
+            try {
+                const response = await fetch('/api/email-import/test-connection');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log('Gmail connection test successful', 'success');
+                    updateStatus('tokenStatus', 'Valid ✅', 'success');
+                } else {
+                    throw new Error(data.message || 'Connection failed');
+                }
+            } catch (error) {
+                log(`Gmail connection error: ${error.message}`, 'error');
+                updateStatus('tokenStatus', 'Invalid ❌', 'error');
+            }
+        }
+
+        async function debugSearchQuery() {
+            log('Debugging search query construction...', 'info');
+            try {
+                const response = await fetch('/api/email-import/debug-query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ dateRange: 'recent' })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log(`Search query debug: ${JSON.stringify(data, null, 2)}`, 'info');
+                } else {
+                    throw new Error(data.message || 'Debug failed');
+                }
+            } catch (error) {
+                log(`Debug query error: ${error.message}`, 'error');
+            }
+        }
+
+        function clearLogs() {
+            logContainer.textContent = 'Logs cleared...\n';
+        }
+
+        // Initialize with a basic API test
+        window.onload = function() {
+            log('Email Import Debug Center initialized', 'info');
+            testEmailStats();
+        };
+    </script>
+</body>
+</html>
