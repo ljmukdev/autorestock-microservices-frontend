@@ -465,11 +465,16 @@ CHANGES: Fixed API calls, added proper error handling, integrated staging workfl
             
             try {
                 // Load purchases directly
-                console.log('📊 Fetching purchases data...');
+                console.log('📊 Fetching purchases data from /api/purchases...');
                 const response = await fetch('/api/purchases');
                 
+                console.log('📊 Response status:', response.status);
+                console.log('📊 Response headers:', response.headers);
+                
                 if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    const errorText = await response.text();
+                    console.error('❌ API Error Response:', errorText);
+                    throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
                 }
                 
                 const data = await response.json();
@@ -478,6 +483,11 @@ CHANGES: Fixed API calls, added proper error handling, integrated staging workfl
                 // Handle the API response structure
                 const purchases = data.purchases || data;
                 console.log(`📊 Loaded ${purchases.length} purchases`);
+                
+                if (!Array.isArray(purchases)) {
+                    console.error('❌ Purchases is not an array:', purchases);
+                    throw new Error('Invalid data format: purchases is not an array');
+                }
                 
                 currentPurchases = purchases;
                 displayPurchases(purchases);
