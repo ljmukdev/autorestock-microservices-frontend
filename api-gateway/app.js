@@ -56,7 +56,7 @@ app.use(express.static(path.join(__dirname, '../frontend')));
 // Microservice endpoints configuration
 const microservices = {
   // Core services
-  purchases: process.env.PURCHASES_SERVICE_URL || 'http://localhost:3001',
+  purchases: process.env.PURCHASES_SERVICE_URL || 'https://stockpilot-purchases-service-production.up.railway.app',
   sales: process.env.SALES_SERVICE_URL || 'http://localhost:3002',
   inventory: process.env.INVENTORY_SERVICE_URL || 'http://localhost:3003',
   settings: process.env.SETTINGS_SERVICE_URL || 'http://localhost:3004',
