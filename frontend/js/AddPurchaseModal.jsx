@@ -1,6 +1,8 @@
-// FILE: AddPurchaseModal.jsx
-// LOCATION: /frontend/js/AddPurchaseModal.jsx
-// PURPOSE: React pop-out form to manually add a purchase to /api/purchases
+// FILE: frontend/js/AddPurchaseModal.jsx
+// PURPOSE: React pop-out to manually add a purchase to /api/purchases
+// Notes:
+// - Inline styles are namespaced (.sp-*) to avoid touching your CSS.
+// - Works with either POST response shape: `{status:"ok", purchase:{}}` OR the raw created object.
 
 const { useState, useEffect } = React;
 
@@ -90,8 +92,7 @@ function AddPurchaseModal({ open, onClose, onSaved }) {
       parts_total: form.parts_total === '' ? undefined : Number(form.parts_total),
       photos: photosArr,
       video_url: form.video_url || undefined,
-      notes: form.notes || undefined,
-      // createdBy is required by the schema default; backend sets default "system"
+      notes: form.notes || undefined
     };
   };
 
@@ -119,7 +120,8 @@ function AddPurchaseModal({ open, onClose, onSaved }) {
       }
 
       const data = await res.json();
-      if (onSaved) onSaved(data.purchase || data);
+      const created = data.purchase || data; // supports both shapes
+      onSaved?.(created);
       onClose();
     } catch (err) {
       setError(err.message);
@@ -279,32 +281,24 @@ function AddPurchaseModal({ open, onClose, onSaved }) {
         .sp-btn { background: linear-gradient(135deg,#1a365d,#2c5282); color:#fff; border:0; padding: 10px 14px; border-radius: 10px; font-weight: 700; cursor: pointer; }
         .sp-btn[disabled] { opacity: .65; cursor: not-allowed; }
         .sp-btn-ghost { background: #eef2f7; color:#1a365d; }
-        .sp-alert { padding: 10px 12px; border-radius: 8px; margin-bottom: 8px; font-weight: 600; }
-        .sp-alert-error { background: rgba(239,68,68,.08); color:#b91c1c; border:1px solid rgba(239,68,68,.3); }
         @media (max-width: 720px) { .sp-grid { grid-template-columns: 1fr; } }
       `}</style>
     </div>
   );
 }
 
-/** Mount helper used by the HTML page */
 function mountAddPurchaseModal(rootId) {
   const root = document.getElementById(rootId);
   if (!root) return;
 
   function App() {
     const [open, setOpen] = useState(false);
-    // expose global open function for your existing buttons
     useEffect(() => { window.showAddPurchaseModal = () => setOpen(true); }, []);
     const onSaved = () => {
       if (window.loadPurchases) window.loadPurchases();
       if (window.showStatus) window.showStatus('✅ Purchase saved', 'success');
     };
-    return (
-      <>
-        <AddPurchaseModal open={open} onClose={() => setOpen(false)} onSaved={onSaved} />
-      </>
-    );
+    return <AddPurchaseModal open={open} onClose={() => setOpen(false)} onSaved={onSaved} />;
   }
 
   ReactDOM.createRoot(root).render(<App />);

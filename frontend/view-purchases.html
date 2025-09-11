@@ -1,17 +1,75 @@
-<!--
-FILE: view-purchases.html
-LOCATION: /frontend/view-purchases.html
-DESCRIPTION: Purchases page with React AddPurchaseModal pop-out integrated
--->
+<!-- FILE: frontend/view-purchases.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>StockPilot - Purchase Management & Staging</title>
+
   <style>
-    /* (… your existing CSS unchanged …) */
-    /* Entire original CSS from your file stays as-is */
+    /* —— your existing CSS kept intact (based on your uploaded file) —— */
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin:0; padding:15px; background:linear-gradient(135deg,#1a365d 0%,#2c5282 100%); min-height:100vh; }
+    .container { max-width:1200px; margin:0 auto; background:rgba(255,255,255,0.95); border-radius:15px; box-shadow:0 20px 40px rgba(26,54,93,0.15); overflow:hidden; }
+    .header { display:flex; align-items:center; margin-bottom:0; background:rgba(255,255,255,0.95); padding:30px 25px 24px 25px; position:relative; }
+    .header-logo { height:80px; position:absolute; left:25px; }
+    .header-text { flex:1; text-align:center; }
+    .header h1 { color:#1a365d; margin:0; font-size:1.8em; }
+    .header p { margin:0; font-size:0.9em; color:#1a365d; }
+    .nav-tabs-container { background:rgba(255,255,255,0.95); padding:12px 25px 0; position:relative; }
+    .nav-tabs-container::after { content:''; position:absolute; bottom:0; left:0; right:0; height:3px; background:#1a365d; z-index:1; }
+    .nav-tabs { display:flex; gap:2px; background:transparent; padding:0; margin:0; list-style:none; flex-wrap:nowrap; overflow-x:auto; }
+    .nav-tab { background:linear-gradient(135deg,#F5F7FA,#E2E8F0); border:none; padding:10px 8px; cursor:pointer; transition:all .3s ease; text-decoration:none; color:#2D3748; font-weight:500; font-size:11px; border-radius:12px 12px 0 0; position:relative; text-align:center; display:flex; align-items:center; justify-content:center; gap:3px; flex:1; min-width:0; white-space:nowrap; }
+    .nav-tab:hover { text-decoration:none; color:white; transform:translateY(-2px); box-shadow:0 6px 15px rgba(26,54,93,.2); }
+    .nav-tab.active { transform:translateY(0); box-shadow:0 0 0 3px rgba(255,255,255,.8); }
+    .nav-tab.home { background:linear-gradient(135deg,#1a365d,#2c5282); color:white; }
+    .nav-tab.purchases { background:linear-gradient(135deg,#67B292,#5A9B7F); color:white; }
+    .nav-tab.inventory { background:linear-gradient(135deg,#3182CE,#2C5282); color:white; }
+    .nav-tab.consumables { background:linear-gradient(135deg,#38A169,#2F855A); color:white; }
+    .nav-tab.log-sale { background:linear-gradient(135deg,#48BB78,#38A169); color:white; }
+    .nav-tab.sales { background:linear-gradient(135deg,#805AD5,#6B46C1); color:white; }
+    .nav-tab.email-import { background:linear-gradient(135deg,#3182CE,#2B6CB0); color:white; }
+    .nav-tab.reports { background:linear-gradient(135deg,#667EEA,#5A67D8); color:white; }
+    .nav-tab.settings { background:linear-gradient(135deg,#2D3748,#1A202C); color:white; }
+
+    .content-area { padding:8px 25px 25px 25px; background:#F8FAFC; }
+
+    .status-bar-enhanced { background:white; color:#1a365d; padding:16px 20px; border-radius:12px; margin:5px 0; border:2px solid #1a365d; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:15px; box-shadow:0 2px 8px rgba(26,54,93,.1); }
+    .status-item { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:500; }
+    .status-badge { background:rgba(26,54,93,.1); color:#1a365d; padding:4px 8px; border-radius:12px; font-size:11px; font-weight:600; margin-left:4px; }
+
+    .recent-activity { background:white; border-radius:12px; padding:14px; margin:5px 0; border:1px solid #e5e7eb; box-shadow:0 2px 10px rgba(26,54,93,.08); overflow:visible; }
+    .purchase-card { display:flex; align-items:center; padding:12px 0; border-bottom:1px solid #f3f4f6; transition:all .2s ease; border-radius:6px; margin:2px 0; position:relative; }
+    .purchase-card:last-child { border-bottom:none; }
+    .purchase-card:hover { background:rgba(26,54,93,.05); }
+    .purchase-icon { width:40px; height:40px; border-radius:50%; background:rgba(26,54,93,.1); display:flex; align-items:center; justify-content:center; margin-right:15px; font-size:16px; color:#1a365d; border:2px solid #1a365d; }
+    .purchase-text { flex:1; font-size:13px; color:#1a365d; font-weight:500; cursor:pointer; padding:6px 10px; border-radius:6px; transition:all .2s ease; }
+    .purchase-text:hover { background:rgba(26,54,93,.1); transform:translateX(2px); }
+    .purchase-amount { font-weight:700; color:#1a365d; font-size:14px; margin-right:15px; }
+    .staging-controls { display:flex; gap:8px; margin-left:auto; }
+    .staging-btn { background:linear-gradient(135deg,#1a365d,#2c5282); color:white; border:none; border-radius:20px; padding:6px 12px; font-size:10px; cursor:pointer; transition:all .2s ease; font-weight:600; text-transform:uppercase; }
+    .staging-btn:hover { transform:scale(1.05); box-shadow:0 2px 8px rgba(26,54,93,.3); }
+    .staging-btn.stage { background:linear-gradient(135deg,#67B292,#5A9B7F); }
+    .staging-btn.split { background:linear-gradient(135deg,#3182CE,#2C5282); }
+    .staging-btn.inventory { background:linear-gradient(135deg,#48BB78,#38A169); }
+
+    .status { padding:12px 16px; border-radius:8px; margin:12px 0; font-weight:500; display:flex; align-items:center; gap:8px; font-size:.9rem; animation:slideIn .3s ease-out; }
+    @keyframes slideIn { from { opacity:0; transform: translateX(-20px); } to { opacity:1; transform: translateX(0); } }
+    .status.success { background:rgba(26,54,93,.1); color:#1a365d; border:1px solid rgba(26,54,93,.2); }
+    .status.error { background:rgba(239,68,68,.1); color:#dc2626; border:1px solid rgba(239,68,68,.2); }
+    .status.info { background:rgba(59,130,246,.1); color:#2563eb; border:1px solid rgba(59,130,246,.2); }
+
+    .loading-spinner { width:20px; height:20px; border:3px solid #f3f4f6; border-top:3px solid #1a365d; border-radius:50%; animation:spin 1s linear infinite; margin:20px auto; }
+    @keyframes spin { 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }
+
+    .error-message { text-align:center; padding:40px 20px; color:#dc2626; background:rgba(239,68,68,.1); border-radius:12px; margin:20px 0; }
+    .retry-btn { background:linear-gradient(135deg,#1a365d,#2c5282); color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:600; margin-top:15px; transition:all .3s ease; }
+    .retry-btn:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(26,54,93,.3); }
+
+    @media (max-width: 768px) {
+      .status-bar-enhanced { flex-direction:column; gap:10px; }
+      .purchase-card { flex-wrap:wrap; gap:10px; }
+      .staging-controls { width:100%; justify-content:center; }
+    }
   </style>
 </head>
 <body>
@@ -41,7 +99,7 @@ DESCRIPTION: Purchases page with React AddPurchaseModal pop-out integrated
     </div>
 
     <div class="content-area">
-      <!-- Status Bar (unchanged) -->
+      <!-- Enhanced Status Bar -->
       <div class="status-bar-enhanced" id="status-bar">
         <div class="status-item">
           <span>💰</span>
@@ -74,7 +132,7 @@ DESCRIPTION: Purchases page with React AddPurchaseModal pop-out integrated
             <span id="purchaseHistoryCount" class="status-badge">Loading...</span>
           </h3>
           <div style="display:flex; gap:8px;">
-            <!-- ADD: New button to open React modal -->
+            <!-- ADD: 👇 new button, styling preserved -->
             <button class="retry-btn" onclick="window.showAddPurchaseModal()" style="padding:6px 12px; font-size:.8rem;">
               ➕ Add Purchase
             </button>
@@ -92,10 +150,9 @@ DESCRIPTION: Purchases page with React AddPurchaseModal pop-out integrated
     </div>
   </div>
 
-  <!-- ADD: React modal mount point -->
+  <!-- ADD: 👇 React modal mount point (no styling impact) -->
   <div id="add-purchase-modal-root"></div>
 
-  <!-- Your existing JS (unchanged below, except we expose loadPurchases globally) -->
   <script>
     console.log('🛒 StockPilot Purchase Management & Staging loaded');
 
@@ -104,13 +161,8 @@ DESCRIPTION: Purchases page with React AddPurchaseModal pop-out integrated
     document.addEventListener('DOMContentLoaded', function() {
       console.log('🚀 Initializing purchase management...');
       loadPurchases();
-      // Mount the React modal once DOM is ready
       if (window.mountAddPurchaseModal) window.mountAddPurchaseModal('add-purchase-modal-root');
     });
-
-    // Expose for React component callback
-    window.loadPurchases = loadPurchases;
-    window.showStatus = showStatus;
 
     async function loadPurchases() {
       console.log('📦 Loading purchases...');
@@ -170,7 +222,15 @@ DESCRIPTION: Purchases page with React AddPurchaseModal pop-out integrated
       const cards = purchases.map(purchase => {
         const timeAgo = getTimeAgo(new Date(purchase.orderDate || purchase.purchase_date || purchase.createdAt));
         const platformEmoji = getPlatformEmoji(purchase.platform || 'Unknown');
-        const total = parseFloat(purchase.totalAmount ?? purchase.total_paid ?? ( (purchase.price_paid||0) + (purchase.shipping_cost||0) + (purchase.fees||0) )).toFixed(2);
+
+        const total = (() => {
+          const a = Number(purchase.totalAmount ?? NaN);
+          const b = Number(purchase.total_paid ?? NaN);
+          if (!isNaN(a)) return a;
+          if (!isNaN(b)) return b;
+          const c = (Number(purchase.price_paid||0) + Number(purchase.shipping_cost||0) + Number(purchase.fees||0));
+          return c;
+        })().toFixed(2);
 
         return `
           <div class="purchase-card" data-id="${purchase._id || purchase.id}">
@@ -197,7 +257,8 @@ DESCRIPTION: Purchases page with React AddPurchaseModal pop-out integrated
     function updateStatusBar(purchases) {
       const totalInvestment = purchases.reduce((sum, p) => {
         if (p.totalAmount != null) return sum + Number(p.totalAmount || 0);
-        return sum + Number(p.total_paid || 0) + Number(p.shipping_cost || 0) + Number(p.fees || 0);
+        if (p.total_paid != null) return sum + Number(p.total_paid || 0);
+        return sum + Number(p.price_paid || 0) + Number(p.shipping_cost || 0) + Number(p.fees || 0);
       }, 0);
       const averagePurchase = purchases.length ? totalInvestment / purchases.length : 0;
 
@@ -216,31 +277,29 @@ DESCRIPTION: Purchases page with React AddPurchaseModal pop-out integrated
       document.getElementById('purchaseHistoryCount').textContent = `${purchases.length} items`;
     }
 
-    // (… rest of your helper & staging functions unchanged …)
+    // Stubs (unchanged)
     function stagePurchase(id){ showStatus('🔍 Staging…','info'); }
     function splitPurchase(id){ showStatus('✂️ Splitting…','info'); }
     function addToInventory(id){ showStatus('📦 Added to inventory','success'); }
-    function showPurchaseDetails(){ /* unchanged for brevity */ }
 
     function getPlatformEmoji(platform){ const e={ 'eBay':'🏪','Amazon':'📦','Vinted':'👕','Facebook Marketplace':'📘','Depop':'🛍️','Gumtree':'🌳'}; return e[platform]||'🛒'; }
     function getTimeAgo(date){ const now=new Date(); const s=Math.floor((now-date)/1000); if(s<60) return 'just now'; if(s<3600) return `${Math.floor(s/60)}m ago`; if(s<86400) return `${Math.floor(s/3600)}h ago`; if(s<604800) return `${Math.floor(s/86400)}d ago`; return `${Math.floor(s/604800)}w ago`; }
     function showStatus(message, type){ const el=document.getElementById('statusMessage'); el.innerHTML=`<div class="status ${type}">${message}</div>`; setTimeout(()=>{ el.innerHTML=''; },5000); }
   </script>
 
-  <!-- ADD: React + Babel (UMD/CDN) -->
+  <!-- ADD: React & Babel (UMD) -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  <!-- ADD: Your JSX component -->
+  <!-- ADD: JSX component -->
   <script type="text/babel" src="js/AddPurchaseModal.jsx"></script>
 
-  <!-- ADD: Bootstrap the modal after the component script loads -->
+  <!-- ADD: Bootstrap the modal -->
   <script>
     if (window.mountAddPurchaseModal) {
       window.mountAddPurchaseModal('add-purchase-modal-root');
     } else {
-      // Fallback in case of async load race
       window.addEventListener('load', () => {
         if (window.mountAddPurchaseModal) window.mountAddPurchaseModal('add-purchase-modal-root');
       });
