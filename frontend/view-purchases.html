@@ -1,13 +1,11 @@
-<!-- FILE: frontend/view-purchases.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>StockPilot - Purchase Management & Staging</title>
-
   <style>
-    /* —— your existing CSS kept intact (based on your uploaded file) —— */
+    /* (your original styling kept) */
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin:0; padding:15px; background:linear-gradient(135deg,#1a365d 0%,#2c5282 100%); min-height:100vh; }
     .container { max-width:1200px; margin:0 auto; background:rgba(255,255,255,0.95); border-radius:15px; box-shadow:0 20px 40px rgba(26,54,93,0.15); overflow:hidden; }
     .header { display:flex; align-items:center; margin-bottom:0; background:rgba(255,255,255,0.95); padding:30px 25px 24px 25px; position:relative; }
@@ -70,11 +68,30 @@
       .purchase-card { flex-wrap:wrap; gap:10px; }
       .staging-controls { width:100%; justify-content:center; }
     }
+
+    /* ===== Modal (CSP-safe) ===== */
+    .mp-hidden { display: none !important; }
+    .mp-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .mp-modal { width: min(920px, 92vw); background: #fff; border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); padding: 16px 18px 18px 18px; border: 2px solid #1a365d; animation: mpPop .2s ease-out; }
+    @keyframes mpPop { from { transform: scale(.98); opacity: .6 } to { transform: scale(1); opacity: 1 } }
+    .mp-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+    .mp-header h3 { color:#1a365d; margin:0; }
+    .mp-close { background: transparent; border: 0; font-size: 18px; cursor: pointer; color:#1a365d; }
+    .mp-form label { display:flex; flex-direction:column; gap:6px; font-size:12px; color:#1a365d; font-weight:600; }
+    .mp-form input, .mp-form select, .mp-form textarea { border:1px solid #cbd5e1; border-radius:8px; padding:8px 10px; font-size:14px; }
+    .mp-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:12px; }
+    .mp-span-2 { grid-column: span 2; }
+    .mp-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:12px; }
+    .mp-btn { background: linear-gradient(135deg,#1a365d,#2c5282); color:#fff; border:0; padding:10px 14px; border-radius:10px; font-weight:700; cursor:pointer; }
+    .mp-btn[disabled] { opacity:.65; cursor:not-allowed; }
+    .mp-btn-ghost { background:#eef2f7; color:#1a365d; }
+    .mp-alert { padding:10px 12px; border-radius:8px; margin-bottom:8px; font-weight:600; }
+    .mp-alert-error { background: rgba(239,68,68,.08); color:#b91c1c; border:1px solid rgba(239,68,68,.3); }
+    @media (max-width:720px){ .mp-grid { grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- Header -->
     <div class="header">
       <img src="images/stockpilot-logo.png" alt="StockPilot Logo" class="header-logo">
       <div class="header-text">
@@ -83,7 +100,6 @@
       </div>
     </div>
 
-    <!-- Navigation -->
     <div class="nav-tabs-container">
       <div class="nav-tabs">
         <a href="index.html" class="nav-tab home">🏠 Home</a>
@@ -99,32 +115,15 @@
     </div>
 
     <div class="content-area">
-      <!-- Enhanced Status Bar -->
       <div class="status-bar-enhanced" id="status-bar">
-        <div class="status-item">
-          <span>💰</span>
-          <span>Total Investment: <strong id="status-total-investment">Loading...</strong></span>
-          <span class="status-badge" id="monthly-change">calculating...</span>
-        </div>
-        <div class="status-item">
-          <span>🛒</span>
-          <span><strong id="status-purchase-count">0</strong> purchases</span>
-          <span class="status-badge" id="source-breakdown">loading...</span>
-        </div>
-        <div class="status-item">
-          <span>📊</span>
-          <span>Average: <strong id="status-avg-purchase">£0.00</strong></span>
-        </div>
-        <div class="status-item">
-          <span>🔄</span>
-          <span>Last sync: <span id="last-sync">now</span></span>
-        </div>
+        <div class="status-item"><span>💰</span><span>Total Investment: <strong id="status-total-investment">Loading...</strong></span><span class="status-badge" id="monthly-change">calculating...</span></div>
+        <div class="status-item"><span>🛒</span><span><strong id="status-purchase-count">0</strong> purchases</span><span class="status-badge" id="source-breakdown">loading...</span></div>
+        <div class="status-item"><span>📊</span><span>Average: <strong id="status-avg-purchase">£0.00</strong></span></div>
+        <div class="status-item"><span>🔄</span><span>Last sync: <span id="last-sync">now</span></span></div>
       </div>
 
-      <!-- Status Messages -->
       <div id="statusMessage"></div>
 
-      <!-- Purchase History Section -->
       <div class="recent-activity">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
           <h3 style="margin:0; color:#1a365d; font-size:18px; display:flex; align-items:center; gap:8px;">
@@ -132,13 +131,8 @@
             <span id="purchaseHistoryCount" class="status-badge">Loading...</span>
           </h3>
           <div style="display:flex; gap:8px;">
-            <!-- ADD: 👇 new button, styling preserved -->
-            <button class="retry-btn" onclick="window.showAddPurchaseModal()" style="padding:6px 12px; font-size:.8rem;">
-              ➕ Add Purchase
-            </button>
-            <button class="retry-btn" onclick="loadPurchases()" style="padding:6px 12px; font-size:.8rem;">
-              🔄 Refresh
-            </button>
+            <button id="btn-add-purchase" class="retry-btn" style="padding:6px 12px; font-size:.8rem;">➕ Add Purchase</button>
+            <button id="btn-refresh" class="retry-btn" style="padding:6px 12px; font-size:.8rem;">🔄 Refresh</button>
           </div>
         </div>
 
@@ -150,8 +144,61 @@
     </div>
   </div>
 
-  <!-- ADD: 👇 React modal mount point (no styling impact) -->
-  <div id="add-purchase-modal-root"></div>
+  <!-- CSP-safe Modal markup -->
+  <div id="mp-backdrop" class="mp-backdrop mp-hidden" role="dialog" aria-modal="true" aria-labelledby="mp-title">
+    <div class="mp-modal">
+      <div class="mp-header">
+        <h3 id="mp-title">➕ Add Purchase (Manual)</h3>
+        <button id="mp-close" class="mp-close" aria-label="Close">✖</button>
+      </div>
+
+      <div id="mp-error" class="mp-alert mp-alert-error mp-hidden"></div>
+
+      <form id="mp-form" class="mp-form">
+        <div class="mp-grid">
+          <label>Identifier<input name="identifier" placeholder="ELECTRONICS-20250911-0001"></label>
+          <label>Category<input name="category" placeholder="AirPods / Speakers / …"></label>
+          <label>Brand<input name="brand"></label>
+          <label>Model<input name="model"></label>
+          <label>Generation<input name="generation"></label>
+          <label>Source
+            <select name="source">
+              <option>Other</option>
+              <option>Auction</option>
+              <option>Vinted</option>
+              <option>Regular Stock</option>
+            </select>
+          </label>
+          <label>Seller Username<input name="seller_username" placeholder="(Vinted/eBay)"></label>
+          <label>Order ID<input name="order_id"></label>
+          <label>Date of Purchase<input type="date" name="dateOfPurchase" required></label>
+          <label>Price Paid (£)<input type="number" step="0.01" name="price_paid"></label>
+          <label>Shipping (£)<input type="number" step="0.01" name="shipping_cost"></label>
+          <label>Fees (£)<input type="number" step="0.01" name="fees"></label>
+          <label>Tracking Ref<input name="tracking_ref"></label>
+          <label>Status
+            <select name="status">
+              <option>Purchased</option>
+              <option>Marked as despatched</option>
+              <option>Delivered</option>
+              <option>Verified</option>
+              <option>Feedback left</option>
+              <option>Returned</option>
+            </select>
+          </label>
+          <label id="mp-return-wrapper" class="mp-span-2 mp-hidden">Return Reason<input name="return_reason"></label>
+          <label>Parts Total<input type="number" min="0" name="parts_total"></label>
+          <label class="mp-span-2">Photos (comma-separate URLs)<input name="photos" placeholder="https://.../p1.jpg, https://.../p2.jpg"></label>
+          <label class="mp-span-2">Video URL<input name="video_url" placeholder="https://.../unboxing.mp4"></label>
+          <label class="mp-span-2">Notes<textarea name="notes" rows="3"></textarea></label>
+        </div>
+        <div class="mp-actions">
+          <button type="button" id="mp-cancel" class="mp-btn mp-btn-ghost">Cancel</button>
+          <button type="submit" id="mp-submit" class="mp-btn">Save Purchase</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <script>
     console.log('🛒 StockPilot Purchase Management & Staging loaded');
@@ -161,7 +208,15 @@
     document.addEventListener('DOMContentLoaded', function() {
       console.log('🚀 Initializing purchase management...');
       loadPurchases();
-      if (window.mountAddPurchaseModal) window.mountAddPurchaseModal('add-purchase-modal-root');
+
+      // Bind buttons (CSP-safe)
+      const addBtn = document.getElementById('btn-add-purchase');
+      const refreshBtn = document.getElementById('btn-refresh');
+      if (addBtn) addBtn.addEventListener('click', openManualPurchaseModal);
+      if (refreshBtn) refreshBtn.addEventListener('click', loadPurchases);
+
+      // Modal wiring
+      setupManualPurchaseModal();
     });
 
     async function loadPurchases() {
@@ -201,9 +256,11 @@
         <div class="error-message">
           <h4>❌ Failed to Load Purchases</h4>
           <p><strong>Error:</strong> ${error.message}</p>
-          <button class="retry-btn" onclick="loadPurchases()">🔄 Try Again</button>
+          <button class="retry-btn" id="btn-retry-load">🔄 Try Again</button>
         </div>
       `;
+      const retry = document.getElementById('btn-retry-load');
+      if (retry) retry.addEventListener('click', loadPurchases);
       showStatus(`❌ Error loading purchases: ${error.message}`, 'error');
     }
 
@@ -213,9 +270,11 @@
         container.innerHTML = `
           <div style="text-align:center; padding:40px 20px; color:#1a365d;">
             <h4>📭 No Purchases Found</h4>
-            <button class="retry-btn" onclick="loadPurchases()">🔄 Try Again</button>
+            <button class="retry-btn" id="btn-retry-empty">🔄 Try Again</button>
           </div>
         `;
+        const btn = document.getElementById('btn-retry-empty');
+        if (btn) btn.addEventListener('click', loadPurchases);
         return;
       }
 
@@ -235,7 +294,7 @@
         return `
           <div class="purchase-card" data-id="${purchase._id || purchase.id}">
             <div class="purchase-icon">${platformEmoji}</div>
-            <div class="purchase-text" onclick="showPurchaseDetails('${purchase._id || purchase.id}')">
+            <div class="purchase-text">
               <div><strong>${purchase.supplier || purchase.brand || 'Unknown'} ${purchase.items?.[0]?.productName || purchase.model || 'Item'}</strong></div>
               <div style="font-size:11px; color:#666; margin-top:2px;">
                 ${purchase.platform || 'Unknown'} • ${timeAgo} • ${purchase.category || 'Uncategorized'}
@@ -243,15 +302,26 @@
             </div>
             <div class="purchase-amount">£${total}</div>
             <div class="staging-controls">
-              <button class="staging-btn stage" onclick="stagePurchase(${JSON.stringify(purchase._id || purchase.id)})">🔍 Stage</button>
-              <button class="staging-btn split" onclick="splitPurchase(${JSON.stringify(purchase._id || purchase.id)})">✂️ Split</button>
-              <button class="staging-btn inventory" onclick="addToInventory(${JSON.stringify(purchase._id || purchase.id)})">📦 Inventory</button>
+              <button class="staging-btn stage" data-action="stage" data-id="${purchase._id || purchase.id}">🔍 Stage</button>
+              <button class="staging-btn split" data-action="split" data-id="${purchase._id || purchase.id}">✂️ Split</button>
+              <button class="staging-btn inventory" data-action="inventory" data-id="${purchase._id || purchase.id}">📦 Inventory</button>
             </div>
           </div>
         `;
       }).join('');
 
       container.innerHTML = cards;
+
+      // Delegate staging button clicks
+      container.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-action]');
+        if (!btn) return;
+        const id = btn.getAttribute('data-id');
+        const action = btn.getAttribute('data-action');
+        if (action === 'stage') showStatus('🔍 Staging…','info');
+        if (action === 'split') showStatus('✂️ Splitting…','info');
+        if (action === 'inventory') showStatus('📦 Added to inventory','success');
+      }, { once: true });
     }
 
     function updateStatusBar(purchases) {
@@ -273,37 +343,103 @@
       document.getElementById('monthly-change').textContent = '+12%';
     }
 
-    function updatePurchaseHistoryCount(purchases) {
-      document.getElementById('purchaseHistoryCount').textContent = `${purchases.length} items`;
-    }
-
-    // Stubs (unchanged)
-    function stagePurchase(id){ showStatus('🔍 Staging…','info'); }
-    function splitPurchase(id){ showStatus('✂️ Splitting…','info'); }
-    function addToInventory(id){ showStatus('📦 Added to inventory','success'); }
-
+    function updatePurchaseHistoryCount(purchases) { document.getElementById('purchaseHistoryCount').textContent = `${purchases.length} items`; }
     function getPlatformEmoji(platform){ const e={ 'eBay':'🏪','Amazon':'📦','Vinted':'👕','Facebook Marketplace':'📘','Depop':'🛍️','Gumtree':'🌳'}; return e[platform]||'🛒'; }
     function getTimeAgo(date){ const now=new Date(); const s=Math.floor((now-date)/1000); if(s<60) return 'just now'; if(s<3600) return `${Math.floor(s/60)}m ago`; if(s<86400) return `${Math.floor(s/3600)}h ago`; if(s<604800) return `${Math.floor(s/86400)}d ago`; return `${Math.floor(s/604800)}w ago`; }
     function showStatus(message, type){ const el=document.getElementById('statusMessage'); el.innerHTML=`<div class="status ${type}">${message}</div>`; setTimeout(()=>{ el.innerHTML=''; },5000); }
-  </script>
 
-  <!-- ADD: React & Babel (UMD) -->
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    /* ===== Modal logic (no inline handlers, no external CDNs) ===== */
+    function setupManualPurchaseModal() {
+      const backdrop = document.getElementById('mp-backdrop');
+      const closeBtn = document.getElementById('mp-close');
+      const cancelBtn = document.getElementById('mp-cancel');
+      const form = document.getElementById('mp-form');
+      const errorEl = document.getElementById('mp-error');
+      const statusSel = form.querySelector('select[name="status"]');
+      const returnWrap = document.getElementById('mp-return-wrapper');
 
-  <!-- ADD: JSX component -->
-  <script type="text/babel" src="js/AddPurchaseModal.jsx"></script>
+      // default date today
+      const dateInput = form.querySelector('input[name="dateOfPurchase"]');
+      dateInput.value = new Date().toISOString().slice(0,10);
 
-  <!-- ADD: Bootstrap the modal -->
-  <script>
-    if (window.mountAddPurchaseModal) {
-      window.mountAddPurchaseModal('add-purchase-modal-root');
-    } else {
-      window.addEventListener('load', () => {
-        if (window.mountAddPurchaseModal) window.mountAddPurchaseModal('add-purchase-modal-root');
+      statusSel.addEventListener('change', () => {
+        const show = statusSel.value === 'Returned';
+        returnWrap.classList.toggle('mp-hidden', !show);
+      });
+
+      function hideError(){ errorEl.classList.add('mp-hidden'); errorEl.textContent=''; }
+      function showErrorMsg(msg){ errorEl.textContent = `❌ ${msg}`; errorEl.classList.remove('mp-hidden'); }
+
+      closeBtn.addEventListener('click', closeManualPurchaseModal);
+      cancelBtn.addEventListener('click', closeManualPurchaseModal);
+      backdrop.addEventListener('click', (e)=>{ if(e.target === backdrop) closeManualPurchaseModal(); });
+      document.addEventListener('keydown', (e)=>{ if(!backdrop.classList.contains('mp-hidden') && e.key==='Escape') closeManualPurchaseModal(); });
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideError();
+
+        // Validate
+        const dateVal = form.dateOfPurchase.value;
+        if (!dateVal) { showErrorMsg('Date of purchase is required.'); return; }
+        const nn = (v) => v === '' || v === null || isNaN(Number(v)) ? 0 : Number(v);
+        if (nn(form.price_paid.value) < 0) { showErrorMsg('Price paid cannot be negative.'); return; }
+        if (nn(form.shipping_cost.value) < 0) { showErrorMsg('Shipping cost cannot be negative.'); return; }
+        if (nn(form.fees.value) < 0) { showErrorMsg('Fees cannot be negative.'); return; }
+
+        // Payload
+        const photosArr = (form.photos.value || '').split(',').map(s=>s.trim()).filter(Boolean);
+        const payload = {
+          identifier: form.identifier.value || undefined,
+          category: form.category.value || undefined,
+          brand: form.brand.value || undefined,
+          model: form.model.value || undefined,
+          generation: form.generation.value || undefined,
+          source: form.source.value || 'Other',
+          seller_username: form.seller_username.value || undefined,
+          order_id: form.order_id.value || undefined,
+          dateOfPurchase: dateVal,
+          price_paid: form.price_paid.value === '' ? 0 : Number(form.price_paid.value),
+          shipping_cost: form.shipping_cost.value === '' ? 0 : Number(form.shipping_cost.value),
+          fees: form.fees.value === '' ? 0 : Number(form.fees.value),
+          tracking_ref: form.tracking_ref.value || undefined,
+          status: form.status.value,
+          return_reason: form.status.value === 'Returned' ? (form.return_reason.value || '') : undefined,
+          parts_total: form.parts_total.value === '' ? undefined : Number(form.parts_total.value),
+          photos: photosArr,
+          video_url: form.video_url.value || undefined,
+          notes: form.notes.value || undefined
+        };
+
+        // Submit
+        const submitBtn = document.getElementById('mp-submit');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving…';
+
+        try {
+          const res = await fetch('/api/purchases', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (!res.ok) {
+            const text = await res.text();
+            throw new Error(`HTTP ${res.status}: ${text}`);
+          }
+          showStatus('✅ Purchase saved', 'success');
+          closeManualPurchaseModal();
+          if (window.loadPurchases) loadPurchases();
+        } catch (err) {
+          showErrorMsg(err.message);
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Save Purchase';
+        }
       });
     }
+
+    function openManualPurchaseModal(){ document.getElementById('mp-backdrop').classList.remove('mp-hidden'); }
+    function closeManualPurchaseModal(){ document.getElementById('mp-backdrop').classList.add('mp-hidden'); }
   </script>
 </body>
 </html>
