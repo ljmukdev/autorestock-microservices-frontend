@@ -80,7 +80,7 @@
       background: rgba(0,0,0,0.45);
       display: flex; align-items: center; justify-content: center;
       z-index: 1000;
-      padding: 16px; /* breathing room on tiny screens */
+      padding: 16px;
     }
 
     .mp-modal {
@@ -156,7 +156,7 @@
     <div class="nav-tabs-container">
       <div class="nav-tabs">
         <a href="index.html" class="nav-tab home">🏠 Home</a>
-        <a href="view-purchases.html" class="nav-tab purchases active">🛒 Purchases</</a>
+        <a href="view-purchases.html" class="nav-tab purchases active">🛒 Purchases</a>
         <a href="view-inventory.html" class="nav-tab inventory">📦 Inventory</a>
         <a href="view-consumables.html" class="nav-tab consumables">🧰 Consumables</a>
         <a href="log-sale.html" class="nav-tab log-sale">💰 Log Sale</a>
@@ -249,7 +249,7 @@
 
             <label>Seller Username<input name="seller_username" placeholder="(Vinted/eBay)"></label>
             <label>Order ID<input name="order_id"></label>
-            <label>Date of Purchase><input type="date" name="dateOfPurchase" required></label>
+            <label>Date of Purchase<input type="date" name="dateOfPurchase" required></label>
             <label>Price Paid (£)<input type="number" step="0.01" name="price_paid"></label>
             <label>Shipping (£)<input type="number" step="0.01" name="shipping_cost"></label>
             <label>Fees (£)<input type="number" step="0.01" name="fees"></label>
@@ -293,15 +293,20 @@
     let currentPurchases = [];
 
     document.addEventListener('DOMContentLoaded', function() {
-      console.log('🚀 Initializing purchase management...');
-      loadPurchases();
+      try {
+        console.log('🚀 Initializing purchase management...');
+        loadPurchases();
 
-      const addBtn = document.getElementById('btn-add-purchase');
-      const refreshBtn = document.getElementById('btn-refresh');
-      if (addBtn) addBtn.addEventListener('click', openManualPurchaseModal);
-      if (refreshBtn) refreshBtn.addEventListener('click', loadPurchases);
+        const addBtn = document.getElementById('btn-add-purchase');
+        const refreshBtn = document.getElementById('btn-refresh');
+        if (addBtn) addBtn.addEventListener('click', openManualPurchaseModal);
+        if (refreshBtn) refreshBtn.addEventListener('click', loadPurchases);
 
-      setupManualPurchaseModal();
+        setupManualPurchaseModal();
+      } catch (e) {
+        console.error('Bootstrap error:', e);
+        showStatus('❌ UI bootstrap error. Check console.', 'error');
+      }
     });
 
     async function loadPurchases() {
@@ -310,16 +315,16 @@
         const response = await fetch('/api/purchases');
         if (!response.ok) {
           const errorText = await response.text();
-          throw new Error(\`HTTP \${response.status}: \${response.statusText} - \${errorText}\`);
+          throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
         }
         const data = await response.json();
         const purchases = data.purchases || data;
-        if (!Array.isArray(purchases)) throw new Error('Invalid data format');
+        if (!Array.isArray(purchases)) throw new Error('Invalid data format from /api/purchases');
         currentPurchases = purchases;
         displayPurchases(purchases);
         updateStatusBar(purchases);
         updatePurchaseHistoryCount(purchases);
-        showStatus(\`✅ Successfully loaded \${purchases.length} purchases\`, 'success');
+        showStatus(`✅ Successfully loaded ${purchases.length} purchases`, 'success');
       } catch (error) {
         console.error('❌ Error loading purchases:', error);
         showError(error);
@@ -345,7 +350,7 @@
       `;
       const retry = document.getElementById('btn-retry-load');
       if (retry) retry.addEventListener('click', loadPurchases);
-      showStatus(\`❌ Error loading purchases: \${error.message}\`, 'error');
+      showStatus(`❌ Error loading purchases: ${error.message}`, 'error');
     }
 
     function displayPurchases(purchases) {
@@ -485,7 +490,6 @@
             }
             populateSelect(sel, arr, clean);
           } else {
-            // revert to previous list, no selection
             populateSelect(sel, loadList(listCfg.key, listCfg.defaults), '');
           }
         });
@@ -503,7 +507,6 @@
           const sel = form.querySelector(`select[name="${cfg.name}"]`);
           if (!sel) return;
           const arr = loadList(cfg.key, cfg.defaults);
-          // Default selection: 'Other' for source, none for others
           const selected = (cfg.name==='source' && arr.includes('Other')) ? 'Other' : '';
           populateSelect(sel, arr, selected);
           wireAddNew(sel, cfg);
