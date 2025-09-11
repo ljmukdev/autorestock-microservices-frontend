@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>StockPilot - Purchase Management & Staging</title>
   <style>
-    /* (your original styling kept) */
+    /* Original page styling */
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin:0; padding:15px; background:linear-gradient(135deg,#1a365d 0%,#2c5282 100%); min-height:100vh; }
     .container { max-width:1200px; margin:0 auto; background:rgba(255,255,255,0.95); border-radius:15px; box-shadow:0 20px 40px rgba(26,54,93,0.15); overflow:hidden; }
     .header { display:flex; align-items:center; margin-bottom:0; background:rgba(255,255,255,0.95); padding:30px 25px 24px 25px; position:relative; }
@@ -13,6 +13,7 @@
     .header-text { flex:1; text-align:center; }
     .header h1 { color:#1a365d; margin:0; font-size:1.8em; }
     .header p { margin:0; font-size:0.9em; color:#1a365d; }
+
     .nav-tabs-container { background:rgba(255,255,255,0.95); padding:12px 25px 0; position:relative; }
     .nav-tabs-container::after { content:''; position:absolute; bottom:0; left:0; right:0; height:3px; background:#1a365d; z-index:1; }
     .nav-tabs { display:flex; gap:2px; background:transparent; padding:0; margin:0; list-style:none; flex-wrap:nowrap; overflow-x:auto; }
@@ -69,29 +70,92 @@
       .staging-controls { width:100%; justify-content:center; }
     }
 
-    /* ===== Modal (CSP-safe) ===== */
+    /* ===== Modal (CSP-safe) — responsive ===== */
+    body.no-scroll { overflow: hidden; }
+
     .mp-hidden { display: none !important; }
-    .mp-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-    .mp-modal { width: min(920px, 92vw); background: #fff; border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); padding: 16px 18px 18px 18px; border: 2px solid #1a365d; animation: mpPop .2s ease-out; }
+
+    .mp-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000;
+      padding: 16px; /* breathing room on tiny screens */
+    }
+
+    .mp-modal {
+      /* Scales to any viewport */
+      width: clamp(320px, 96vw, 980px);
+      max-height: min(90vh, 1000px);
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+      border: 2px solid #1a365d;
+
+      /* Make header/actions fixed and content scrollable */
+      display: flex; flex-direction: column;
+      overflow: hidden; /* contain internal scroll */
+      animation: mpPop .2s ease-out;
+    }
+
     @keyframes mpPop { from { transform: scale(.98); opacity: .6 } to { transform: scale(1); opacity: 1 } }
-    .mp-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+
+    .mp-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding: 16px 18px 10px 18px;
+      position: sticky; top: 0; z-index: 1;
+      background: #fff; border-bottom: 1px solid #edf2f7;
+    }
     .mp-header h3 { color:#1a365d; margin:0; }
+
     .mp-close { background: transparent; border: 0; font-size: 18px; cursor: pointer; color:#1a365d; }
+
+    .mp-content {
+      /* This section scrolls if needed */
+      flex: 1 1 auto;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 12px 18px;
+    }
+
     .mp-form label { display:flex; flex-direction:column; gap:6px; font-size:12px; color:#1a365d; font-weight:600; }
-    .mp-form input, .mp-form select, .mp-form textarea { border:1px solid #cbd5e1; border-radius:8px; padding:8px 10px; font-size:14px; }
-    .mp-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:12px; }
-    .mp-span-2 { grid-column: span 2; }
-    .mp-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:12px; }
+
+    /* Avoid iOS auto-zoom on inputs */
+    .mp-form input, .mp-form select, .mp-form textarea {
+      border:1px solid #cbd5e1; border-radius:8px; padding:8px 10px; font-size:16px;
+    }
+
+    .mp-grid {
+      /* Auto-fit responsive columns: 240px min per field */
+      display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:12px;
+    }
+    .mp-span-2 { grid-column: 1 / -1; }
+
+    .mp-actions {
+      display:flex; justify-content:flex-end; gap:10px;
+      padding: 10px 18px 16px 18px;
+      position: sticky; bottom: 0; z-index: 1;
+      background: linear-gradient(#fff, #fff);
+      border-top: 1px solid #edf2f7;
+    }
+
     .mp-btn { background: linear-gradient(135deg,#1a365d,#2c5282); color:#fff; border:0; padding:10px 14px; border-radius:10px; font-weight:700; cursor:pointer; }
     .mp-btn[disabled] { opacity:.65; cursor:not-allowed; }
     .mp-btn-ghost { background:#eef2f7; color:#1a365d; }
+
     .mp-alert { padding:10px 12px; border-radius:8px; margin-bottom:8px; font-weight:600; }
     .mp-alert-error { background: rgba(239,68,68,.08); color:#b91c1c; border:1px solid rgba(239,68,68,.3); }
-    @media (max-width:720px){ .mp-grid { grid-template-columns:1fr; } }
+
+    /* Ultra-small or short viewports: become a full-screen sheet */
+    @media (max-width: 480px), (max-height: 560px) {
+      .mp-backdrop { align-items: stretch; padding: 0; }
+      .mp-modal { width: 100vw; max-height: 100vh; border-radius: 0; }
+    }
   </style>
 </head>
 <body>
   <div class="container">
+    <!-- Header -->
     <div class="header">
       <img src="images/stockpilot-logo.png" alt="StockPilot Logo" class="header-logo">
       <div class="header-text">
@@ -100,6 +164,7 @@
       </div>
     </div>
 
+    <!-- Navigation -->
     <div class="nav-tabs-container">
       <div class="nav-tabs">
         <a href="index.html" class="nav-tab home">🏠 Home</a>
@@ -115,15 +180,32 @@
     </div>
 
     <div class="content-area">
+      <!-- Enhanced Status Bar -->
       <div class="status-bar-enhanced" id="status-bar">
-        <div class="status-item"><span>💰</span><span>Total Investment: <strong id="status-total-investment">Loading...</strong></span><span class="status-badge" id="monthly-change">calculating...</span></div>
-        <div class="status-item"><span>🛒</span><span><strong id="status-purchase-count">0</strong> purchases</span><span class="status-badge" id="source-breakdown">loading...</span></div>
-        <div class="status-item"><span>📊</span><span>Average: <strong id="status-avg-purchase">£0.00</strong></span></div>
-        <div class="status-item"><span>🔄</span><span>Last sync: <span id="last-sync">now</span></span></div>
+        <div class="status-item">
+          <span>💰</span>
+          <span>Total Investment: <strong id="status-total-investment">Loading...</strong></span>
+          <span class="status-badge" id="monthly-change">calculating...</span>
+        </div>
+        <div class="status-item">
+          <span>🛒</span>
+          <span><strong id="status-purchase-count">0</strong> purchases</span>
+          <span class="status-badge" id="source-breakdown">loading...</span>
+        </div>
+        <div class="status-item">
+          <span>📊</span>
+          <span>Average: <strong id="status-avg-purchase">£0.00</strong></span>
+        </div>
+        <div class="status-item">
+          <span>🔄</span>
+          <span>Last sync: <span id="last-sync">now</span></span>
+        </div>
       </div>
 
+      <!-- Status Messages -->
       <div id="statusMessage"></div>
 
+      <!-- Purchase History Section -->
       <div class="recent-activity">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
           <h3 style="margin:0; color:#1a365d; font-size:18px; display:flex; align-items:center; gap:8px;">
@@ -144,7 +226,7 @@
     </div>
   </div>
 
-  <!-- CSP-safe Modal markup -->
+  <!-- CSP-safe Modal -->
   <div id="mp-backdrop" class="mp-backdrop mp-hidden" role="dialog" aria-modal="true" aria-labelledby="mp-title">
     <div class="mp-modal">
       <div class="mp-header">
@@ -152,51 +234,54 @@
         <button id="mp-close" class="mp-close" aria-label="Close">✖</button>
       </div>
 
-      <div id="mp-error" class="mp-alert mp-alert-error mp-hidden"></div>
+      <div class="mp-content">
+        <div id="mp-error" class="mp-alert mp-alert-error mp-hidden"></div>
 
-      <form id="mp-form" class="mp-form">
-        <div class="mp-grid">
-          <label>Identifier<input name="identifier" placeholder="ELECTRONICS-20250911-0001"></label>
-          <label>Category<input name="category" placeholder="AirPods / Speakers / …"></label>
-          <label>Brand<input name="brand"></label>
-          <label>Model<input name="model"></label>
-          <label>Generation<input name="generation"></label>
-          <label>Source
-            <select name="source">
-              <option>Other</option>
-              <option>Auction</option>
-              <option>Vinted</option>
-              <option>Regular Stock</option>
-            </select>
-          </label>
-          <label>Seller Username<input name="seller_username" placeholder="(Vinted/eBay)"></label>
-          <label>Order ID<input name="order_id"></label>
-          <label>Date of Purchase<input type="date" name="dateOfPurchase" required></label>
-          <label>Price Paid (£)<input type="number" step="0.01" name="price_paid"></label>
-          <label>Shipping (£)<input type="number" step="0.01" name="shipping_cost"></label>
-          <label>Fees (£)<input type="number" step="0.01" name="fees"></label>
-          <label>Tracking Ref<input name="tracking_ref"></label>
-          <label>Status
-            <select name="status">
-              <option>Purchased</option>
-              <option>Marked as despatched</option>
-              <option>Delivered</option>
-              <option>Verified</option>
-              <option>Feedback left</option>
-              <option>Returned</option>
-            </select>
-          </label>
-          <label id="mp-return-wrapper" class="mp-span-2 mp-hidden">Return Reason<input name="return_reason"></label>
-          <label>Parts Total<input type="number" min="0" name="parts_total"></label>
-          <label class="mp-span-2">Photos (comma-separate URLs)<input name="photos" placeholder="https://.../p1.jpg, https://.../p2.jpg"></label>
-          <label class="mp-span-2">Video URL<input name="video_url" placeholder="https://.../unboxing.mp4"></label>
-          <label class="mp-span-2">Notes<textarea name="notes" rows="3"></textarea></label>
-        </div>
-        <div class="mp-actions">
-          <button type="button" id="mp-cancel" class="mp-btn mp-btn-ghost">Cancel</button>
-          <button type="submit" id="mp-submit" class="mp-btn">Save Purchase</button>
-        </div>
-      </form>
+        <form id="mp-form" class="mp-form">
+          <div class="mp-grid">
+            <label>Identifier<input name="identifier" placeholder="ELECTRONICS-20250911-0001"></label>
+            <label>Category<input name="category" placeholder="AirPods / Speakers / …"></label>
+            <label>Brand<input name="brand"></label>
+            <label>Model<input name="model"></label>
+            <label>Generation<input name="generation"></label>
+            <label>Source
+              <select name="source">
+                <option>Other</option>
+                <option>Auction</option>
+                <option>Vinted</option>
+                <option>Regular Stock</option>
+              </select>
+            </label>
+            <label>Seller Username<input name="seller_username" placeholder="(Vinted/eBay)"></label>
+            <label>Order ID<input name="order_id"></label>
+            <label>Date of Purchase<input type="date" name="dateOfPurchase" required></label>
+            <label>Price Paid (£)<input type="number" step="0.01" name="price_paid"></label>
+            <label>Shipping (£)<input type="number" step="0.01" name="shipping_cost"></label>
+            <label>Fees (£)<input type="number" step="0.01" name="fees"></label>
+            <label>Tracking Ref<input name="tracking_ref"></label>
+            <label>Status
+              <select name="status">
+                <option>Purchased</option>
+                <option>Marked as despatched</option>
+                <option>Delivered</option>
+                <option>Verified</option>
+                <option>Feedback left</option>
+                <option>Returned</option>
+              </select>
+            </label>
+            <label id="mp-return-wrapper" class="mp-span-2 mp-hidden">Return Reason<input name="return_reason"></label>
+            <label>Parts Total<input type="number" min="0" name="parts_total"></label>
+            <label class="mp-span-2">Photos (comma-separate URLs)<input name="photos" placeholder="https://.../p1.jpg, https://.../p2.jpg"></label>
+            <label class="mp-span-2">Video URL<input name="video_url" placeholder="https://.../unboxing.mp4"></label>
+            <label class="mp-span-2">Notes<textarea name="notes" rows="3"></textarea></label>
+          </div>
+        </form>
+      </div>
+
+      <div class="mp-actions">
+        <button type="button" id="mp-cancel" class="mp-btn mp-btn-ghost">Cancel</button>
+        <button type="submit" form="mp-form" id="mp-submit" class="mp-btn">Save Purchase</button>
+      </div>
     </div>
   </div>
 
@@ -312,8 +397,8 @@
 
       container.innerHTML = cards;
 
-      // Delegate staging button clicks
-      container.addEventListener('click', (e) => {
+      // Single delegation handler per render
+      container.onclick = (e) => {
         const btn = e.target.closest('button[data-action]');
         if (!btn) return;
         const id = btn.getAttribute('data-id');
@@ -321,7 +406,7 @@
         if (action === 'stage') showStatus('🔍 Staging…','info');
         if (action === 'split') showStatus('✂️ Splitting…','info');
         if (action === 'inventory') showStatus('📦 Added to inventory','success');
-      }, { once: true });
+      };
     }
 
     function updateStatusBar(purchases) {
@@ -343,7 +428,10 @@
       document.getElementById('monthly-change').textContent = '+12%';
     }
 
-    function updatePurchaseHistoryCount(purchases) { document.getElementById('purchaseHistoryCount').textContent = `${purchases.length} items`; }
+    function updatePurchaseHistoryCount(purchases) {
+      document.getElementById('purchaseHistoryCount').textContent = `${purchases.length} items`;
+    }
+
     function getPlatformEmoji(platform){ const e={ 'eBay':'🏪','Amazon':'📦','Vinted':'👕','Facebook Marketplace':'📘','Depop':'🛍️','Gumtree':'🌳'}; return e[platform]||'🛒'; }
     function getTimeAgo(date){ const now=new Date(); const s=Math.floor((now-date)/1000); if(s<60) return 'just now'; if(s<3600) return `${Math.floor(s/60)}m ago`; if(s<86400) return `${Math.floor(s/3600)}h ago`; if(s<604800) return `${Math.floor(s/86400)}d ago`; return `${Math.floor(s/604800)}w ago`; }
     function showStatus(message, type){ const el=document.getElementById('statusMessage'); el.innerHTML=`<div class="status ${type}">${message}</div>`; setTimeout(()=>{ el.innerHTML=''; },5000); }
@@ -438,8 +526,14 @@
       });
     }
 
-    function openManualPurchaseModal(){ document.getElementById('mp-backdrop').classList.remove('mp-hidden'); }
-    function closeManualPurchaseModal(){ document.getElementById('mp-backdrop').classList.add('mp-hidden'); }
+    function openManualPurchaseModal(){
+      document.getElementById('mp-backdrop').classList.remove('mp-hidden');
+      document.body.classList.add('no-scroll');   // prevent background scroll
+    }
+    function closeManualPurchaseModal(){
+      document.getElementById('mp-backdrop').classList.add('mp-hidden');
+      document.body.classList.remove('no-scroll');
+    }
   </script>
 </body>
 </html>
