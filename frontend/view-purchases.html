@@ -84,17 +84,14 @@
     }
 
     .mp-modal {
-      /* Scales to any viewport */
       width: clamp(320px, 96vw, 980px);
       max-height: min(90vh, 1000px);
       background: #fff;
       border-radius: 14px;
       box-shadow: 0 20px 60px rgba(0,0,0,0.25);
       border: 2px solid #1a365d;
-
-      /* Make header/actions fixed and content scrollable */
       display: flex; flex-direction: column;
-      overflow: hidden; /* contain internal scroll */
+      overflow: hidden;
       animation: mpPop .2s ease-out;
     }
 
@@ -111,7 +108,6 @@
     .mp-close { background: transparent; border: 0; font-size: 18px; cursor: pointer; color:#1a365d; }
 
     .mp-content {
-      /* This section scrolls if needed */
       flex: 1 1 auto;
       overflow: auto;
       -webkit-overflow-scrolling: touch;
@@ -119,16 +115,9 @@
     }
 
     .mp-form label { display:flex; flex-direction:column; gap:6px; font-size:12px; color:#1a365d; font-weight:600; }
+    .mp-form input, .mp-form select, .mp-form textarea { border:1px solid #cbd5e1; border-radius:8px; padding:8px 10px; font-size:16px; }
 
-    /* Avoid iOS auto-zoom on inputs */
-    .mp-form input, .mp-form select, .mp-form textarea {
-      border:1px solid #cbd5e1; border-radius:8px; padding:8px 10px; font-size:16px;
-    }
-
-    .mp-grid {
-      /* Auto-fit responsive columns: 240px min per field */
-      display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:12px;
-    }
+    .mp-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:12px; }
     .mp-span-2 { grid-column: 1 / -1; }
 
     .mp-actions {
@@ -146,7 +135,6 @@
     .mp-alert { padding:10px 12px; border-radius:8px; margin-bottom:8px; font-weight:600; }
     .mp-alert-error { background: rgba(239,68,68,.08); color:#b91c1c; border:1px solid rgba(239,68,68,.3); }
 
-    /* Ultra-small or short viewports: become a full-screen sheet */
     @media (max-width: 480px), (max-height: 560px) {
       .mp-backdrop { align-items: stretch; padding: 0; }
       .mp-modal { width: 100vw; max-height: 100vh; border-radius: 0; }
@@ -168,7 +156,7 @@
     <div class="nav-tabs-container">
       <div class="nav-tabs">
         <a href="index.html" class="nav-tab home">🏠 Home</a>
-        <a href="view-purchases.html" class="nav-tab purchases active">🛒 Purchases</a>
+        <a href="view-purchases.html" class="nav-tab purchases active">🛒 Purchases</</a>
         <a href="view-inventory.html" class="nav-tab inventory">📦 Inventory</a>
         <a href="view-consumables.html" class="nav-tab consumables">🧰 Consumables</a>
         <a href="log-sale.html" class="nav-tab log-sale">💰 Log Sale</a>
@@ -240,25 +228,38 @@
         <form id="mp-form" class="mp-form">
           <div class="mp-grid">
             <label>Identifier<input name="identifier" placeholder="ELECTRONICS-20250911-0001"></label>
-            <label>Category<input name="category" placeholder="AirPods / Speakers / …"></label>
-            <label>Brand<input name="brand"></label>
+
+            <!-- Category select with 'Add new…' -->
+            <label>Category
+              <select name="category" data-label="category"></select>
+            </label>
+
+            <!-- Brand select with 'Add new…' -->
+            <label>Brand
+              <select name="brand" data-label="brand"></select>
+            </label>
+
             <label>Model<input name="model"></label>
             <label>Generation<input name="generation"></label>
+
+            <!-- Source select with 'Add new…' -->
             <label>Source
-              <select name="source">
-                <option>Other</option>
-                <option>Auction</option>
-                <option>Vinted</option>
-                <option>Regular Stock</option>
-              </select>
+              <select name="source" data-label="source"></select>
             </label>
+
             <label>Seller Username<input name="seller_username" placeholder="(Vinted/eBay)"></label>
             <label>Order ID<input name="order_id"></label>
-            <label>Date of Purchase<input type="date" name="dateOfPurchase" required></label>
+            <label>Date of Purchase><input type="date" name="dateOfPurchase" required></label>
             <label>Price Paid (£)<input type="number" step="0.01" name="price_paid"></label>
             <label>Shipping (£)<input type="number" step="0.01" name="shipping_cost"></label>
             <label>Fees (£)<input type="number" step="0.01" name="fees"></label>
             <label>Tracking Ref<input name="tracking_ref"></label>
+
+            <!-- Shipping provider select with 'Add new…' -->
+            <label>Shipping Provider
+              <select name="shipping_provider" data-label="shipping provider"></select>
+            </label>
+
             <label>Status
               <select name="status">
                 <option>Purchased</option>
@@ -269,6 +270,7 @@
                 <option>Returned</option>
               </select>
             </label>
+
             <label id="mp-return-wrapper" class="mp-span-2 mp-hidden">Return Reason<input name="return_reason"></label>
             <label>Parts Total<input type="number" min="0" name="parts_total"></label>
             <label class="mp-span-2">Photos (comma-separate URLs)<input name="photos" placeholder="https://.../p1.jpg, https://.../p2.jpg"></label>
@@ -294,24 +296,21 @@
       console.log('🚀 Initializing purchase management...');
       loadPurchases();
 
-      // Bind buttons (CSP-safe)
       const addBtn = document.getElementById('btn-add-purchase');
       const refreshBtn = document.getElementById('btn-refresh');
       if (addBtn) addBtn.addEventListener('click', openManualPurchaseModal);
       if (refreshBtn) refreshBtn.addEventListener('click', loadPurchases);
 
-      // Modal wiring
       setupManualPurchaseModal();
     });
 
     async function loadPurchases() {
-      console.log('📦 Loading purchases...');
       showLoading();
       try {
         const response = await fetch('/api/purchases');
         if (!response.ok) {
           const errorText = await response.text();
-          throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
+          throw new Error(\`HTTP \${response.status}: \${response.statusText} - \${errorText}\`);
         }
         const data = await response.json();
         const purchases = data.purchases || data;
@@ -320,7 +319,7 @@
         displayPurchases(purchases);
         updateStatusBar(purchases);
         updatePurchaseHistoryCount(purchases);
-        showStatus(`✅ Successfully loaded ${purchases.length} purchases`, 'success');
+        showStatus(\`✅ Successfully loaded \${purchases.length} purchases\`, 'success');
       } catch (error) {
         console.error('❌ Error loading purchases:', error);
         showError(error);
@@ -346,7 +345,7 @@
       `;
       const retry = document.getElementById('btn-retry-load');
       if (retry) retry.addEventListener('click', loadPurchases);
-      showStatus(`❌ Error loading purchases: ${error.message}`, 'error');
+      showStatus(\`❌ Error loading purchases: \${error.message}\`, 'error');
     }
 
     function displayPurchases(purchases) {
@@ -366,7 +365,6 @@
       const cards = purchases.map(purchase => {
         const timeAgo = getTimeAgo(new Date(purchase.orderDate || purchase.purchase_date || purchase.createdAt));
         const platformEmoji = getPlatformEmoji(purchase.platform || 'Unknown');
-
         const total = (() => {
           const a = Number(purchase.totalAmount ?? NaN);
           const b = Number(purchase.total_paid ?? NaN);
@@ -397,7 +395,6 @@
 
       container.innerHTML = cards;
 
-      // Single delegation handler per render
       container.onclick = (e) => {
         const btn = e.target.closest('button[data-action]');
         if (!btn) return;
@@ -446,6 +443,73 @@
       const statusSel = form.querySelector('select[name="status"]');
       const returnWrap = document.getElementById('mp-return-wrapper');
 
+      // --- Dropdown lists with "Add new…" + localStorage persistence ---
+      const LISTS = {
+        category: { key:'sp_categories', defaults:['Electronics','Audio','Phones','Accessories','Tools','Clothing'] },
+        brand: { key:'sp_brands', defaults:['Apple','Samsung','Sony','Bose','Generic'] },
+        source: { key:'sp_sources', defaults:['Other','Auction','Vinted','Regular Stock','eBay','Amazon'] },
+        shipping_provider: { key:'sp_shippers', defaults:['Royal Mail','EVRi','DPD','UPS','FedEx','DHL','Yodel','Parcelforce'] }
+      };
+
+      function loadList(key, defaults){ try{ const s=localStorage.getItem(key); return s? JSON.parse(s) : defaults.slice(); }catch(_){ return defaults.slice(); } }
+      function saveList(key, arr){ try{ localStorage.setItem(key, JSON.stringify(arr)); }catch(_){} }
+
+      function populateSelect(sel, items, selectedValue){
+        sel.innerHTML = '';
+        const placeholder = document.createElement('option');
+        placeholder.value = ''; placeholder.textContent = '-- Select --';
+        sel.appendChild(placeholder);
+        items.forEach(v => {
+          const opt = document.createElement('option');
+          opt.value = v; opt.textContent = v;
+          if (selectedValue && selectedValue === v) opt.selected = true;
+          sel.appendChild(opt);
+        });
+        const add = document.createElement('option');
+        add.value = '__add_new__'; add.textContent = '➕ Add new…';
+        sel.appendChild(add);
+      }
+
+      function wireAddNew(sel, listCfg){
+        sel.addEventListener('change', () => {
+          if (sel.value !== '__add_new__') return;
+          const label = sel.getAttribute('data-label') || 'item';
+          const newItem = window.prompt(`Add new ${label}:`);
+          if (newItem && newItem.trim()) {
+            const clean = newItem.trim();
+            const arr = loadList(listCfg.key, listCfg.defaults);
+            if (!arr.includes(clean)) {
+              arr.push(clean);
+              arr.sort((a,b)=>a.localeCompare(b));
+              saveList(listCfg.key, arr);
+            }
+            populateSelect(sel, arr, clean);
+          } else {
+            // revert to previous list, no selection
+            populateSelect(sel, loadList(listCfg.key, listCfg.defaults), '');
+          }
+        });
+      }
+
+      // Initialize dropdowns
+      (function initDropdowns(){
+        const cfgs = [
+          { name:'category', ...LISTS.category },
+          { name:'brand', ...LISTS.brand },
+          { name:'source', ...LISTS.source },
+          { name:'shipping_provider', ...LISTS.shipping_provider }
+        ];
+        cfgs.forEach(cfg => {
+          const sel = form.querySelector(`select[name="${cfg.name}"]`);
+          if (!sel) return;
+          const arr = loadList(cfg.key, cfg.defaults);
+          // Default selection: 'Other' for source, none for others
+          const selected = (cfg.name==='source' && arr.includes('Other')) ? 'Other' : '';
+          populateSelect(sel, arr, selected);
+          wireAddNew(sel, cfg);
+        });
+      })();
+
       // default date today
       const dateInput = form.querySelector('input[name="dateOfPurchase"]');
       dateInput.value = new Date().toISOString().slice(0,10);
@@ -467,7 +531,6 @@
         e.preventDefault();
         hideError();
 
-        // Validate
         const dateVal = form.dateOfPurchase.value;
         if (!dateVal) { showErrorMsg('Date of purchase is required.'); return; }
         const nn = (v) => v === '' || v === null || isNaN(Number(v)) ? 0 : Number(v);
@@ -475,7 +538,6 @@
         if (nn(form.shipping_cost.value) < 0) { showErrorMsg('Shipping cost cannot be negative.'); return; }
         if (nn(form.fees.value) < 0) { showErrorMsg('Fees cannot be negative.'); return; }
 
-        // Payload
         const photosArr = (form.photos.value || '').split(',').map(s=>s.trim()).filter(Boolean);
         const payload = {
           identifier: form.identifier.value || undefined,
@@ -491,6 +553,7 @@
           shipping_cost: form.shipping_cost.value === '' ? 0 : Number(form.shipping_cost.value),
           fees: form.fees.value === '' ? 0 : Number(form.fees.value),
           tracking_ref: form.tracking_ref.value || undefined,
+          shipping_provider: form.shipping_provider.value || undefined,
           status: form.status.value,
           return_reason: form.status.value === 'Returned' ? (form.return_reason.value || '') : undefined,
           parts_total: form.parts_total.value === '' ? undefined : Number(form.parts_total.value),
@@ -499,7 +562,6 @@
           notes: form.notes.value || undefined
         };
 
-        // Submit
         const submitBtn = document.getElementById('mp-submit');
         submitBtn.disabled = true;
         submitBtn.textContent = 'Saving…';
@@ -528,7 +590,7 @@
 
     function openManualPurchaseModal(){
       document.getElementById('mp-backdrop').classList.remove('mp-hidden');
-      document.body.classList.add('no-scroll');   // prevent background scroll
+      document.body.classList.add('no-scroll');
     }
     function closeManualPurchaseModal(){
       document.getElementById('mp-backdrop').classList.add('mp-hidden');
