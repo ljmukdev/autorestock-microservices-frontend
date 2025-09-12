@@ -237,10 +237,26 @@
         <button type="button" id="mp-cancel" class="mp-btn mp-btn-ghost">Cancel</button>
         <button type="submit" form="mp-form" id="mp-submit" class="mp-btn">Save Purchase</button>
       </div>
+  </div>
+</div>
+
+<!-- Purchase Details Modal -->
+<div id="purchase-details-modal" class="modal" style="display: none;">
+  <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+    <div class="modal-header">
+      <h2>Purchase Details</h2>
+      <button id="purchase-details-close" class="modal-close">&times;</button>
+    </div>
+    <div id="purchase-details-content" class="modal-body">
+      <!-- Purchase details will be loaded here -->
+    </div>
+    <div class="modal-footer">
+      <button id="purchase-details-close-btn" class="btn btn-secondary">Close</button>
     </div>
   </div>
+</div>
 
-  <script>
+<script>
     console.log('🛒 StockPilot Purchase Management & Staging loaded');
 
     let currentPurchases = [];
@@ -334,7 +350,7 @@
         })().toFixed(2);
 
         return `
-          <div class="purchase-card" data-id="${purchase._id || purchase.id}">
+          <div class="purchase-card" data-id="${purchase._id || purchase.id}" style="cursor: pointer;" title="Click to view details">
             <div class="purchase-icon">${platformEmoji}</div>
             <div class="purchase-text">
               <div><strong>${purchase.supplier || purchase.brand || 'Unknown'} ${purchase.items?.[0]?.productName || purchase.model || 'Item'}</strong></div>
@@ -357,13 +373,23 @@
 
       container.onclick = (e) => {
         const btn = e.target.closest('button[data-action]');
-        if (!btn) return;
-        const id = btn.getAttribute('data-id');
-        const action = btn.getAttribute('data-action');
-        if (action === 'stage') showStatus('🔍 Staging…','info');
-        if (action === 'split') showStatus('✂️ Splitting…','info');
-        if (action === 'inventory') showStatus('📦 Added to inventory','success');
-        if (action === 'delete') confirmDeletePurchase(id);
+        if (btn) {
+          // Handle button clicks
+          const id = btn.getAttribute('data-id');
+          const action = btn.getAttribute('data-action');
+          if (action === 'stage') showStatus('🔍 Staging…','info');
+          if (action === 'split') showStatus('✂️ Splitting…','info');
+          if (action === 'inventory') showStatus('📦 Added to inventory','success');
+          if (action === 'delete') confirmDeletePurchase(id);
+          return;
+        }
+        
+        // Handle purchase card clicks
+        const card = e.target.closest('.purchase-card');
+        if (card) {
+          const id = card.getAttribute('data-id');
+          showPurchaseDetails(id);
+        }
       };
     }
 
@@ -874,6 +900,125 @@
         syncBtn.disabled = false;
         syncBtn.textContent = originalText;
       }
+    }
+
+    // Show purchase details modal
+    async function showPurchaseDetails(purchaseId) {
+      try {
+        console.log('Loading purchase details for:', purchaseId);
+        
+        // Find the purchase in current data
+        const purchase = currentPurchases.find(p => (p._id || p.id) === purchaseId);
+        if (!purchase) {
+          showStatus('❌ Purchase not found', 'error');
+          return;
+        }
+        
+        // Show modal
+        const modal = document.getElementById('purchase-details-modal');
+        const content = document.getElementById('purchase-details-content');
+        
+        // Generate purchase details HTML
+        const detailsHtml = generatePurchaseDetailsHtml(purchase);
+        content.innerHTML = detailsHtml;
+        
+        modal.style.display = 'flex';
+        
+        // Setup modal close handlers
+        const closeBtn = document.getElementById('purchase-details-close');
+        const closeBtn2 = document.getElementById('purchase-details-close-btn');
+        
+        const closeModal = () => {
+          modal.style.display = 'none';
+        };
+        
+        closeBtn.onclick = closeModal;
+        closeBtn2.onclick = closeModal;
+        
+        // Close on backdrop click
+        modal.onclick = (e) => {
+          if (e.target === modal) closeModal();
+        };
+        
+      } catch (error) {
+        console.error('Error loading purchase details:', error);
+        showStatus('❌ Failed to load purchase details', 'error');
+      }
+    }
+
+    // Generate HTML for purchase details
+    function generatePurchaseDetailsHtml(purchase) {
+      const formatDate = (date) => {
+        if (!date) return 'N/A';
+        return new Date(date).toLocaleString();
+      };
+      
+      const formatCurrency = (amount) => {
+        if (amount == null) return '£0.00';
+        return `£${Number(amount).toFixed(2)}`;
+      };
+      
+      const formatItems = (items) => {
+        if (!items || !Array.isArray(items)) return '<p>No items</p>';
+        return items.map(item => `
+          <div style="padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px; margin: 4px 0;">
+            <strong>${item.productName || item.name || 'Unknown Item'}</strong><br>
+            <small>SKU: ${item.sku || 'N/A'} | Qty: ${item.quantity || 1} | Price: ${formatCurrency(item.unitPrice)} | Total: ${formatCurrency(item.totalPrice)}</small>
+          </div>
+        `).join('');
+      };
+      
+      return `
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <div>
+            <h3 style="margin-top: 0; color: #1a365d;">Basic Information</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">ID:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.identifier || purchase._id || purchase.id || 'N/A'}</td></tr>
+              <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Category:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.category || 'N/A'}</td></tr>
+              <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Brand:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.brand || purchase.supplier || 'N/A'}</td></tr>
+              <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Model:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.model || 'N/A'}</td></tr>
+              <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Source:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.source || 'N/A'}</td></tr>
+              <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Status:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.status || 'N/A'}</td></tr>
+            </table>
+          </div>
+          
+          <div>
+            <h3 style="margin-top: 0; color: #1a365d;">Financial Information</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Price Paid:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatCurrency(purchase.price_paid)}</td></tr>
+              <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Shipping Cost:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatCurrency(purchase.shipping_cost)}</td></tr>
+              <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Fees:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatCurrency(purchase.fees)}</td></tr>
+              <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Total Amount:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #059669;">${formatCurrency(purchase.totalAmount)}</td></tr>
+            </table>
+          </div>
+        </div>
+        
+        <div style="margin-top: 20px;">
+          <h3 style="color: #1a365d;">Items</h3>
+          ${formatItems(purchase.items)}
+        </div>
+        
+        <div style="margin-top: 20px;">
+          <h3 style="color: #1a365d;">Additional Information</h3>
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Order ID:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.order_id || 'N/A'}</td></tr>
+            <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Seller:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.seller_username || 'N/A'}</td></tr>
+            <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Date of Purchase:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatDate(purchase.dateOfPurchase || purchase.orderDate)}</td></tr>
+            <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Created:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatDate(purchase.createdAt)}</td></tr>
+            <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Updated:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatDate(purchase.updatedAt)}</td></tr>
+            <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Tracking Ref:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.tracking_ref || 'N/A'}</td></tr>
+          </table>
+        </div>
+        
+        ${purchase.notes ? `
+        <div style="margin-top: 20px;">
+          <h3 style="color: #1a365d;">Notes</h3>
+          <div style="padding: 12px; background: #f9fafb; border-radius: 6px; border-left: 4px solid #3b82f6;">
+            ${purchase.notes}
+          </div>
+        </div>
+        ` : ''}
+      `;
     }
   </script>
 </body>
