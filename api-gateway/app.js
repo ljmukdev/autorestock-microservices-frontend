@@ -455,6 +455,7 @@ app.post('/api/ebay-sync', async (req, res) => {
     let marketplaceItems = [];
     let categories = [];
     let brands = [];
+    let responseData = null;
     
     if (realPurchaseData && realPurchaseData.success && realPurchaseData.data) {
       // Use real purchase data
@@ -483,6 +484,9 @@ app.post('/api/ebay-sync', async (req, res) => {
           marketplaceItems = generateEbayMarketplaceItems(ebayData);
           categories = [...new Set(marketplaceItems.map(item => item.category))];
           brands = [...new Set(marketplaceItems.map(item => item.brand))];
+          
+          // Store ebayData for response
+          responseData = ebayData;
         }
       } catch (error) {
         console.log('⚠️ Marketplace data also failed:', error.message);
@@ -495,7 +499,7 @@ app.post('/api/ebay-sync', async (req, res) => {
       success: true,
       message: `eBay ${isRealData ? 'purchase' : 'marketplace'} data loaded successfully`,
       data: {
-        ebayItems: ebayData.data?.marketplaceItems || 0,
+        ebayItems: responseData?.data?.marketplaceItems || 0,
         marketplaceItems: marketplaceItems,
         totalItems: marketplaceItems.length,
         categories: categories,
