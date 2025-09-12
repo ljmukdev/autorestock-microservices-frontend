@@ -11,6 +11,7 @@ const rateLimit = require('express-rate-limit');
 const compression = require('compression');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const path = require('path');
+const fetch = require('node-fetch');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -85,8 +86,47 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API routes with proxy middleware
-app.use('/api/purchases', createProxyMiddleware({
+// Direct purchase endpoint (bypass proxy issues)
+app.post('/api/purchases', async (req, res) => {
+  console.log('🔄 Direct purchase endpoint called');
+  console.log('📦 Request body:', JSON.stringify(req.body, null, 2));
+  
+  try {
+    const purchaseServiceUrl = microservices.purchases;
+    const response = await fetch(`${purchaseServiceUrl}/api/purchases`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(req.body),
+      timeout: 25000
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Purchases service error:', response.status, errorText);
+      return res.status(response.status).json({
+        error: 'Purchases service error',
+        details: errorText,
+        status: response.status
+      });
+    }
+    
+    const result = await response.json();
+    console.log('✅ Purchase created successfully:', result);
+    res.status(201).json(result);
+    
+  } catch (error) {
+    console.error('❌ Direct purchase endpoint error:', error.message);
+    res.status(500).json({
+      error: 'Failed to create purchase',
+      details: error.message
+    });
+  }
+});
+
+// Keep GET requests using proxy for now
+app.get('/api/purchases', createProxyMiddleware({
   target: microservices.purchases,
   changeOrigin: true,
   secure: true, // Use HTTPS
