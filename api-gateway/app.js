@@ -95,9 +95,21 @@ app.use('/api/purchases', createProxyMiddleware({
     '^/api/purchases': '/api/purchases'
   },
   onError: (err, req, res) => {
-    console.error('Purchases service error:', err.message);
+    console.error('🚨 Purchases service proxy error:', err.message);
+    console.error('🔍 Error details:', {
+      code: err.code,
+      errno: err.errno,
+      syscall: err.syscall,
+      address: err.address,
+      port: err.port
+    });
+    console.error('📡 Target URL:', microservices.purchases);
     if (!res.headersSent) {
-      res.status(503).json({ error: 'Purchases service unavailable' });
+      res.status(503).json({ 
+        error: 'Purchases service unavailable',
+        details: err.message,
+        target: microservices.purchases
+      });
     }
   },
   onProxyReq: (proxyReq, req, res) => {
