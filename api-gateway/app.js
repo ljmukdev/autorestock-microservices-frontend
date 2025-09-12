@@ -385,10 +385,10 @@ app.use('/api/settings', createProxyMiddleware({
 app.use(
   '/api/v1/ebay',
   createProxyMiddleware({
-    target: microservices.ebay,        // e.g. https://stockpilot-ebay-microservice-production.up.railway.app
+    target: microservices.ebay,
     changeOrigin: true,
     xfwd: true,
-    pathRewrite: { '^/api/v1/ebay': '' },  // strip prefix → service sees flat routes
+    pathRewrite: { '^/api/v1/ebay': '/api/ebay' },  // map to existing working endpoints
     proxyTimeout: 25_000,
     timeout: 25_000,
     onProxyReq: (proxyReq, req) => {
