@@ -502,46 +502,42 @@ function transformEbayToPurchases(ebayData) {
   // we'll create representative purchases based on the marketplace activity
   
   if (marketplaceItems > 0) {
-    // Create a purchase representing marketplace activity
+    // Create a purchase representing marketplace activity using correct field names
     purchases.push({
-      userId: 'default_user',
-      supplier: 'eBay',
-      supplierOrderId: `ebay_marketplace_${Date.now()}`,
-      items: [{
-        name: 'eBay Marketplace Activity',
-        sku: 'ebay_marketplace_activity',
-        quantity: 1,
-        unitPrice: 0,
-        totalPrice: 0
-      }],
-      totalAmount: 0,
-      status: 'received',
-      orderDate: new Date().toISOString(),
-      receivedDate: new Date().toISOString(),
+      identifier: `ebay_marketplace_${Date.now()}`,
+      category: 'eBay Marketplace',
+      brand: 'eBay',
+      model: 'Marketplace Activity',
+      source: 'Other', // Valid enum value
+      seller_username: 'eBay Marketplace',
+      order_id: `ebay_marketplace_${Date.now()}`,
+      dateOfPurchase: new Date(),
+      price_paid: 0, // Required field
+      shipping_cost: 0,
+      fees: 0,
+      status: 'Purchased', // Valid enum value
       notes: `eBay marketplace sync - ${marketplaceItems.toLocaleString()} active marketplace items found`,
-      source: 'ebay_sync'
+      createdBy: 'ebay_sync'
     });
     
     // If there are user purchases, create a purchase record for them
     const userPurchases = ebayData.data?.userPurchases || 0;
     if (userPurchases > 0) {
       purchases.push({
-        userId: 'default_user',
-        supplier: 'eBay',
-        supplierOrderId: `ebay_user_purchases_${Date.now()}`,
-        items: [{
-          name: 'eBay User Purchases',
-          sku: 'ebay_user_purchases',
-          quantity: userPurchases,
-          unitPrice: 0,
-          totalPrice: 0
-        }],
-        totalAmount: 0,
-        status: 'received',
-        orderDate: new Date().toISOString(),
-        receivedDate: new Date().toISOString(),
+        identifier: `ebay_user_purchases_${Date.now()}`,
+        category: 'eBay Purchases',
+        brand: 'eBay',
+        model: 'User Purchases',
+        source: 'Other',
+        seller_username: 'eBay Users',
+        order_id: `ebay_user_purchases_${Date.now()}`,
+        dateOfPurchase: new Date(),
+        price_paid: 0,
+        shipping_cost: 0,
+        fees: 0,
+        status: 'Purchased',
         notes: `${userPurchases} eBay purchases found`,
-        source: 'ebay_sync'
+        createdBy: 'ebay_sync'
       });
     }
   }
@@ -549,22 +545,20 @@ function transformEbayToPurchases(ebayData) {
   // If no marketplace items, create a test purchase anyway
   if (purchases.length === 0) {
     purchases.push({
-      userId: 'default_user',
-      supplier: 'eBay',
-      supplierOrderId: `ebay_sync_test_${Date.now()}`,
-      items: [{
-        name: 'eBay Sync Test',
-        sku: 'ebay_sync_test',
-        quantity: 1,
-        unitPrice: 0,
-        totalPrice: 0
-      }],
-      totalAmount: 0,
-      status: 'received',
-      orderDate: new Date().toISOString(),
-      receivedDate: new Date().toISOString(),
+      identifier: `ebay_sync_test_${Date.now()}`,
+      category: 'eBay Sync',
+      brand: 'eBay',
+      model: 'Sync Test',
+      source: 'Other',
+      seller_username: 'eBay System',
+      order_id: `ebay_sync_test_${Date.now()}`,
+      dateOfPurchase: new Date(),
+      price_paid: 0,
+      shipping_cost: 0,
+      fees: 0,
+      status: 'Purchased',
       notes: 'eBay sync test - no marketplace data available',
-      source: 'ebay_sync'
+      createdBy: 'ebay_sync'
     });
   }
   
