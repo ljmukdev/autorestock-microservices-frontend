@@ -805,15 +805,11 @@
         console.log('📡 Fetching eBay purchase data...');
         showStatus('📡 Fetching eBay purchase data...', 'info');
         
-        const syncResponse = await fetch('/api/v1/ebay/sync', {
-          method: 'POST',
+        const syncResponse = await fetch('/api/v1/ebay/default_user/purchases?limit=100', {
+          method: 'GET',
           headers: {
             'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            userId: 'default_user', // You can customize this
-            limit: 100 // Fetch last 100 purchases
-          })
+          }
         });
         
         if (!syncResponse.ok) {
