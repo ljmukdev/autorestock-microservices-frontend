@@ -598,11 +598,19 @@
         submitBtn.textContent = 'Saving…';
 
         try {
-          console.log('Sending purchase data:', payload);
+          console.log('🚀 Starting purchase save...');
+          console.log('📦 Payload:', payload);
+          console.log('🌐 Fetching URL:', '/api/purchases');
+          console.log('📍 Current domain:', window.location.origin);
+          console.log('🕐 Timestamp:', new Date().toISOString());
           
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+          const timeoutId = setTimeout(() => {
+            console.log('⏰ Request timed out after 30 seconds');
+            controller.abort();
+          }, 30000); // 30 second timeout
           
+          console.log('📡 Making fetch request...');
           const res = await fetch('/api/purchases', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -611,7 +619,7 @@
           });
           
           clearTimeout(timeoutId);
-          console.log('Response status:', res.status);
+          console.log('✅ Got response:', res.status, res.statusText);
           if (!res.ok) {
             const text = await res.text();
             throw new Error(`HTTP ${res.status}: ${text}`);
