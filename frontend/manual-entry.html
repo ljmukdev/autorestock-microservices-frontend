@@ -15,7 +15,8 @@
     <label>Model: <input name="model" required /></label><br />
     <label>Generation: <input name="generation" /></label><br />
     <label>Listing Title: <input name="listing_title" /></label><br />
-    <label>Purchase Price: <input type="number" name="purchase_price" step="0.01" /></label><br />
+    <label>Purchase Price: <input type="number" name="purchase_price" step="0.01" required /></label><br />
+    <label>Fees: <input type="number" name="fees" step="0.01" value="0" /></label><br />
     <label>Shipping Cost: <input type="number" name="shipping_cost" step="0.01" /></label><br />
     <label>Total Paid: <input type="number" name="total_paid" step="0.01" /></label><br />
     <label>Currency: <input name="currency" value="GBP" /></label><br />
@@ -39,17 +40,44 @@
       event.preventDefault();
       const form = event.target;
       const data = Object.fromEntries(new FormData(form).entries());
-      data.manual_collection = form.manual_collection.checked;
-      data.will_be_parted_out = form.will_be_parted_out.checked;
+      
+      // Map frontend fields to backend model fields
+      const mappedData = {
+        category: data.category,
+        brand: data.brand,
+        model: data.model,
+        generation: data.generation,
+        seller_username: data.seller_username,
+        order_id: data.order_id,
+        price_paid: parseFloat(data.purchase_price) || 0,
+        shipping_cost: parseFloat(data.shipping_cost) || 0,
+        fees: parseFloat(data.fees) || 0,
+        tracking_ref: data.tracking_number,
+        notes: data.notes,
+        supplier: data.platform,
+        source: data.platform === 'Vinted' ? 'Vinted' : 'Other',
+        dateOfPurchase: data.dispatch_date ? new Date(data.dispatch_date) : new Date(),
+        status: 'Purchased',
+        createdBy: 'manual-entry'
+      };
+      
+      // Add optional fields if they exist
+      if (data.listing_title) mappedData.identifier = data.listing_title;
+      if (data.currency) mappedData.currency = data.currency;
+      if (data.delivery_date) mappedData.deliveryDate = new Date(data.delivery_date);
+      if (data.delivery_status) mappedData.deliveryStatus = data.delivery_status;
+      if (data.courier) mappedData.courier = data.courier;
+      if (data.listing_url) mappedData.listingUrl = data.listing_url;
+      if (data.invoice_url) mappedData.invoiceUrl = data.invoice_url;
 
       try {
         const res = await fetch('http://localhost:3001/api/purchases', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
+          body: JSON.stringify(mappedData),
         });
         const result = await res.json();
-        alert('Purchase saved with ID: ' + result.id);
+        alert('Purchase saved with ID: ' + (result.purchase?._id || result.id || 'unknown'));
         form.reset();
       } catch (err) {
         alert('Failed to save purchase: ' + err.message);
