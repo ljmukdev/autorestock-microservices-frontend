@@ -125,6 +125,43 @@ app.post('/api/purchases', async (req, res) => {
   }
 });
 
+// Direct delete purchase endpoint
+app.delete('/api/purchases/:id', async (req, res) => {
+  console.log('🗑️ Direct delete purchase endpoint called for ID:', req.params.id);
+  
+  try {
+    const purchaseServiceUrl = microservices.purchases;
+    const response = await fetch(`${purchaseServiceUrl}/api/purchases/${req.params.id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      timeout: 25000
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Purchases service delete error:', response.status, errorText);
+      return res.status(response.status).json({
+        error: 'Failed to delete purchase',
+        details: errorText,
+        status: response.status
+      });
+    }
+    
+    const result = await response.json();
+    console.log('✅ Purchase deleted successfully:', result);
+    res.json(result);
+    
+  } catch (error) {
+    console.error('❌ Direct delete endpoint error:', error.message);
+    res.status(500).json({
+      error: 'Failed to delete purchase',
+      details: error.message
+    });
+  }
+});
+
 // Keep GET requests using proxy for now
 app.get('/api/purchases', createProxyMiddleware({
   target: microservices.purchases,

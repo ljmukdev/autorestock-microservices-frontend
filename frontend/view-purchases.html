@@ -344,6 +344,7 @@
               <button class="staging-btn stage" data-action="stage" data-id="${purchase._id || purchase.id}">🔍 Stage</button>
               <button class="staging-btn split" data-action="split" data-id="${purchase._id || purchase.id}">✂️ Split</button>
               <button class="staging-btn inventory" data-action="inventory" data-id="${purchase._id || purchase.id}">📦 Inventory</button>
+              <button class="staging-btn delete" data-action="delete" data-id="${purchase._id || purchase.id}" style="background: #dc2626; color: white;">🗑️ Delete</button>
             </div>
           </div>
         `;
@@ -359,6 +360,7 @@
         if (action === 'stage') showStatus('🔍 Staging…','info');
         if (action === 'split') showStatus('✂️ Splitting…','info');
         if (action === 'inventory') showStatus('📦 Added to inventory','success');
+        if (action === 'delete') confirmDeletePurchase(id);
       };
     }
 
@@ -648,6 +650,139 @@
     function closeManualPurchaseModal(){
       document.getElementById('mp-backdrop').classList.add('mp-hidden');
       document.body.classList.remove('no-scroll');
+    }
+
+    // Delete confirmation with failsafe
+    function confirmDeletePurchase(purchaseId) {
+      // Create confirmation modal
+      const modal = document.createElement('div');
+      modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+      `;
+      
+      modal.innerHTML = `
+        <div style="
+          background: white;
+          padding: 30px;
+          border-radius: 12px;
+          max-width: 400px;
+          width: 90%;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        ">
+          <h3 style="margin: 0 0 15px 0; color: #dc2626; font-size: 18px;">🗑️ Delete Purchase</h3>
+          <p style="margin: 0 0 20px 0; color: #374151; line-height: 1.5;">
+            Are you sure you want to delete this purchase? This action cannot be undone.
+          </p>
+          <p style="margin: 0 0 15px 0; color: #dc2626; font-weight: 600; font-size: 14px;">
+            Type "delete" to confirm:
+          </p>
+          <input type="text" id="delete-confirmation-input" placeholder="Type 'delete' here" style="
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 20px;
+          ">
+          <div style="display: flex; gap: 10px; justify-content: flex-end;">
+            <button id="cancel-delete" style="
+              padding: 10px 20px;
+              border: 1px solid #d1d5db;
+              background: white;
+              color: #374151;
+              border-radius: 6px;
+              cursor: pointer;
+              font-weight: 500;
+            ">Cancel</button>
+            <button id="confirm-delete" disabled style="
+              padding: 10px 20px;
+              border: none;
+              background: #dc2626;
+              color: white;
+              border-radius: 6px;
+              cursor: pointer;
+              font-weight: 600;
+              opacity: 0.5;
+            ">Delete Purchase</button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      
+      const input = modal.querySelector('#delete-confirmation-input');
+      const confirmBtn = modal.querySelector('#confirm-delete');
+      const cancelBtn = modal.querySelector('#cancel-delete');
+      
+      // Enable/disable delete button based on input
+      input.addEventListener('input', (e) => {
+        const isValid = e.target.value.toLowerCase() === 'delete';
+        confirmBtn.disabled = !isValid;
+        confirmBtn.style.opacity = isValid ? '1' : '0.5';
+      });
+      
+      // Handle confirmation
+      confirmBtn.addEventListener('click', () => {
+        if (input.value.toLowerCase() === 'delete') {
+          deletePurchase(purchaseId);
+          document.body.removeChild(modal);
+        }
+      });
+      
+      // Handle cancel
+      cancelBtn.addEventListener('click', () => {
+        document.body.removeChild(modal);
+      });
+      
+      // Close on backdrop click
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          document.body.removeChild(modal);
+        }
+      });
+      
+      // Focus input
+      input.focus();
+    }
+
+    // Delete purchase function
+    async function deletePurchase(purchaseId) {
+      try {
+        console.log('🗑️ Deleting purchase:', purchaseId);
+        showStatus('🗑️ Deleting purchase...', 'info');
+        
+        const response = await fetch(`/api/purchases/${purchaseId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.details || errorData.error || `HTTP ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('✅ Purchase deleted successfully:', result);
+        showStatus('✅ Purchase deleted successfully', 'success');
+        
+        // Reload purchases to update the list
+        loadPurchases();
+        
+      } catch (error) {
+        console.error('❌ Error deleting purchase:', error);
+        showStatus(`❌ Failed to delete purchase: ${error.message}`, 'error');
+      }
     }
   </script>
 </body>
