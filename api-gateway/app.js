@@ -63,7 +63,7 @@ const microservices = {
   settings: process.env.SETTINGS_SERVICE_URL || 'http://localhost:3004',
   
   // Integration services
-  ebay: process.env.EBAY_SERVICE_URL || 'http://localhost:3005',
+  ebay: process.env.EBAY_SERVICE_URL || 'https://stockpilot-ebay-microservice-production.up.railway.app',
   vinted: process.env.VINTED_SERVICE_URL || 'http://localhost:3006',
   email: process.env.EMAIL_SERVICE_URL || 'http://localhost:3007',
   
@@ -161,6 +161,264 @@ app.delete('/api/purchases/:id', async (req, res) => {
     });
   }
 });
+
+// eBay OAuth start endpoint
+app.get('/api/ebay/oauth/start', async (req, res) => {
+  console.log('🔄 eBay OAuth start requested');
+  
+  try {
+    const ebayServiceUrl = microservices.ebay;
+    const response = await fetch(`${ebayServiceUrl}/api/ebay/oauth/start-simple`, {
+      method: 'GET',
+      timeout: 15000
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ eBay OAuth start error:', response.status, errorText);
+      return res.status(response.status).json({
+        error: 'Failed to start eBay OAuth',
+        details: errorText,
+        status: response.status
+      });
+    }
+    
+    const result = await response.json();
+    console.log('✅ eBay OAuth started successfully');
+    res.json(result);
+    
+  } catch (error) {
+    console.error('❌ eBay OAuth start error:', error.message);
+    res.status(500).json({
+      error: 'Failed to start eBay OAuth',
+      details: error.message
+    });
+  }
+});
+
+// eBay purchase sync endpoint
+app.post('/api/ebay/sync-purchases', async (req, res) => {
+  console.log('🔄 eBay purchase sync requested');
+  console.log('📦 Request body:', JSON.stringify(req.body, null, 2));
+  
+  try {
+    const ebayServiceUrl = microservices.ebay;
+    const purchaseServiceUrl = microservices.purchases;
+    
+    // First, get purchase data from eBay
+    console.log('📡 Fetching eBay purchase data...');
+    const ebayResponse = await fetch(`${ebayServiceUrl}/api/ebay/sync`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(req.body),
+      timeout: 30000
+    });
+    
+    if (!ebayResponse.ok) {
+      const errorText = await ebayResponse.text();
+      console.error('❌ eBay service sync error:', ebayResponse.status, errorText);
+      return res.status(ebayResponse.status).json({
+        error: 'Failed to fetch eBay purchase data',
+        details: errorText,
+        status: ebayResponse.status
+      });
+    }
+    
+    const ebayData = await ebayResponse.json();
+    console.log('✅ eBay data fetched successfully');
+    console.log('📊 eBay data preview:', JSON.stringify(ebayData, null, 2).substring(0, 500));
+    
+    // Transform eBay data to purchase format
+    const transformedPurchases = transformEbayDataToPurchases(ebayData);
+    console.log(`🔄 Transformed ${transformedPurchases.length} eBay purchases`);
+    
+    // Save each purchase to the purchases service
+    const savedPurchases = [];
+    const errors = [];
+    
+    for (const purchase of transformedPurchases) {
+      try {
+        console.log('💾 Saving purchase:', purchase.identifier);
+        const saveResponse = await fetch(`${purchaseServiceUrl}/api/purchases`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(purchase),
+          timeout: 15000
+        });
+        
+        if (saveResponse.ok) {
+          const savedPurchase = await saveResponse.json();
+          savedPurchases.push(savedPurchase);
+          console.log('✅ Purchase saved:', purchase.identifier);
+        } else {
+          const errorText = await saveResponse.text();
+          console.error('❌ Failed to save purchase:', purchase.identifier, errorText);
+          errors.push({
+            purchase: purchase.identifier,
+            error: errorText
+          });
+        }
+      } catch (error) {
+        console.error('❌ Error saving purchase:', purchase.identifier, error.message);
+        errors.push({
+          purchase: purchase.identifier,
+          error: error.message
+        });
+      }
+    }
+    
+    console.log(`✅ Sync complete: ${savedPurchases.length} saved, ${errors.length} errors`);
+    
+    res.json({
+      success: true,
+      summary: {
+        totalFetched: transformedPurchases.length,
+        successfullySaved: savedPurchases.length,
+        errors: errors.length
+      },
+      savedPurchases: savedPurchases,
+      errors: errors,
+      source: 'eBay API'
+    });
+    
+  } catch (error) {
+    console.error('❌ eBay sync endpoint error:', error.message);
+    res.status(500).json({
+      error: 'Failed to sync eBay purchases',
+      details: error.message
+    });
+  }
+});
+
+// Transform eBay data to purchase format
+function transformEbayDataToPurchases(ebayData) {
+  const purchases = [];
+  
+  try {
+    // Handle different eBay data structures
+    if (ebayData.purchases && Array.isArray(ebayData.purchases)) {
+      ebayData.purchases.forEach(ebayPurchase => {
+        const purchase = {
+          identifier: ebayPurchase.itemId || `EBAY_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          category: extractCategoryFromTitle(ebayPurchase.title || ''),
+          brand: extractBrandFromTitle(ebayPurchase.title || ''),
+          model: extractModelFromTitle(ebayPurchase.title || ''),
+          generation: null,
+          source: 'eBay',
+          supplier: 'eBay',
+          seller_username: ebayPurchase.seller || 'Unknown',
+          order_id: ebayPurchase.itemId || null,
+          price_paid: parseFloat(ebayPurchase.currentPrice || ebayPurchase.price || 0),
+          shipping_cost: parseFloat(ebayPurchase.shippingCost || 0),
+          fees: parseFloat(ebayPurchase.fees || 0),
+          tracking_ref: ebayPurchase.trackingNumber || null,
+          notes: `eBay Purchase: ${ebayPurchase.title || 'Unknown Item'}`,
+          dateOfPurchase: ebayPurchase.endTime ? new Date(ebayPurchase.endTime) : new Date(),
+          status: 'Purchased',
+          createdBy: 'ebay-sync',
+          platform: 'eBay',
+          external_id: ebayPurchase.itemId,
+          external_url: ebayPurchase.viewUrl || null,
+          photos: ebayPurchase.photos || []
+        };
+        
+        purchases.push(purchase);
+      });
+    }
+    
+    // Handle alternative data structures
+    if (ebayData.orders && Array.isArray(ebayData.orders)) {
+      ebayData.orders.forEach(order => {
+        // Process order items
+        if (order.items && Array.isArray(order.items)) {
+          order.items.forEach(item => {
+            const purchase = {
+              identifier: item.itemId || `EBAY_ORDER_${order.orderId}_${Date.now()}`,
+              category: extractCategoryFromTitle(item.title || ''),
+              brand: extractBrandFromTitle(item.title || ''),
+              model: extractModelFromTitle(item.title || ''),
+              generation: null,
+              source: 'eBay',
+              supplier: 'eBay',
+              seller_username: order.seller || 'Unknown',
+              order_id: order.orderId || item.itemId,
+              price_paid: parseFloat(item.price || 0),
+              shipping_cost: parseFloat(order.shippingCost || 0),
+              fees: parseFloat(order.fees || 0),
+              tracking_ref: order.trackingNumber || null,
+              notes: `eBay Order: ${item.title || 'Unknown Item'}`,
+              dateOfPurchase: order.orderDate ? new Date(order.orderDate) : new Date(),
+              status: 'Purchased',
+              createdBy: 'ebay-sync',
+              platform: 'eBay',
+              external_id: item.itemId,
+              external_url: item.viewUrl || null,
+              photos: item.photos || []
+            };
+            
+            purchases.push(purchase);
+          });
+        }
+      });
+    }
+    
+  } catch (error) {
+    console.error('❌ Error transforming eBay data:', error.message);
+  }
+  
+  return purchases;
+}
+
+// Helper functions for data extraction
+function extractCategoryFromTitle(title) {
+  const titleLower = title.toLowerCase();
+  
+  if (titleLower.includes('sonos') || titleLower.includes('speaker') || titleLower.includes('audio')) return 'Audio Equipment';
+  if (titleLower.includes('iphone') || titleLower.includes('apple') || titleLower.includes('mobile')) return 'Mobile Accessories';
+  if (titleLower.includes('laptop') || titleLower.includes('computer') || titleLower.includes('pc')) return 'Computing';
+  if (titleLower.includes('headphone') || titleLower.includes('earphone') || titleLower.includes('headset')) return 'Audio Equipment';
+  if (titleLower.includes('cable') || titleLower.includes('charger') || titleLower.includes('adapter')) return 'Accessories';
+  
+  return 'Other';
+}
+
+function extractBrandFromTitle(title) {
+  const titleLower = title.toLowerCase();
+  
+  if (titleLower.includes('sonos')) return 'Sonos';
+  if (titleLower.includes('apple')) return 'Apple';
+  if (titleLower.includes('samsung')) return 'Samsung';
+  if (titleLower.includes('bose')) return 'Bose';
+  if (titleLower.includes('jbl')) return 'JBL';
+  if (titleLower.includes('lg')) return 'LG';
+  if (titleLower.includes('dell')) return 'Dell';
+  if (titleLower.includes('hp')) return 'HP';
+  if (titleLower.includes('lenovo')) return 'Lenovo';
+  
+  return 'Unknown';
+}
+
+function extractModelFromTitle(title) {
+  // Try to extract model numbers or specific product names
+  const modelPatterns = [
+    /(\b[A-Z]{2,}\d{2,}[A-Z]?\b)/, // Pattern like "Play5", "iPhone12"
+    /(\b\d{4}[A-Z]?\b)/, // Pattern like "2021", "13Pro"
+    /(\b[A-Z]+\d+[A-Z]*\b)/ // General alphanumeric patterns
+  ];
+  
+  for (const pattern of modelPatterns) {
+    const match = title.match(pattern);
+    if (match) {
+      return match[1];
+    }
+  }
+  
+  return 'Unknown';
+}
 
 // Keep GET requests using proxy for now
 app.get('/api/purchases', createProxyMiddleware({

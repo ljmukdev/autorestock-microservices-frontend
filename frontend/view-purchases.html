@@ -154,6 +154,7 @@
           </h3>
           <div style="display:flex; gap:8px;">
             <button id="btn-add-purchase" class="retry-btn" style="padding:6px 12px; font-size:.8rem;">➕ Add Purchase</button>
+            <button id="btn-ebay-sync" class="retry-btn" style="padding:6px 12px; font-size:.8rem; background: #0064d2; color: white;">🛒 Sync eBay</button>
             <button id="btn-refresh" class="retry-btn" style="padding:6px 12px; font-size:.8rem;">🔄 Refresh</button>
           </div>
         </div>
@@ -250,8 +251,10 @@
 
         const addBtn = document.getElementById('btn-add-purchase');
         const refreshBtn = document.getElementById('btn-refresh');
+        const ebaySyncBtn = document.getElementById('btn-ebay-sync');
         if (addBtn) addBtn.addEventListener('click', openManualPurchaseModal);
         if (refreshBtn) refreshBtn.addEventListener('click', loadPurchases);
+        if (ebaySyncBtn) ebaySyncBtn.addEventListener('click', syncEbayPurchases);
 
         setupManualPurchaseModal();
       } catch (e) {
@@ -782,6 +785,88 @@
       } catch (error) {
         console.error('❌ Error deleting purchase:', error);
         showStatus(`❌ Failed to delete purchase: ${error.message}`, 'error');
+      }
+    }
+
+    // eBay purchase sync function
+    async function syncEbayPurchases() {
+      const syncBtn = document.getElementById('btn-ebay-sync');
+      const originalText = syncBtn.textContent;
+      
+      try {
+        // Show loading state
+        syncBtn.disabled = true;
+        syncBtn.textContent = '⏳ Syncing...';
+        showStatus('🛒 Starting eBay purchase sync...', 'info');
+        
+        console.log('🔄 Starting eBay purchase sync...');
+        
+        // First, start OAuth flow if needed
+        const oauthResponse = await fetch('/api/ebay/oauth/start', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!oauthResponse.ok) {
+          const errorData = await oauthResponse.json();
+          throw new Error(errorData.details || errorData.error || 'OAuth failed');
+        }
+        
+        const oauthData = await oauthResponse.json();
+        console.log('✅ OAuth started:', oauthData);
+        
+        // If OAuth returns a redirect URL, redirect user to eBay
+        if (oauthData.authUrl) {
+          showStatus('🔐 Redirecting to eBay for authentication...', 'info');
+          window.location.href = oauthData.authUrl;
+          return;
+        }
+        
+        // If we have tokens, proceed with sync
+        if (oauthData.success) {
+          console.log('📡 Fetching eBay purchase data...');
+          showStatus('📡 Fetching eBay purchase data...', 'info');
+          
+          const syncResponse = await fetch('/api/ebay/sync-purchases', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              userId: 'default_user', // You can customize this
+              limit: 100 // Fetch last 100 purchases
+            })
+          });
+          
+          if (!syncResponse.ok) {
+            const errorData = await syncResponse.json();
+            throw new Error(errorData.details || errorData.error || 'Sync failed');
+          }
+          
+          const syncData = await syncResponse.json();
+          console.log('✅ Sync completed:', syncData);
+          
+          // Show success message
+          showStatus(`✅ eBay sync complete! ${syncData.summary.successfullySaved} purchases imported`, 'success');
+          
+          // Reload purchases to show new data
+          setTimeout(() => {
+            loadPurchases();
+          }, 1000);
+          
+        } else {
+          throw new Error('OAuth authentication required');
+        }
+        
+      } catch (error) {
+        console.error('❌ eBay sync error:', error);
+        showStatus(`❌ eBay sync failed: ${error.message}`, 'error');
+      } finally {
+        // Reset button state
+        syncBtn.disabled = false;
+        syncBtn.textContent = originalText;
       }
     }
   </script>
