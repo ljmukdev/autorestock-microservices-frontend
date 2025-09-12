@@ -256,6 +256,51 @@
   </div>
 </div>
 
+<!-- eBay Marketplace Browser Modal -->
+<div id="ebay-marketplace-modal" class="modal" style="display: none;">
+  <div class="modal-content" style="max-width: 95vw; max-height: 95vh; overflow-y: auto;">
+    <div class="modal-header">
+      <h2>eBay Marketplace Browser</h2>
+      <button id="ebay-marketplace-close" class="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <!-- Filters -->
+      <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+        <input type="text" id="ebay-search" placeholder="Search items..." style="flex: 1; min-width: 200px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+        <select id="ebay-category-filter" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+          <option value="">All Categories</option>
+        </select>
+        <select id="ebay-brand-filter" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+          <option value="">All Brands</option>
+        </select>
+        <select id="ebay-condition-filter" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+          <option value="">All Conditions</option>
+          <option value="New">New</option>
+          <option value="Used - Like New">Used - Like New</option>
+          <option value="Used - Good">Used - Good</option>
+          <option value="Used - Fair">Used - Fair</option>
+          <option value="For Parts">For Parts</option>
+        </select>
+        <input type="number" id="ebay-price-min" placeholder="Min Price" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 100px;">
+        <input type="number" id="ebay-price-max" placeholder="Max Price" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 100px;">
+      </div>
+      
+      <!-- Selection controls -->
+      <div style="display: flex; gap: 10px; margin-bottom: 20px; align-items: center;">
+        <button id="ebay-select-all" class="btn btn-secondary" style="padding: 6px 12px;">Select All</button>
+        <button id="ebay-select-none" class="btn btn-secondary" style="padding: 6px 12px;">Select None</button>
+        <span id="ebay-selection-count" style="margin-left: 10px; font-weight: bold; color: #059669;">0 items selected</span>
+        <button id="ebay-import-selected" class="btn" style="background: #059669; color: white; padding: 6px 12px; margin-left: auto;">Import Selected</button>
+      </div>
+      
+      <!-- Items grid -->
+      <div id="ebay-items-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; max-height: 60vh; overflow-y: auto;">
+        <!-- Items will be loaded here -->
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
     console.log('🛒 StockPilot Purchase Management & Staging loaded');
 
@@ -880,17 +925,16 @@
         }
         
         const syncData = await syncResponse.json();
-        console.log('✅ Sync completed:', syncData);
+        console.log('✅ eBay data loaded:', syncData);
         
-        // Show success message
-        const savedCount = syncData.data?.savedPurchases || 0;
-        const ebayItems = syncData.data?.ebayItems || 0;
-        showStatus(`✅ eBay sync complete! Found ${ebayItems} eBay items, saved ${savedCount} purchases`, 'success');
+        // Show eBay marketplace browser
+        const totalItems = syncData.data?.totalItems || 0;
+        const marketplaceItems = syncData.data?.marketplaceItems || [];
         
-        // Reload purchases to show new data
-        setTimeout(() => {
-          loadPurchases();
-        }, 1000);
+        showStatus(`✅ eBay marketplace loaded! Found ${totalItems} items to browse`, 'success');
+        
+        // Show marketplace browser modal
+        showEbayMarketplaceBrowser(marketplaceItems, syncData.data?.categories || [], syncData.data?.brands || []);
         
       } catch (error) {
         console.error('❌ eBay sync error:', error);
@@ -1019,6 +1063,226 @@
         </div>
         ` : ''}
       `;
+    }
+
+    // eBay Marketplace Browser Functions
+    let currentEbayItems = [];
+    let filteredEbayItems = [];
+
+    function showEbayMarketplaceBrowser(items, categories, brands) {
+      currentEbayItems = items;
+      filteredEbayItems = [...items];
+      
+      const modal = document.getElementById('ebay-marketplace-modal');
+      modal.style.display = 'flex';
+      
+      // Populate filters
+      populateEbayFilters(categories, brands);
+      
+      // Render items
+      renderEbayItems(filteredEbayItems);
+      
+      // Setup event listeners
+      setupEbayEventListeners();
+      
+      // Update selection count
+      updateEbaySelectionCount();
+    }
+
+    function populateEbayFilters(categories, brands) {
+      // Populate category filter
+      const categoryFilter = document.getElementById('ebay-category-filter');
+      categoryFilter.innerHTML = '<option value="">All Categories</option>';
+      categories.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = cat;
+        categoryFilter.appendChild(option);
+      });
+      
+      // Populate brand filter
+      const brandFilter = document.getElementById('ebay-brand-filter');
+      brandFilter.innerHTML = '<option value="">All Brands</option>';
+      brands.forEach(brand => {
+        const option = document.createElement('option');
+        option.value = brand;
+        option.textContent = brand;
+        brandFilter.appendChild(option);
+      });
+    }
+
+    function renderEbayItems(items) {
+      const grid = document.getElementById('ebay-items-grid');
+      
+      if (items.length === 0) {
+        grid.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No items match your filters</p>';
+        return;
+      }
+      
+      const itemsHtml = items.map(item => `
+        <div class="ebay-item-card" data-id="${item.id}" style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; background: white; cursor: pointer; transition: all 0.2s;" ${item.isSelected ? 'style="border-color: #059669; background: #f0fdf4;"' : ''}>
+          <div style="display: flex; align-items: flex-start; gap: 12px;">
+            <input type="checkbox" class="ebay-item-checkbox" data-id="${item.id}" ${item.isSelected ? 'checked' : ''} style="margin-top: 4px;">
+            <img src="${item.imageUrl}" alt="${item.title}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px;">
+            <div style="flex: 1; min-width: 0;">
+              <h4 style="margin: 0 0 8px 0; font-size: 14px; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${item.title}</h4>
+              <div style="font-size: 12px; color: #666; margin-bottom: 4px;">
+                <span style="background: #e5e7eb; padding: 2px 6px; border-radius: 12px; margin-right: 4px;">${item.category}</span>
+                <span style="background: #e5e7eb; padding: 2px 6px; border-radius: 12px; margin-right: 4px;">${item.brand}</span>
+                <span style="background: #e5e7eb; padding: 2px 6px; border-radius: 12px;">${item.condition}</span>
+              </div>
+              <div style="font-weight: bold; color: #059669; font-size: 16px;">£${item.price.toFixed(2)}</div>
+              <div style="font-size: 11px; color: #666; margin-top: 4px;">
+                ${item.seller} (${(item.sellerRating * 100).toFixed(0)}%) • ${item.location} • ${item.timeLeft}
+              </div>
+              ${item.shippingCost > 0 ? `<div style="font-size: 11px; color: #666;">+ £${item.shippingCost.toFixed(2)} shipping</div>` : '<div style="font-size: 11px; color: #059669;">Free shipping</div>'}
+            </div>
+          </div>
+        </div>
+      `).join('');
+      
+      grid.innerHTML = itemsHtml;
+    }
+
+    function setupEbayEventListeners() {
+      const modal = document.getElementById('ebay-marketplace-modal');
+      const closeBtn = document.getElementById('ebay-marketplace-close');
+      const searchInput = document.getElementById('ebay-search');
+      const categoryFilter = document.getElementById('ebay-category-filter');
+      const brandFilter = document.getElementById('ebay-brand-filter');
+      const conditionFilter = document.getElementById('ebay-condition-filter');
+      const priceMinInput = document.getElementById('ebay-price-min');
+      const priceMaxInput = document.getElementById('ebay-price-max');
+      const selectAllBtn = document.getElementById('ebay-select-all');
+      const selectNoneBtn = document.getElementById('ebay-select-none');
+      const importBtn = document.getElementById('ebay-import-selected');
+      
+      // Close modal
+      const closeModal = () => {
+        modal.style.display = 'none';
+        currentEbayItems = [];
+        filteredEbayItems = [];
+      };
+      
+      closeBtn.onclick = closeModal;
+      modal.onclick = (e) => {
+        if (e.target === modal) closeModal();
+      };
+      
+      // Filter events
+      const applyFilters = () => {
+        const searchTerm = searchInput.value.toLowerCase();
+        const category = categoryFilter.value;
+        const brand = brandFilter.value;
+        const condition = conditionFilter.value;
+        const minPrice = parseFloat(priceMinInput.value) || 0;
+        const maxPrice = parseFloat(priceMaxInput.value) || Infinity;
+        
+        filteredEbayItems = currentEbayItems.filter(item => {
+          const matchesSearch = item.title.toLowerCase().includes(searchTerm) || 
+                               item.description.toLowerCase().includes(searchTerm);
+          const matchesCategory = !category || item.category === category;
+          const matchesBrand = !brand || item.brand === brand;
+          const matchesCondition = !condition || item.condition === condition;
+          const matchesPrice = item.price >= minPrice && item.price <= maxPrice;
+          
+          return matchesSearch && matchesCategory && matchesBrand && matchesCondition && matchesPrice;
+        });
+        
+        renderEbayItems(filteredEbayItems);
+        updateEbaySelectionCount();
+      };
+      
+      searchInput.addEventListener('input', applyFilters);
+      categoryFilter.addEventListener('change', applyFilters);
+      brandFilter.addEventListener('change', applyFilters);
+      conditionFilter.addEventListener('change', applyFilters);
+      priceMinInput.addEventListener('input', applyFilters);
+      priceMaxInput.addEventListener('input', applyFilters);
+      
+      // Selection events
+      selectAllBtn.onclick = () => {
+        filteredEbayItems.forEach(item => item.isSelected = true);
+        renderEbayItems(filteredEbayItems);
+        updateEbaySelectionCount();
+      };
+      
+      selectNoneBtn.onclick = () => {
+        filteredEbayItems.forEach(item => item.isSelected = false);
+        renderEbayItems(filteredEbayItems);
+        updateEbaySelectionCount();
+      };
+      
+      // Item selection
+      document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('ebay-item-checkbox')) {
+          const itemId = e.target.getAttribute('data-id');
+          const item = filteredEbayItems.find(i => i.id === itemId);
+          if (item) {
+            item.isSelected = e.target.checked;
+            updateEbaySelectionCount();
+          }
+        }
+        
+        if (e.target.closest('.ebay-item-card')) {
+          const card = e.target.closest('.ebay-item-card');
+          const checkbox = card.querySelector('.ebay-item-checkbox');
+          if (checkbox && e.target !== checkbox) {
+            checkbox.checked = !checkbox.checked;
+            const itemId = checkbox.getAttribute('data-id');
+            const item = filteredEbayItems.find(i => i.id === itemId);
+            if (item) {
+              item.isSelected = checkbox.checked;
+              updateEbaySelectionCount();
+            }
+          }
+        }
+      });
+      
+      // Import selected items
+      importBtn.onclick = async () => {
+        const selectedItems = filteredEbayItems.filter(item => item.isSelected);
+        
+        if (selectedItems.length === 0) {
+          showStatus('❌ Please select at least one item to import', 'error');
+          return;
+        }
+        
+        try {
+          showStatus(`📦 Importing ${selectedItems.length} selected items...`, 'info');
+          
+          const response = await fetch('/api/ebay-import', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ selectedItems })
+          });
+          
+          const result = await response.json();
+          
+          if (result.success) {
+            showStatus(`✅ Import complete! ${result.data.imported} items imported successfully`, 'success');
+            closeModal();
+            
+            // Reload purchases to show new data
+            setTimeout(() => {
+              loadPurchases();
+            }, 1000);
+          } else {
+            showStatus(`❌ Import failed: ${result.message}`, 'error');
+          }
+        } catch (error) {
+          console.error('Import error:', error);
+          showStatus(`❌ Import failed: ${error.message}`, 'error');
+        }
+      };
+    }
+
+    function updateEbaySelectionCount() {
+      const selectedCount = filteredEbayItems.filter(item => item.isSelected).length;
+      const countElement = document.getElementById('ebay-selection-count');
+      countElement.textContent = `${selectedCount} items selected`;
     }
   </script>
 </body>

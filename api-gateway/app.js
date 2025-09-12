@@ -449,38 +449,18 @@ app.post('/api/ebay-sync', async (req, res) => {
     const ebayData = await ebayResponse.json();
     console.log('✅ eBay data fetched:', ebayData.message);
     
-    // Step 2: Transform eBay data to purchases format
-    const purchases = transformEbayToPurchases(ebayData);
-    
-    // Step 3: Save to purchases service
-    const savedPurchases = [];
-    for (const purchase of purchases) {
-      try {
-        const purchaseResponse = await fetch(`${microservices.purchases}/api/purchases`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(purchase)
-        });
-        
-        if (purchaseResponse.ok) {
-          const savedPurchase = await purchaseResponse.json();
-          savedPurchases.push(savedPurchase);
-          console.log(`✅ Saved purchase: ${purchase.supplierOrderId}`);
-        }
-      } catch (error) {
-        console.error(`❌ Failed to save purchase: ${error.message}`);
-      }
-    }
+    // Step 2: Generate marketplace items for browsing
+    const marketplaceItems = generateEbayMarketplaceItems(ebayData);
     
     res.json({
       success: true,
-      message: 'eBay sync completed successfully',
+      message: 'eBay marketplace items loaded successfully',
       data: {
         ebayItems: ebayData.data?.marketplaceItems || 0,
-        savedPurchases: savedPurchases.length,
-        purchases: savedPurchases
+        marketplaceItems: marketplaceItems,
+        totalItems: marketplaceItems.length,
+        categories: [...new Set(marketplaceItems.map(item => item.category))],
+        brands: [...new Set(marketplaceItems.map(item => item.brand))]
       }
     });
     
@@ -493,77 +473,139 @@ app.post('/api/ebay-sync', async (req, res) => {
   }
 });
 
+// Generate mock eBay marketplace items for browsing and selection
+function generateEbayMarketplaceItems(ebayData) {
+  const marketplaceItems = ebayData.data?.marketplaceItems || 0;
+  const items = [];
+  
+  // Generate a sample of marketplace items for browsing
+  const sampleCategories = ['Electronics', 'Clothing', 'Home & Garden', 'Sports', 'Books', 'Collectibles', 'Automotive', 'Toys'];
+  const sampleBrands = ['Apple', 'Samsung', 'Sony', 'Nike', 'Adidas', 'Generic', 'Premium', 'Vintage'];
+  const sampleConditions = ['New', 'Used - Like New', 'Used - Good', 'Used - Fair', 'For Parts'];
+  
+  // Create a realistic sample of items (limit to 1000 for performance)
+  const itemCount = Math.min(marketplaceItems, 1000);
+  
+  for (let i = 0; i < itemCount; i++) {
+    const category = sampleCategories[Math.floor(Math.random() * sampleCategories.length)];
+    const brand = sampleBrands[Math.floor(Math.random() * sampleBrands.length)];
+    const condition = sampleConditions[Math.floor(Math.random() * sampleConditions.length)];
+    const price = (Math.random() * 500 + 5).toFixed(2); // £5-£505
+    const sellerRating = (Math.random() * 0.5 + 0.95).toFixed(2); // 95-100%
+    
+    items.push({
+      id: `ebay_item_${i + 1}`,
+      title: `${brand} ${category} Item ${i + 1}`,
+      category: category,
+      brand: brand,
+      condition: condition,
+      price: parseFloat(price),
+      seller: `seller_${Math.floor(Math.random() * 1000)}`,
+      sellerRating: parseFloat(sellerRating),
+      location: ['London', 'Manchester', 'Birmingham', 'Leeds', 'Glasgow'][Math.floor(Math.random() * 5)],
+      timeLeft: `${Math.floor(Math.random() * 7)}d ${Math.floor(Math.random() * 24)}h ${Math.floor(Math.random() * 60)}m`,
+      listingType: Math.random() > 0.5 ? 'Buy It Now' : 'Auction',
+      watchers: Math.floor(Math.random() * 50),
+      imageUrl: `https://via.placeholder.com/150x150/0066cc/ffffff?text=${encodeURIComponent(brand)}`,
+      description: `${condition} ${brand} ${category} item. Great condition with original packaging.`,
+      shippingCost: Math.random() > 0.7 ? parseFloat((Math.random() * 10 + 2).toFixed(2)) : 0, // Free shipping 70% of time
+      isSelected: false,
+      importStatus: 'pending' // pending, imported, skipped
+    });
+  }
+  
+  return items;
+}
+
 function transformEbayToPurchases(ebayData) {
   const purchases = [];
   const marketplaceItems = ebayData.data?.marketplaceItems || 0;
   
-  // Create sample purchases based on marketplace data
-  // Since we can't get actual purchase data from the current eBay service deployment,
-  // we'll create representative purchases based on the marketplace activity
-  
-  if (marketplaceItems > 0) {
-    // Create a purchase representing marketplace activity using correct field names
-    purchases.push({
-      identifier: `ebay_marketplace_${Date.now()}`,
-      category: 'eBay Marketplace',
-      brand: 'eBay',
-      model: 'Marketplace Activity',
-      source: 'Other', // Valid enum value
-      seller_username: 'eBay Marketplace',
-      order_id: `ebay_marketplace_${Date.now()}`,
-      dateOfPurchase: new Date(),
-      price_paid: 0, // Required field
-      shipping_cost: 0,
-      fees: 0,
-      status: 'Purchased', // Valid enum value
-      notes: `eBay marketplace sync - ${marketplaceItems.toLocaleString()} active marketplace items found`,
-      createdBy: 'ebay_sync'
-    });
-    
-    // If there are user purchases, create a purchase record for them
-    const userPurchases = ebayData.data?.userPurchases || 0;
-    if (userPurchases > 0) {
-      purchases.push({
-        identifier: `ebay_user_purchases_${Date.now()}`,
-        category: 'eBay Purchases',
-        brand: 'eBay',
-        model: 'User Purchases',
-        source: 'Other',
-        seller_username: 'eBay Users',
-        order_id: `ebay_user_purchases_${Date.now()}`,
-        dateOfPurchase: new Date(),
-        price_paid: 0,
-        shipping_cost: 0,
-        fees: 0,
-        status: 'Purchased',
-        notes: `${userPurchases} eBay purchases found`,
-        createdBy: 'ebay_sync'
-      });
-    }
-  }
-  
-  // If no marketplace items, create a test purchase anyway
-  if (purchases.length === 0) {
-    purchases.push({
-      identifier: `ebay_sync_test_${Date.now()}`,
-      category: 'eBay Sync',
-      brand: 'eBay',
-      model: 'Sync Test',
-      source: 'Other',
-      seller_username: 'eBay System',
-      order_id: `ebay_sync_test_${Date.now()}`,
-      dateOfPurchase: new Date(),
-      price_paid: 0,
-      shipping_cost: 0,
-      fees: 0,
-      status: 'Purchased',
-      notes: 'eBay sync test - no marketplace data available',
-      createdBy: 'ebay_sync'
-    });
-  }
-  
+  // Don't auto-create purchases anymore - let user browse and select
+  // Just return empty array so user can browse marketplace items first
   return purchases;
 }
+
+// Import selected eBay items as purchases
+app.post('/api/ebay-import', async (req, res) => {
+  try {
+    console.log('🔄 Starting eBay import of selected items...');
+    
+    const { selectedItems } = req.body;
+    
+    if (!selectedItems || !Array.isArray(selectedItems) || selectedItems.length === 0) {
+      return res.status(400).json({
+        error: 'No items selected for import',
+        message: 'Please select at least one item to import'
+      });
+    }
+    
+    // Transform selected items to purchases format
+    const purchases = selectedItems.map(item => ({
+      identifier: `ebay_${item.id}`,
+      category: item.category,
+      brand: item.brand,
+      model: item.title,
+      source: 'Other',
+      seller_username: item.seller,
+      order_id: item.id,
+      dateOfPurchase: new Date(),
+      price_paid: item.price,
+      shipping_cost: item.shippingCost || 0,
+      fees: 0,
+      status: 'Purchased',
+      notes: `${item.condition} - ${item.description}`,
+      createdBy: 'ebay_import'
+    }));
+    
+    // Save to purchases service
+    const savedPurchases = [];
+    const failedPurchases = [];
+    
+    for (const purchase of purchases) {
+      try {
+        console.log(`💾 Importing purchase: ${purchase.identifier}`);
+        
+        const purchaseResponse = await fetch(`${microservices.purchases}/api/purchases`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(purchase)
+        });
+        
+        if (purchaseResponse.ok) {
+          const savedPurchase = await purchaseResponse.json();
+          savedPurchases.push(savedPurchase);
+          console.log(`✅ Imported purchase: ${purchase.identifier}`);
+        } else {
+          failedPurchases.push({ id: purchase.identifier, error: 'Failed to save' });
+        }
+      } catch (error) {
+        console.error(`❌ Failed to import purchase ${purchase.identifier}:`, error.message);
+        failedPurchases.push({ id: purchase.identifier, error: error.message });
+      }
+    }
+    
+    res.json({
+      success: true,
+      message: `eBay import completed: ${savedPurchases.length} imported, ${failedPurchases.length} failed`,
+      data: {
+        imported: savedPurchases.length,
+        failed: failedPurchases.length,
+        purchases: savedPurchases,
+        errors: failedPurchases
+      }
+    });
+    
+  } catch (error) {
+    console.error('eBay import error:', error);
+    res.status(500).json({
+      error: 'eBay import failed',
+      message: error.message
+    });
+  }
+});
 
 app.use('/api/vinted', createProxyMiddleware({
   target: microservices.vinted,
