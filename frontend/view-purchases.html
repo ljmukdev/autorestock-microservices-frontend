@@ -857,7 +857,9 @@
         console.log('✅ Sync completed:', syncData);
         
         // Show success message
-        showStatus(`✅ eBay sync complete! ${syncData.summary.successfullySaved} purchases imported`, 'success');
+        const savedCount = syncData.data?.savedPurchases || 0;
+        const ebayItems = syncData.data?.ebayItems || 0;
+        showStatus(`✅ eBay sync complete! Found ${ebayItems} eBay items, saved ${savedCount} purchases`, 'success');
         
         // Reload purchases to show new data
         setTimeout(() => {
