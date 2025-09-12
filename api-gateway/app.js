@@ -430,37 +430,80 @@ app.post('/api/ebay-sync', async (req, res) => {
   try {
     console.log('🔄 Starting eBay sync integration...');
     
-    // Step 1: Get eBay data from eBay service
-    const ebayResponse = await fetch(`${microservices.ebay}/api/ebay/sync`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        userId: 'default_user',
-        limit: 100
-      })
-    });
-    
-    if (!ebayResponse.ok) {
-      throw new Error(`eBay service error: ${ebayResponse.status}`);
+    // Step 1: Try to get real eBay purchase data first
+    let realPurchaseData = null;
+    try {
+      console.log('🔄 Attempting to fetch real eBay purchase data...');
+      const purchaseResponse = await fetch(`${microservices.ebay}/api/ebay/default_user/purchases?limit=100`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (purchaseResponse.ok) {
+        realPurchaseData = await purchaseResponse.json();
+        console.log('✅ Real eBay purchase data fetched:', realPurchaseData);
+      } else {
+        console.log('⚠️ Real purchase data not available, falling back to marketplace data');
+      }
+    } catch (error) {
+      console.log('⚠️ Real purchase data failed, falling back to marketplace data:', error.message);
     }
     
-    const ebayData = await ebayResponse.json();
-    console.log('✅ eBay data fetched:', ebayData.message);
+    // Step 2: If we have real purchase data, use it; otherwise get marketplace data
+    let marketplaceItems = [];
+    let categories = [];
+    let brands = [];
     
-    // Step 2: Generate marketplace items for browsing
-    const marketplaceItems = generateEbayMarketplaceItems(ebayData);
+    if (realPurchaseData && realPurchaseData.success && realPurchaseData.data) {
+      // Use real purchase data
+      const purchaseHistory = realPurchaseData.data.purchaseHistory || [];
+      marketplaceItems = transformRealPurchasesToMarketplaceItems(purchaseHistory);
+      categories = [...new Set(marketplaceItems.map(item => item.category))];
+      brands = [...new Set(marketplaceItems.map(item => item.brand))];
+      console.log(`✅ Using ${marketplaceItems.length} real eBay purchases`);
+    } else {
+      // Fallback to marketplace statistics
+      try {
+        const ebayResponse = await fetch(`${microservices.ebay}/api/ebay/sync`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            userId: 'default_user',
+            limit: 100
+          })
+        });
+        
+        if (ebayResponse.ok) {
+          const ebayData = await ebayResponse.json();
+          console.log('✅ eBay marketplace data fetched:', ebayData.message);
+          marketplaceItems = generateEbayMarketplaceItems(ebayData);
+          categories = [...new Set(marketplaceItems.map(item => item.category))];
+          brands = [...new Set(marketplaceItems.map(item => item.brand))];
+        }
+      } catch (error) {
+        console.log('⚠️ Marketplace data also failed:', error.message);
+      }
+    }
+    
+    const isRealData = marketplaceItems.length > 0 && marketplaceItems[0].isRealData;
     
     res.json({
       success: true,
-      message: 'eBay marketplace items loaded successfully',
+      message: `eBay ${isRealData ? 'purchase' : 'marketplace'} data loaded successfully`,
       data: {
         ebayItems: ebayData.data?.marketplaceItems || 0,
         marketplaceItems: marketplaceItems,
         totalItems: marketplaceItems.length,
-        categories: [...new Set(marketplaceItems.map(item => item.category))],
-        brands: [...new Set(marketplaceItems.map(item => item.brand))]
+        categories: categories,
+        brands: brands,
+        dataType: isRealData ? 'real_purchases' : 'marketplace_sample',
+        note: isRealData ? 
+          'Showing real eBay purchase data from your account' : 
+          'Showing sample marketplace data (real purchase data not available)'
       }
     });
     
@@ -473,7 +516,31 @@ app.post('/api/ebay-sync', async (req, res) => {
   }
 });
 
-// Generate mock eBay marketplace items for browsing and selection
+// Transform real eBay purchase data to marketplace items format
+function transformRealPurchasesToMarketplaceItems(purchaseHistory) {
+  return purchaseHistory.map((purchase, index) => ({
+    id: `real_purchase_${index + 1}`,
+    title: purchase.title || purchase.itemTitle || `eBay Purchase ${index + 1}`,
+    category: purchase.category || 'Electronics',
+    brand: purchase.brand || purchase.sellerName || 'eBay',
+    condition: purchase.condition || 'Used - Good',
+    price: parseFloat(purchase.price || purchase.totalPrice || 0),
+    seller: purchase.sellerName || purchase.seller || 'Unknown Seller',
+    sellerRating: 0.98, // Default high rating
+    location: purchase.location || 'UK',
+    timeLeft: purchase.orderDate ? `${Math.floor((Date.now() - new Date(purchase.orderDate).getTime()) / (1000 * 60 * 60 * 24))}d ago` : 'Recently',
+    listingType: purchase.listingType || 'Buy It Now',
+    watchers: 0,
+    imageUrl: purchase.imageUrl || `https://via.placeholder.com/150x150/0066cc/ffffff?text=${encodeURIComponent(purchase.brand || 'eBay')}`,
+    description: purchase.description || `${purchase.condition || 'Used'} ${purchase.brand || 'eBay'} item from eBay.`,
+    shippingCost: parseFloat(purchase.shippingCost || 0),
+    isSelected: false,
+    importStatus: 'pending',
+    isRealData: true // Flag to indicate this is real data
+  }));
+}
+
+// Generate mock eBay marketplace items for browsing and selection (fallback)
 function generateEbayMarketplaceItems(ebayData) {
   const marketplaceItems = ebayData.data?.marketplaceItems || 0;
   const items = [];

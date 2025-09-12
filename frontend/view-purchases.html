@@ -930,11 +930,17 @@
         // Show eBay marketplace browser
         const totalItems = syncData.data?.totalItems || 0;
         const marketplaceItems = syncData.data?.marketplaceItems || [];
+        const dataType = syncData.data?.dataType || 'unknown';
+        const note = syncData.data?.note || '';
         
-        showStatus(`✅ eBay marketplace loaded! Found ${totalItems} items to browse`, 'success');
+        const statusMessage = dataType === 'real_purchases' ? 
+          `✅ Real eBay purchases loaded! Found ${totalItems} actual purchases to browse` :
+          `⚠️ Sample data loaded! Found ${totalItems} marketplace items (real purchase data not available)`;
+        
+        showStatus(statusMessage, dataType === 'real_purchases' ? 'success' : 'warning');
         
         // Show marketplace browser modal
-        showEbayMarketplaceBrowser(marketplaceItems, syncData.data?.categories || [], syncData.data?.brands || []);
+        showEbayMarketplaceBrowser(marketplaceItems, syncData.data?.categories || [], syncData.data?.brands || [], dataType, note);
         
       } catch (error) {
         console.error('❌ eBay sync error:', error);
@@ -1069,18 +1075,46 @@
     let currentEbayItems = [];
     let filteredEbayItems = [];
 
-    function showEbayMarketplaceBrowser(items, categories, brands) {
+    function showEbayMarketplaceBrowser(items, categories, brands, dataType = 'unknown', note = '') {
       currentEbayItems = items;
       filteredEbayItems = [...items];
       
       const modal = document.getElementById('ebay-marketplace-modal');
       modal.style.display = 'flex';
       
+      // Update modal title and add note
+      const modalTitle = modal.querySelector('h2');
+      modalTitle.textContent = dataType === 'real_purchases' ? 'eBay Purchase History Browser' : 'eBay Marketplace Browser';
+      
+      // Add data type note
+      const modalBody = modal.querySelector('.modal-body');
+      let noteElement = modalBody.querySelector('.data-type-note');
+      if (noteElement) {
+        noteElement.remove();
+      }
+      
+      if (note) {
+        noteElement = document.createElement('div');
+        noteElement.className = 'data-type-note';
+        noteElement.style.cssText = `
+          padding: 10px; 
+          margin-bottom: 15px; 
+          border-radius: 6px; 
+          font-size: 14px;
+          ${dataType === 'real_purchases' ? 
+            'background: #f0fdf4; border: 1px solid #059669; color: #059669;' : 
+            'background: #fef3c7; border: 1px solid #f59e0b; color: #92400e;'
+          }
+        `;
+        noteElement.innerHTML = `<strong>📊 Data Source:</strong> ${note}`;
+        modalBody.insertBefore(noteElement, modalBody.firstChild);
+      }
+      
       // Populate filters
       populateEbayFilters(categories, brands);
       
       // Render items
-      renderEbayItems(filteredEbayItems);
+      renderEbayItems(filteredEbayItems, dataType);
       
       // Setup event listeners
       setupEbayEventListeners();
@@ -1111,7 +1145,7 @@
       });
     }
 
-    function renderEbayItems(items) {
+    function renderEbayItems(items, dataType = 'unknown') {
       const grid = document.getElementById('ebay-items-grid');
       
       if (items.length === 0) {
@@ -1119,27 +1153,43 @@
         return;
       }
       
-      const itemsHtml = items.map(item => `
-        <div class="ebay-item-card" data-id="${item.id}" style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; background: white; cursor: pointer; transition: all 0.2s;" ${item.isSelected ? 'style="border-color: #059669; background: #f0fdf4;"' : ''}>
-          <div style="display: flex; align-items: flex-start; gap: 12px;">
-            <input type="checkbox" class="ebay-item-checkbox" data-id="${item.id}" ${item.isSelected ? 'checked' : ''} style="margin-top: 4px;">
-            <img src="${item.imageUrl}" alt="${item.title}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px;">
-            <div style="flex: 1; min-width: 0;">
-              <h4 style="margin: 0 0 8px 0; font-size: 14px; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${item.title}</h4>
-              <div style="font-size: 12px; color: #666; margin-bottom: 4px;">
-                <span style="background: #e5e7eb; padding: 2px 6px; border-radius: 12px; margin-right: 4px;">${item.category}</span>
-                <span style="background: #e5e7eb; padding: 2px 6px; border-radius: 12px; margin-right: 4px;">${item.brand}</span>
-                <span style="background: #e5e7eb; padding: 2px 6px; border-radius: 12px;">${item.condition}</span>
+      const isRealData = dataType === 'real_purchases';
+      
+      const itemsHtml = items.map(item => {
+        const isSelected = item.isSelected;
+        const cardStyle = isSelected ? 
+          'border: 2px solid #059669; background: #f0fdf4;' : 
+          'border: 1px solid #e5e7eb; background: white;';
+        
+        const realDataBadge = isRealData ? 
+          '<span style="background: #059669; color: white; padding: 2px 6px; border-radius: 12px; font-size: 10px; margin-left: 4px;">REAL</span>' : 
+          '<span style="background: #f59e0b; color: white; padding: 2px 6px; border-radius: 12px; font-size: 10px; margin-left: 4px;">SAMPLE</span>';
+        
+        return `
+          <div class="ebay-item-card" data-id="${item.id}" style="${cardStyle} border-radius: 8px; padding: 12px; cursor: pointer; transition: all 0.2s;">
+            <div style="display: flex; align-items: flex-start; gap: 12px;">
+              <input type="checkbox" class="ebay-item-checkbox" data-id="${item.id}" ${isSelected ? 'checked' : ''} style="margin-top: 4px;">
+              <img src="${item.imageUrl}" alt="${item.title}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px;">
+              <div style="flex: 1; min-width: 0;">
+                <h4 style="margin: 0 0 8px 0; font-size: 14px; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                  ${item.title} ${realDataBadge}
+                </h4>
+                <div style="font-size: 12px; color: #666; margin-bottom: 4px;">
+                  <span style="background: #e5e7eb; padding: 2px 6px; border-radius: 12px; margin-right: 4px;">${item.category}</span>
+                  <span style="background: #e5e7eb; padding: 2px 6px; border-radius: 12px; margin-right: 4px;">${item.brand}</span>
+                  <span style="background: #e5e7eb; padding: 2px 6px; border-radius: 12px;">${item.condition}</span>
+                </div>
+                <div style="font-weight: bold; color: #059669; font-size: 16px;">£${item.price.toFixed(2)}</div>
+                <div style="font-size: 11px; color: #666; margin-top: 4px;">
+                  ${item.seller} (${(item.sellerRating * 100).toFixed(0)}%) • ${item.location} • ${item.timeLeft}
+                </div>
+                ${item.shippingCost > 0 ? `<div style="font-size: 11px; color: #666;">+ £${item.shippingCost.toFixed(2)} shipping</div>` : '<div style="font-size: 11px; color: #059669;">Free shipping</div>'}
+                ${isRealData ? '<div style="font-size: 10px; color: #059669; margin-top: 4px; font-weight: bold;">✓ Real Purchase Data</div>' : ''}
               </div>
-              <div style="font-weight: bold; color: #059669; font-size: 16px;">£${item.price.toFixed(2)}</div>
-              <div style="font-size: 11px; color: #666; margin-top: 4px;">
-                ${item.seller} (${(item.sellerRating * 100).toFixed(0)}%) • ${item.location} • ${item.timeLeft}
-              </div>
-              ${item.shippingCost > 0 ? `<div style="font-size: 11px; color: #666;">+ £${item.shippingCost.toFixed(2)} shipping</div>` : '<div style="font-size: 11px; color: #059669;">Free shipping</div>'}
             </div>
           </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
       
       grid.innerHTML = itemsHtml;
     }
