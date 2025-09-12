@@ -164,102 +164,7 @@ app.delete('/api/purchases/:id', async (req, res) => {
 
 // eBay OAuth start endpoint - now handled by proxy
 
-// eBay purchase sync endpoint
-app.post('/api/ebay/sync-purchases', async (req, res) => {
-  console.log('🔄 eBay purchase sync requested');
-  console.log('📦 Request body:', JSON.stringify(req.body, null, 2));
-  
-  try {
-    const ebayServiceUrl = microservices.ebay;
-    const purchaseServiceUrl = microservices.purchases;
-    
-    // First, get purchase data from eBay
-    console.log('📡 Fetching eBay purchase data...');
-    const ebayResponse = await fetch(`${ebayServiceUrl}/api/ebay/${req.body.userId || 'default_user'}/purchases?limit=100`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      timeout: 30000
-    });
-    
-    if (!ebayResponse.ok) {
-      const errorText = await ebayResponse.text();
-      console.error('❌ eBay service sync error:', ebayResponse.status, errorText);
-      return res.status(ebayResponse.status).json({
-        error: 'Failed to fetch eBay purchase data',
-        details: errorText,
-        status: ebayResponse.status
-      });
-    }
-    
-    const ebayData = await ebayResponse.json();
-    console.log('✅ eBay data fetched successfully');
-    console.log('📊 eBay data preview:', JSON.stringify(ebayData, null, 2).substring(0, 500));
-    
-    // Transform eBay data to purchase format
-    const transformedPurchases = transformEbayDataToPurchases(ebayData);
-    console.log(`🔄 Transformed ${transformedPurchases.length} eBay purchases`);
-    
-    // Save each purchase to the purchases service
-    const savedPurchases = [];
-    const errors = [];
-    
-    for (const purchase of transformedPurchases) {
-      try {
-        console.log('💾 Saving purchase:', purchase.identifier);
-        const saveResponse = await fetch(`${purchaseServiceUrl}/api/purchases`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(purchase),
-          timeout: 15000
-        });
-        
-        if (saveResponse.ok) {
-          const savedPurchase = await saveResponse.json();
-          savedPurchases.push(savedPurchase);
-          console.log('✅ Purchase saved:', purchase.identifier);
-        } else {
-          const errorText = await saveResponse.text();
-          console.error('❌ Failed to save purchase:', purchase.identifier, errorText);
-          errors.push({
-            purchase: purchase.identifier,
-            error: errorText
-          });
-        }
-      } catch (error) {
-        console.error('❌ Error saving purchase:', purchase.identifier, error.message);
-        errors.push({
-          purchase: purchase.identifier,
-          error: error.message
-        });
-      }
-    }
-    
-    console.log(`✅ Sync complete: ${savedPurchases.length} saved, ${errors.length} errors`);
-    
-    res.json({
-      success: true,
-      summary: {
-        totalFetched: transformedPurchases.length,
-        successfullySaved: savedPurchases.length,
-        errors: errors.length
-      },
-      savedPurchases: savedPurchases,
-      errors: errors,
-      source: 'eBay API'
-    });
-    
-  } catch (error) {
-    console.error('❌ eBay sync endpoint error:', error.message);
-    res.status(500).json({
-      error: 'Failed to sync eBay purchases',
-      details: error.message
-    });
-  }
-});
+// eBay purchase sync endpoint - now handled by flat route proxy
 
 // Transform eBay data to purchase format
 function transformEbayDataToPurchases(ebayData) {
@@ -477,17 +382,26 @@ app.use('/api/settings', createProxyMiddleware({
   }
 }));
 
-app.use('/api/ebay', createProxyMiddleware({
-  target: microservices.ebay,
-  changeOrigin: true,
-  pathRewrite: {
-    '^/api/ebay': '/api/ebay'
-  },
-  onError: (err, req, res) => {
-    console.error('eBay service error:', err.message);
-    res.status(503).json({ error: 'eBay service unavailable' });
-  }
-}));
+app.use(
+  '/api/v1/ebay',
+  createProxyMiddleware({
+    target: microservices.ebay,        // e.g. https://stockpilot-ebay-microservice-production.up.railway.app
+    changeOrigin: true,
+    xfwd: true,
+    pathRewrite: { '^/api/v1/ebay': '' },  // strip prefix → service sees flat routes
+    proxyTimeout: 25_000,
+    timeout: 25_000,
+    onProxyReq: (proxyReq, req) => {
+      const rid = req.headers['x-request-id'] || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      proxyReq.setHeader('x-request-id', rid);
+      proxyReq.setHeader('x-forwarded-host', req.headers.host || 'api-gateway');
+    },
+    onError: (err, req, res) => {
+      console.error('eBay service error:', err.message);
+      res.status(503).json({ error: 'EBAY_SERVICE_UNAVAILABLE', detail: err.message });
+    },
+  })
+);
 
 app.use('/api/vinted', createProxyMiddleware({
   target: microservices.vinted,

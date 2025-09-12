@@ -805,7 +805,7 @@
         console.log('📡 Fetching eBay purchase data...');
         showStatus('📡 Fetching eBay purchase data...', 'info');
         
-        const syncResponse = await fetch('/api/ebay/sync-purchases', {
+        const syncResponse = await fetch('/api/v1/ebay/sync', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -837,7 +837,7 @@
               margin-top: 10px;
             `;
             authBtn.onclick = () => {
-              window.location.href = '/api/ebay/ebay-oauth/login';
+              window.location.href = '/api/v1/ebay/oauth/login';
             };
             
             // Show the button in the status area
