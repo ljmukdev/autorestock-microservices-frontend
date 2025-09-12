@@ -113,7 +113,9 @@ app.use('/api/purchases', createProxyMiddleware({
     }
   },
   onProxyReq: (proxyReq, req, res) => {
-    console.log(`Proxying ${req.method} ${req.url} to ${microservices.purchases}${req.url}`);
+    console.log(`🔄 Proxying ${req.method} ${req.url} to ${microservices.purchases}${req.url}`);
+    console.log(`🌐 Full target URL: ${microservices.purchases}/api/purchases`);
+    console.log(`📋 Request headers being sent:`, proxyReq.getHeaders());
   },
   onProxyRes: (proxyRes, req, res) => {
     console.log(`Response from purchases service: ${proxyRes.statusCode}`);
