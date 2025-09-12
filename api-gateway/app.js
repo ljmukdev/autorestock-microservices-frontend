@@ -175,12 +175,11 @@ app.post('/api/ebay/sync-purchases', async (req, res) => {
     
     // First, get purchase data from eBay
     console.log('📡 Fetching eBay purchase data...');
-    const ebayResponse = await fetch(`${ebayServiceUrl}/api/ebay/sync`, {
-      method: 'POST',
+    const ebayResponse = await fetch(`${ebayServiceUrl}/api/ebay/${req.body.userId || 'default_user'}/purchases?limit=100`, {
+      method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(req.body),
       timeout: 30000
     });
     

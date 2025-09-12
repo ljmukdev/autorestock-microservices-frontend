@@ -801,64 +801,68 @@
         
         console.log('🔄 Starting eBay purchase sync...');
         
-        // First, start OAuth flow if needed
-        const oauthResponse = await fetch('/api/ebay/oauth/start-simple', {
-          method: 'GET',
+        // Try to sync purchases directly
+        console.log('📡 Fetching eBay purchase data...');
+        showStatus('📡 Fetching eBay purchase data...', 'info');
+        
+        const syncResponse = await fetch('/api/ebay/sync-purchases', {
+          method: 'POST',
           headers: {
             'Content-Type': 'application/json'
-          }
+          },
+          body: JSON.stringify({
+            userId: 'default_user', // You can customize this
+            limit: 100 // Fetch last 100 purchases
+          })
         });
         
-        if (!oauthResponse.ok) {
-          const errorData = await oauthResponse.json();
-          throw new Error(errorData.details || errorData.error || 'OAuth failed');
-        }
-        
-        const oauthData = await oauthResponse.json();
-        console.log('✅ OAuth started:', oauthData);
-        
-        // If OAuth returns a redirect URL, redirect user to eBay
-        if (oauthData.authUrl) {
-          showStatus('🔐 Redirecting to eBay for authentication...', 'info');
-          window.location.href = oauthData.authUrl;
-          return;
-        }
-        
-        // If we have tokens, proceed with sync
-        if (oauthData.success) {
-          console.log('📡 Fetching eBay purchase data...');
-          showStatus('📡 Fetching eBay purchase data...', 'info');
+        if (!syncResponse.ok) {
+          const errorData = await syncResponse.json();
           
-          const syncResponse = await fetch('/api/ebay/sync-purchases', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              userId: 'default_user', // You can customize this
-              limit: 100 // Fetch last 100 purchases
-            })
-          });
-          
-          if (!syncResponse.ok) {
-            const errorData = await syncResponse.json();
-            throw new Error(errorData.details || errorData.error || 'Sync failed');
+          // If authentication is required, show OAuth option
+          if (errorData.details && errorData.details.includes('No tokens found')) {
+            showStatus('🔐 eBay authentication required. Click to authorize...', 'info');
+            
+            // Add a button to start OAuth
+            const authBtn = document.createElement('button');
+            authBtn.textContent = '🔐 Authorize eBay';
+            authBtn.style.cssText = `
+              background: #0064d2;
+              color: white;
+              border: none;
+              padding: 10px 20px;
+              border-radius: 6px;
+              cursor: pointer;
+              font-weight: 600;
+              margin-top: 10px;
+            `;
+            authBtn.onclick = () => {
+              window.location.href = '/api/ebay/ebay-oauth/login';
+            };
+            
+            // Show the button in the status area
+            const statusEl = document.querySelector('.status-message');
+            if (statusEl) {
+              statusEl.appendChild(document.createElement('br'));
+              statusEl.appendChild(authBtn);
+            }
+            
+            return;
           }
           
-          const syncData = await syncResponse.json();
-          console.log('✅ Sync completed:', syncData);
-          
-          // Show success message
-          showStatus(`✅ eBay sync complete! ${syncData.summary.successfullySaved} purchases imported`, 'success');
-          
-          // Reload purchases to show new data
-          setTimeout(() => {
-            loadPurchases();
-          }, 1000);
-          
-        } else {
-          throw new Error('OAuth authentication required');
+          throw new Error(errorData.details || errorData.error || 'Sync failed');
         }
+        
+        const syncData = await syncResponse.json();
+        console.log('✅ Sync completed:', syncData);
+        
+        // Show success message
+        showStatus(`✅ eBay sync complete! ${syncData.summary.successfullySaved} purchases imported`, 'success');
+        
+        // Reload purchases to show new data
+        setTimeout(() => {
+          loadPurchases();
+        }, 1000);
         
       } catch (error) {
         console.error('❌ eBay sync error:', error);
