@@ -89,10 +89,20 @@ app.get('/health', (req, res) => {
 app.use('/api/purchases', createProxyMiddleware({
   target: microservices.purchases,
   changeOrigin: true,
+  secure: true, // Use HTTPS
   timeout: 25000, // 25 second timeout
   proxyTimeout: 25000,
   pathRewrite: {
     '^/api/purchases': '/api/purchases'
+  },
+  onProxyReq: (proxyReq, req, res) => {
+    console.log(`🔄 Proxying ${req.method} ${req.url} to ${microservices.purchases}${req.url}`);
+    console.log(`🌐 Full target URL: ${microservices.purchases}/api/purchases`);
+    console.log(`📋 Request headers being sent:`, proxyReq.getHeaders());
+    // Force HTTPS if not already set
+    if (!proxyReq.protocol || proxyReq.protocol === 'http:') {
+      proxyReq.protocol = 'https:';
+    }
   },
   onError: (err, req, res) => {
     console.error('🚨 Purchases service proxy error:', err.message);
@@ -111,11 +121,6 @@ app.use('/api/purchases', createProxyMiddleware({
         target: microservices.purchases
       });
     }
-  },
-  onProxyReq: (proxyReq, req, res) => {
-    console.log(`🔄 Proxying ${req.method} ${req.url} to ${microservices.purchases}${req.url}`);
-    console.log(`🌐 Full target URL: ${microservices.purchases}/api/purchases`);
-    console.log(`📋 Request headers being sent:`, proxyReq.getHeaders());
   },
   onProxyRes: (proxyRes, req, res) => {
     console.log(`Response from purchases service: ${proxyRes.statusCode}`);
