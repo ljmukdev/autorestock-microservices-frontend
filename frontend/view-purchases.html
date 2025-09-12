@@ -805,7 +805,7 @@
         console.log('📡 Fetching eBay purchase data...');
         showStatus('📡 Fetching eBay purchase data...', 'info');
         
-        const syncResponse = await fetch('/api/v1/ebay/sync', {
+        const syncResponse = await fetch('/api/ebay-sync', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
