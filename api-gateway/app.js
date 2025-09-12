@@ -89,12 +89,22 @@ app.get('/health', (req, res) => {
 app.use('/api/purchases', createProxyMiddleware({
   target: microservices.purchases,
   changeOrigin: true,
+  timeout: 25000, // 25 second timeout
+  proxyTimeout: 25000,
   pathRewrite: {
     '^/api/purchases': '/api/purchases'
   },
   onError: (err, req, res) => {
     console.error('Purchases service error:', err.message);
-    res.status(503).json({ error: 'Purchases service unavailable' });
+    if (!res.headersSent) {
+      res.status(503).json({ error: 'Purchases service unavailable' });
+    }
+  },
+  onProxyReq: (proxyReq, req, res) => {
+    console.log(`Proxying ${req.method} ${req.url} to ${microservices.purchases}${req.url}`);
+  },
+  onProxyRes: (proxyRes, req, res) => {
+    console.log(`Response from purchases service: ${proxyRes.statusCode}`);
   }
 }));
 
