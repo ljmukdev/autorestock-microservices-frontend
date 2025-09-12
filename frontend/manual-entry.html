@@ -32,13 +32,23 @@
     <label>Number of Parts: <input type="number" name="number_of_parts" /></label><br />
     <label>Notes: <textarea name="notes"></textarea></label><br />
     <label>Tags: <input name="tags" /></label><br /><br />
-    <button type="submit">Submit Purchase</button>
+    <button type="submit" id="saveBtn">
+      <span id="saveIcon">💾</span> <span id="saveText">Submit Purchase</span>
+    </button>
   </form>
 
   <script>
     document.getElementById('purchaseForm').addEventListener('submit', async function(event) {
       event.preventDefault();
       const form = event.target;
+      const saveBtn = document.getElementById('saveBtn');
+      const saveIcon = document.getElementById('saveIcon');
+      const saveText = document.getElementById('saveText');
+      
+      // Show loading state
+      saveIcon.textContent = '⏳';
+      saveText.textContent = 'Saving...';
+      saveBtn.disabled = true;
       const data = Object.fromEntries(new FormData(form).entries());
       
       // Map frontend fields to backend model fields
@@ -71,16 +81,45 @@
       if (data.invoice_url) mappedData.invoiceUrl = data.invoice_url;
 
       try {
+        console.log('Sending purchase data:', mappedData);
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+        
         const res = await fetch('http://localhost:3001/api/purchases', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(mappedData),
+          signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
+        
+        console.log('Response status:', res.status);
+        console.log('Response headers:', res.headers);
+        
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error('API Error:', errorText);
+          throw new Error(`HTTP ${res.status}: ${errorText}`);
+        }
+        
         const result = await res.json();
+        console.log('Purchase result:', result);
         alert('Purchase saved with ID: ' + (result.purchase?._id || result.id || 'unknown'));
         form.reset();
       } catch (err) {
-        alert('Failed to save purchase: ' + err.message);
+        console.error('Purchase save error:', err);
+        if (err.name === 'AbortError') {
+          alert('Request timed out after 30 seconds. Please check if the server is running.');
+        } else {
+          alert('Failed to save purchase: ' + err.message);
+        }
+      } finally {
+        // Reset button state
+        saveBtn.disabled = false;
+        saveIcon.textContent = '💾';
+        saveText.textContent = 'Submit Purchase';
       }
     });
   </script>

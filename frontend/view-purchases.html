@@ -598,11 +598,20 @@
         submitBtn.textContent = 'Saving…';
 
         try {
+          console.log('Sending purchase data:', payload);
+          
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+          
           const res = await fetch('/api/purchases', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
+            signal: controller.signal
           });
+          
+          clearTimeout(timeoutId);
+          console.log('Response status:', res.status);
           if (!res.ok) {
             const text = await res.text();
             throw new Error(`HTTP ${res.status}: ${text}`);
@@ -611,7 +620,12 @@
           closeManualPurchaseModal();
           if (window.loadPurchases) loadPurchases();
         } catch (err) {
-          showErrorMsg(err.message);
+          console.error('Purchase save error:', err);
+          if (err.name === 'AbortError') {
+            showErrorMsg('Request timed out after 30 seconds. Please check if the server is running.');
+          } else {
+            showErrorMsg(err.message);
+          }
         } finally {
           submitBtn.disabled = false;
           submitBtn.textContent = 'Save Purchase';
