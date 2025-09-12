@@ -162,39 +162,7 @@ app.delete('/api/purchases/:id', async (req, res) => {
   }
 });
 
-// eBay OAuth start endpoint
-app.get('/api/ebay/oauth/start', async (req, res) => {
-  console.log('🔄 eBay OAuth start requested');
-  
-  try {
-    const ebayServiceUrl = microservices.ebay;
-    const response = await fetch(`${ebayServiceUrl}/api/ebay/oauth/start-simple`, {
-      method: 'GET',
-      timeout: 15000
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ eBay OAuth start error:', response.status, errorText);
-      return res.status(response.status).json({
-        error: 'Failed to start eBay OAuth',
-        details: errorText,
-        status: response.status
-      });
-    }
-    
-    const result = await response.json();
-    console.log('✅ eBay OAuth started successfully');
-    res.json(result);
-    
-  } catch (error) {
-    console.error('❌ eBay OAuth start error:', error.message);
-    res.status(500).json({
-      error: 'Failed to start eBay OAuth',
-      details: error.message
-    });
-  }
-});
+// eBay OAuth start endpoint - now handled by proxy
 
 // eBay purchase sync endpoint
 app.post('/api/ebay/sync-purchases', async (req, res) => {
@@ -514,7 +482,7 @@ app.use('/api/ebay', createProxyMiddleware({
   target: microservices.ebay,
   changeOrigin: true,
   pathRewrite: {
-    '^/api/ebay': '/api'
+    '^/api/ebay': '/api/ebay'
   },
   onError: (err, req, res) => {
     console.error('eBay service error:', err.message);

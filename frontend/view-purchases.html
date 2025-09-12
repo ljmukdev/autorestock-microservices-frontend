@@ -802,7 +802,7 @@
         console.log('🔄 Starting eBay purchase sync...');
         
         // First, start OAuth flow if needed
-        const oauthResponse = await fetch('/api/ebay/oauth/start', {
+        const oauthResponse = await fetch('/api/ebay/oauth/start-simple', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json'
