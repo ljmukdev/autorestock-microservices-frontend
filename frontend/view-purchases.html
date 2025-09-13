@@ -329,14 +329,17 @@
     async function loadPurchases() {
       showLoading();
       try {
-        const response = await fetch('/api/purchases');
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
+        // Load from localStorage since we're using eBay data now
+        const storedPurchases = localStorage.getItem('stockpilot_purchases');
+        if (!storedPurchases) {
+          console.log('📦 No stored purchases found, showing empty state');
+          displayPurchases([]);
+          showStatus('📦 No purchases found. Click "Sync Purchases" to load eBay data.', 'info');
+          return;
         }
-        const data = await response.json();
+        const data = JSON.parse(storedPurchases);
         const purchases = data.purchases || data;
-        if (!Array.isArray(purchases)) throw new Error('Invalid data format from /api/purchases');
+        if (!Array.isArray(purchases)) throw new Error('Invalid data format from localStorage');
         currentPurchases = purchases;
         displayPurchases(purchases);
         updateStatusBar(purchases);
@@ -688,19 +691,22 @@
             controller.abort();
           }, 30000); // 30 second timeout
           
-          console.log('📡 Making fetch request...');
-          const res = await fetch('/api/purchases', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-            signal: controller.signal
-          });
+          console.log('📡 Saving to localStorage...');
+          // Save to localStorage since we're using eBay data now
+          const existingPurchases = JSON.parse(localStorage.getItem('stockpilot_purchases') || '[]');
+          existingPurchases.push(payload);
+          localStorage.setItem('stockpilot_purchases', JSON.stringify(existingPurchases));
+          
+          // Simulate API response
+          const res = {
+            ok: true,
+            json: async () => ({ success: true, purchase: payload })
+          };
           
           clearTimeout(timeoutId);
-          console.log('✅ Got response:', res.status, res.statusText);
+          console.log('✅ Purchase saved to localStorage successfully');
           if (!res.ok) {
-            const text = await res.text();
-            throw new Error(`HTTP ${res.status}: ${text}`);
+            throw new Error('Failed to save purchase');
           }
           showStatus('✅ Purchase saved', 'success');
           closeManualPurchaseModal();
@@ -836,12 +842,16 @@
         console.log('🗑️ Deleting purchase:', purchaseId);
         showStatus('🗑️ Deleting purchase...', 'info');
         
-        const response = await fetch(`/api/purchases/${purchaseId}`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
+        // Delete from localStorage since we're using eBay data now
+        const existingPurchases = JSON.parse(localStorage.getItem('stockpilot_purchases') || '[]');
+        const updatedPurchases = existingPurchases.filter(p => p.identifier !== purchaseId);
+        localStorage.setItem('stockpilot_purchases', JSON.stringify(updatedPurchases));
+        
+        // Simulate API response
+        const response = {
+          ok: true,
+          json: async () => ({ success: true, message: 'Purchase deleted' })
+        };
         
         if (!response.ok) {
           const errorData = await response.json();
