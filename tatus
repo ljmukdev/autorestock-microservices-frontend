@@ -1,0 +1,26 @@
+warning: in the working copy of 'api-gateway/app.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'railway.json', LF will be replaced by CRLF the next time Git touches it
+.github/workflows/deploy.yml
+.gitignore
+DEPLOYMENT.md
+DEPLOYMENT_CHECKLIST.md
+GITHUB_SETUP.md
+MONGODB_SETUP_GUIDE.md
+QUICK_SETUP.md
+README-Frontend.md
+README.md
+api-gateway/Procfile
+api-gateway/package.json
+api-gateway/railway.json
+frontend/manual-entry.html
+microservices/accounting-integration-service
+microservices/ad-generator-service
+microservices/auto-buying-service
+microservices/inventory-service
+microservices/purchases-service
+microservices/reporting-service
+microservices/sales-service
+microservices/settings-service
+package.json
+setup-railway.ps1
+start-frontend.ps1

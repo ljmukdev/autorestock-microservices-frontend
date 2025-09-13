@@ -103,3 +103,4 @@ jobs:
         railway-token: ${{ secrets.RAILWAY_TOKEN }}
         service: settings-service
         working-directory: microservices/settings-service
+

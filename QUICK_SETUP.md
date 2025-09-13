@@ -110,3 +110,4 @@ Your StockPilot frontend is now deployed and ready to work with your microservic
 ---
 
 **Need Help?** Check the detailed guides in `DEPLOYMENT.md` and `README-Frontend.md`
+

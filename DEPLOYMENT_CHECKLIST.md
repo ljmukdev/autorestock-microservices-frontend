@@ -85,3 +85,4 @@ Once deployed, your StockPilot frontend will:
 **Total Time**: ~10-15 minutes
 **Difficulty**: Easy
 **Result**: Production-ready frontend with microservice backend
+

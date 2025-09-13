@@ -29,3 +29,4 @@ Write-Host ""
 Write-Host "Press Ctrl+C to stop the server" -ForegroundColor Yellow
 
 npm start
+

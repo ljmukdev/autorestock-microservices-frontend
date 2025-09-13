@@ -119,3 +119,4 @@ Write-Host "  railway variables       - Manage environment variables" -Foregroun
 Write-Host "  railway domain          - Manage custom domains" -ForegroundColor White
 Write-Host ""
 Write-Host "📖 For detailed instructions, see DEPLOYMENT.md" -ForegroundColor Yellow
+
