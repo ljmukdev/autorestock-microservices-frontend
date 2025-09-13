@@ -859,7 +859,109 @@
       }
     }
 
-    // eBay purchase sync function
+    // Process eBay sync data
+    async function processEbaySyncData(syncData) {
+      console.log('📊 Processing eBay sync data:', syncData);
+      
+      // Check if we have real purchase data
+      const hasRealData = syncData.success && syncData.data && 
+                         (syncData.data.recentPurchases || syncData.data.summary?.totalPurchases > 0);
+      
+      if (hasRealData) {
+        // Convert eBay data to our format
+        const purchases = convertEbayDataToPurchases(syncData.data);
+        
+        const statusMessage = `✅ Real eBay purchases loaded! Found ${purchases.length} actual purchases`;
+        showStatus(statusMessage, 'success');
+        
+        // Display the real purchases
+        displayPurchases(purchases);
+        updateStatusBar(purchases);
+        
+        // Show marketplace browser with real data
+        showEbayMarketplaceBrowser(purchases, [], [], 'real_purchases', 'Real eBay purchase data');
+        
+      } else {
+        // Fallback to sample data
+        const statusMessage = `⚠️ Sample data loaded! Real purchase data not available`;
+        showStatus(statusMessage, 'warning');
+        
+        // Load sample data
+        loadSampleData();
+      }
+    }
+
+    // Convert eBay data to our purchase format
+    function convertEbayDataToPurchases(ebayData) {
+      const purchases = [];
+      
+      if (ebayData.recentPurchases && Array.isArray(ebayData.recentPurchases)) {
+        ebayData.recentPurchases.forEach((item, index) => {
+          purchases.push({
+            id: `ebay_${index}_${Date.now()}`,
+            purchase_date: item.date || new Date().toISOString().split('T')[0],
+            platform: 'eBay',
+            brand: extractBrand(item.title),
+            model: extractModel(item.title),
+            product_name: item.title,
+            purchase_price: item.price || 0,
+            total_paid: item.price || 0,
+            delivery_status: 'Delivered',
+            seller: item.seller || 'Unknown',
+            notes: `eBay purchase: ${item.title}`,
+            source: 'ebay-oauth',
+            created_at: new Date().toISOString()
+          });
+        });
+      }
+      
+      return purchases;
+    }
+
+    // Helper functions for data extraction
+    function extractBrand(title) {
+      const brands = ['Apple', 'Samsung', 'Sony', 'Bose', 'Sonos', 'LG'];
+      const titleLower = title.toLowerCase();
+      
+      for (const brand of brands) {
+        if (titleLower.includes(brand.toLowerCase())) {
+          return brand;
+        }
+      }
+      
+      return 'Unknown';
+    }
+
+    function extractModel(title) {
+      const words = title.split(' ');
+      if (words.length > 2) {
+        return words.slice(1, 4).join(' ');
+      }
+      return title;
+    }
+
+    // Load sample data fallback
+    function loadSampleData() {
+      const samplePurchases = [
+        {
+          id: 'sample_1',
+          purchase_date: '2025-09-10',
+          platform: 'eBay',
+          brand: 'Apple',
+          model: 'AirPods Pro',
+          purchase_price: 89.99,
+          total_paid: 94.98,
+          delivery_status: 'Delivered',
+          seller: 'tech_deals',
+          notes: 'Sample purchase data'
+        }
+      ];
+      
+      displayPurchases(samplePurchases);
+      updateStatusBar(samplePurchases);
+    }
+
+    // eBay purchase sync function with OAuth integration
     async function syncEbayPurchases() {
       const syncBtn = document.getElementById('btn-ebay-sync');
       const originalText = syncBtn.textContent;
@@ -872,26 +974,47 @@
         
         console.log('🔄 Starting eBay purchase sync...');
         
-        // Try to sync purchases directly
-        console.log('📡 Fetching eBay purchase data...');
+        // Use OAuth API wrapper if available
+        if (typeof window.oauthApiWrapper !== 'undefined') {
+          console.log('📡 Using OAuth API wrapper...');
+          showStatus('📡 Connecting to eBay with OAuth...', 'info');
+          
+          const result = await window.oauthApiWrapper.getPurchases({ limit: 100 });
+          
+          if (result.oauth_required) {
+            // OAuth modal will be shown automatically
+            showStatus('🔐 eBay authentication required. OAuth modal will appear...', 'info');
+            return;
+          }
+          
+          if (result.success && result.data) {
+            const syncData = result.data;
+            console.log('✅ eBay data loaded via OAuth:', syncData);
+            
+            // Process the real eBay data
+            await processEbaySyncData(syncData);
+            return;
+          } else {
+            throw new Error(result.error || 'OAuth sync failed');
+          }
+        }
+        
+        // Fallback to direct API call
+        console.log('📡 Fetching eBay purchase data directly...');
         showStatus('📡 Fetching eBay purchase data...', 'info');
         
-        const syncResponse = await fetch('/api/ebay-sync', {
-          method: 'POST',
+        const syncResponse = await fetch('https://stockpilot-ebay-oauth-production.up.railway.app/api/ebay/default_user/purchases?limit=100', {
+          method: 'GET',
           headers: {
             'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            userId: 'default_user',
-            limit: 100
-          })
+          }
         });
         
         if (!syncResponse.ok) {
           const errorData = await syncResponse.json();
           
           // If authentication is required, show OAuth option
-          if (errorData.details && errorData.details.includes('No tokens found')) {
+          if (errorData.oauth_required || errorData.redirect_required) {
             showStatus('🔐 eBay authentication required. Click to authorize...', 'info');
             
             // Add a button to start OAuth
@@ -908,7 +1031,7 @@
               margin-top: 10px;
             `;
             authBtn.onclick = () => {
-              window.location.href = '/api/v1/ebay/oauth/login';
+              window.location.href = 'https://stockpilot-ebay-oauth-production.up.railway.app/ebay-oauth/login';
             };
             
             // Show the button in the status area
@@ -921,26 +1044,14 @@
             return;
           }
           
-          throw new Error(errorData.details || errorData.error || 'Sync failed');
+          throw new Error(errorData.message || errorData.error || 'Sync failed');
         }
         
         const syncData = await syncResponse.json();
         console.log('✅ eBay data loaded:', syncData);
         
-        // Show eBay marketplace browser
-        const totalItems = syncData.data?.totalItems || 0;
-        const marketplaceItems = syncData.data?.marketplaceItems || [];
-        const dataType = syncData.data?.dataType || 'unknown';
-        const note = syncData.data?.note || '';
-        
-        const statusMessage = dataType === 'real_purchases' ? 
-          `✅ Real eBay purchases loaded! Found ${totalItems} actual purchases to browse` :
-          `⚠️ Sample data loaded! Found ${totalItems} marketplace items (real purchase data not available)`;
-        
-        showStatus(statusMessage, dataType === 'real_purchases' ? 'success' : 'warning');
-        
-        // Show marketplace browser modal
-        showEbayMarketplaceBrowser(marketplaceItems, syncData.data?.categories || [], syncData.data?.brands || [], dataType, note);
+        // Process the eBay sync data
+        await processEbaySyncData(syncData);
         
       } catch (error) {
         console.error('❌ eBay sync error:', error);
@@ -1334,6 +1445,120 @@
       const countElement = document.getElementById('ebay-selection-count');
       countElement.textContent = `${selectedCount} items selected`;
     }
+
+    // Initialize OAuth integration
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('🔐 Initializing OAuth integration for view-purchases...');
+      
+      // Create OAuth handler and API wrapper
+      const EBAY_OAUTH_LOGIN_URL = 'https://stockpilot-ebay-oauth-production.up.railway.app/ebay-oauth/login';
+      
+      // OAuth Handler Class
+      class OAuthHandler {
+        constructor(oauthLoginUrl) {
+          this.oauthLoginUrl = oauthLoginUrl;
+          this.modalId = 'oauthRedirectModal';
+          this.setupModal();
+        }
+
+        setupModal() {
+          if (!document.getElementById(this.modalId)) {
+            const modalHtml = `
+              <div id="${this.modalId}" class="oauth-modal-backdrop" style="display:none;">
+                <div class="oauth-modal-content">
+                  <h2>🔐 Authentication Required</h2>
+                  <p>Your eBay session has expired or requires re-authentication.</p>
+                  <p>Please click the button below to securely log in with eBay.</p>
+                  <button id="oauthRedirectButton" class="btn btn-primary">🔑 Login with eBay</button>
+                </div>
+              </div>
+              <style>
+                .oauth-modal-backdrop {
+                  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                  background-color: rgba(0,0,0,0.7); display: flex;
+                  justify-content: center; align-items: center; z-index: 10000;
+                }
+                .oauth-modal-content {
+                  background: #fff; padding: 30px; border-radius: 8px;
+                  text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                  max-width: 400px; width: 90%;
+                }
+                .oauth-modal-content h2 { color: #333; margin-bottom: 15px; }
+                .oauth-modal-content p { color: #555; margin-bottom: 20px; line-height: 1.5; }
+                .oauth-modal-content button {
+                  background-color: #0064d2; color: white; padding: 12px 24px;
+                  border: none; border-radius: 6px; cursor: pointer;
+                  font-size: 1rem; font-weight: 600; transition: background-color 0.3s ease;
+                }
+                .oauth-modal-content button:hover { background-color: #0056b3; }
+              </style>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            document.getElementById('oauthRedirectButton').addEventListener('click', () => {
+              window.location.href = this.oauthLoginUrl;
+            });
+          }
+        }
+
+        handleOAuthRequired(response) {
+          if (response && response.oauth_required && response.redirect_required) {
+            const modal = document.getElementById(this.modalId);
+            if (modal) {
+              modal.style.display = 'flex';
+            }
+            return true;
+          }
+          return false;
+        }
+
+        hideModal() {
+          const modal = document.getElementById(this.modalId);
+          if (modal) {
+            modal.style.display = 'none';
+          }
+        }
+      }
+
+      // OAuth API Wrapper Class
+      class OAuthAPIWrapper {
+        constructor(oauthHandler) {
+          this.oauthHandler = oauthHandler;
+          this.baseUrl = 'https://stockpilot-ebay-oauth-production.up.railway.app';
+        }
+
+        async getPurchases(params = {}) {
+          try {
+            const url = `${this.baseUrl}/api/ebay/default_user/purchases?limit=${params.limit || 100}`;
+            const response = await fetch(url);
+            
+            if (response.status === 401) {
+              const errorData = await response.json();
+              if (errorData.oauth_required) {
+                return { oauth_required: true, ...errorData };
+              }
+            }
+            
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.message || errorData.error || 'API request failed');
+            }
+            
+            const data = await response.json();
+            return data;
+          } catch (error) {
+            console.error('OAuth API Wrapper error:', error);
+            throw error;
+          }
+        }
+      }
+
+      // Initialize OAuth system
+      window.oauthHandler = new OAuthHandler(EBAY_OAUTH_LOGIN_URL);
+      window.oauthApiWrapper = new OAuthAPIWrapper(window.oauthHandler);
+      
+      console.log('✅ OAuth integration initialized');
+    });
   </script>
 </body>
 </html>
