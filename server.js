@@ -1,7 +1,7 @@
 const express = require('express');
 const path = require('path');
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
 // Set CSP headers to allow eBay service connections
 app.use((req, res, next) => {
@@ -33,8 +33,9 @@ app.get('/health', (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 StockPilot Frontend Server running on port ${PORT}`);
   console.log(`📁 Serving static files from: ${path.join(__dirname, 'frontend')}`);
   console.log(`🔒 CSP configured to allow eBay service connections`);
+  console.log(`🌐 Railway will handle the external URL routing`);
 });
