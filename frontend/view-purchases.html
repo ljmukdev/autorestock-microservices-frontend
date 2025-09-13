@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta http-equiv="Content-Security-Policy" content="connect-src 'self' https://stockpilot-ebay-oauth-production.up.railway.app">
+  <meta http-equiv="Content-Security-Policy" content="connect-src 'self' https://stockpilot-ebay-oauth-production.up.railway.app https://*.railway.app https://*.up.railway.app">
   <title>StockPilot - Purchase Management & Staging</title>
+  <!-- CSP fix for eBay service connections -->
   <style>
     /* Original page styling */
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin:0; padding:15px; background:linear-gradient(135deg,#1a365d 0%,#2c5282 100%); min-height:100vh; }
