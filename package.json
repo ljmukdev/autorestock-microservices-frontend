@@ -1,18 +1,25 @@
 {
   "name": "stockpilot-frontend",
   "version": "1.0.0",
-  "description": "StockPilot Frontend with API Gateway",
-  "main": "api-gateway/app.js",
+  "description": "StockPilot Frontend with CSP configuration",
+  "main": "server.js",
   "scripts": {
-    "start": "cd api-gateway && npm start",
-    "build": "cd api-gateway && npm install",
-    "dev": "cd api-gateway && npm run dev"
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
   },
-  "keywords": ["stockpilot", "frontend", "api-gateway", "microservices"],
-  "author": "ljmukdev",
+  "keywords": [
+    "stockpilot",
+    "frontend",
+    "csp",
+    "ebay"
+  ],
+  "author": "LJMUK",
   "license": "MIT"
 }
-
