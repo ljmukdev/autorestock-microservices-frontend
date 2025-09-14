@@ -74,7 +74,13 @@ class PurchasesView {
 
     const refreshBtn = this.container.querySelector('#btn-refresh');
     if (refreshBtn) {
-      refreshBtn.addEventListener('click', () => this.handleRefresh());
+      // eBay login button
+    const ebayLoginBtn = this.container.querySelector("#btn-ebay-login");
+    if (ebayLoginBtn) {
+      ebayLoginBtn.addEventListener("click", () => this.handleEbayLogin());
+    }
+
+    refreshBtn.addEventListener('click', () => this.handleRefresh());
     }
 
     // Add purchase button
@@ -113,6 +119,16 @@ class PurchasesView {
   /**
    * Handle refresh action
    */
+  async handleEbayLogin() {
+    console.log("eBay login clicked");
+    try {
+      const { oauthService } = await import("../services/auth/oauth.js");
+      await oauthService.authenticate();
+    } catch (error) {
+      console.error("eBay login error", error);
+    }
+  }
+
   async handleRefresh() {
     debugLog('Handling refresh');
     

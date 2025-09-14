@@ -252,7 +252,8 @@ function renderHistoryActions() {
     <div style="display:flex; gap:8px;">
       <button id="btn-add-purchase" class="btn btn-primary" style="padding:6px 12px; font-size:.8rem;">➕ Add Purchase</button>
       <button id="btn-ebay-sync" class="btn btn-info" style="padding:6px 12px; font-size:.8rem;">🛒 Sync eBay</button>
-      <button id="btn-refresh" class="btn btn-secondary" style="padding:6px 12px; font-size:.8rem;">🔄 Refresh</button>
+      <button id="btn-ebay-login" class="btn btn-warning" style="padding:6px 12px; font-size:.8rem;">eBay Login</button>
+      <button id="btn-refresh" class="btn btn-secondary" style="padding:6px 12px; font-size:.8rem;">Refresh</button>
     </div>
   `;
 }
