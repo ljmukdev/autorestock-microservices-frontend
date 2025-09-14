@@ -24,6 +24,9 @@ app.use((req, res, next) => {
   next();
 });
 
+// Serve static files from the root directory (for redirect files)
+app.use(express.static(__dirname));
+
 // Serve static files from the frontend directory
 app.use(express.static(path.join(__dirname, 'frontend')));
 
