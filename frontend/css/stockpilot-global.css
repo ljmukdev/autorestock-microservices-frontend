@@ -179,8 +179,9 @@ body {
 
 /* Button Sizes */
 .btn-small {
-    padding: 8px 16px;
-    font-size: 0.85rem;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    min-height: 32px;
 }
 
 .btn-large {
@@ -191,6 +192,43 @@ body {
 .btn-block {
     width: 100%;
     display: block;
+}
+
+/* ===== UNIFIED ACTION BUTTONS ===== */
+.action-stage {
+    background: linear-gradient(45deg, #3498db, #2980b9) !important;
+    color: white !important;
+}
+
+.action-stage:hover {
+    background: linear-gradient(45deg, #2980b9, #1f4e79) !important;
+}
+
+.action-split {
+    background: linear-gradient(45deg, #9b59b6, #8e44ad) !important;
+    color: white !important;
+}
+
+.action-split:hover {
+    background: linear-gradient(45deg, #8e44ad, #7d3c98) !important;
+}
+
+.action-inventory {
+    background: linear-gradient(45deg, #27ae60, #229954) !important;
+    color: white !important;
+}
+
+.action-inventory:hover {
+    background: linear-gradient(45deg, #229954, #1e8449) !important;
+}
+
+.action-delete {
+    background: linear-gradient(45deg, #e74c3c, #c0392b) !important;
+    color: white !important;
+}
+
+.action-delete:hover {
+    background: linear-gradient(45deg, #c0392b, #a93226) !important;
 }
 
 /* ===== FORM STYLES ===== */

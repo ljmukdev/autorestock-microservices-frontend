@@ -72,10 +72,10 @@ function renderPurchaseActions(purchase) {
   
   return `
     <div class="staging-controls">
-      <button class="staging-btn stage" data-action="stage" data-id="${purchaseId}">🔍 Stage</button>
-      <button class="staging-btn split" data-action="split" data-id="${purchaseId}">✂️ Split</button>
-      <button class="staging-btn inventory" data-action="inventory" data-id="${purchaseId}">📦 Inventory</button>
-      <button class="staging-btn delete" data-action="delete" data-id="${purchaseId}" style="background: #dc2626; color: white;">🗑️ Delete</button>
+      <button class="btn btn-small action-stage" data-action="stage" data-id="${purchaseId}">🔍 Stage</button>
+      <button class="btn btn-small action-split" data-action="split" data-id="${purchaseId}">✂️ Split</button>
+      <button class="btn btn-small action-inventory" data-action="inventory" data-id="${purchaseId}">📦 Inventory</button>
+      <button class="btn btn-small action-delete" data-action="delete" data-id="${purchaseId}">🗑️ Delete</button>
     </div>
   `;
 }
@@ -250,10 +250,10 @@ export function renderPurchaseHistory(purchases, options = {}) {
 function renderHistoryActions() {
   return `
     <div style="display:flex; gap:8px;">
-      <button id="btn-add-purchase" class="btn btn-primary" style="padding:6px 12px; font-size:.8rem;">➕ Add Purchase</button>
-      <button id="btn-ebay-sync" class="btn btn-info" style="padding:6px 12px; font-size:.8rem;">🛒 Sync eBay</button>
-      <button id="btn-ebay-login" class="btn btn-warning" style="padding:6px 12px; font-size:.8rem;">🔐 eBay Login</button>
-      <button id="btn-refresh" class="btn btn-secondary" style="padding:6px 12px; font-size:.8rem;">Refresh</button>
+      <button id="btn-add-purchase" class="btn btn-primary btn-small">➕ Add Purchase</button>
+      <button id="btn-ebay-sync" class="btn btn-info btn-small">🛒 Sync eBay</button>
+      <button id="btn-ebay-login" class="btn btn-warning btn-small">🔐 eBay Login</button>
+      <button id="btn-refresh" class="btn btn-secondary btn-small">Refresh</button>
     </div>
   `;
 }
