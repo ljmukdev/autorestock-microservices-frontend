@@ -85,3 +85,144 @@ export function updateStatusBar(status) {
 }
 
 // Add other essential utility functions here as needed
+/**
+ * Extract brand from product title
+ */
+export function extractBrand(title) {
+  if (!title) return 'Unknown';
+  
+  const brands = ['Apple', 'Samsung', 'Sony', 'Bose', 'Sonos', 'LG', 'Microsoft', 'Google', 'Huawei', 'OnePlus'];
+  const titleLower = title.toLowerCase();
+  
+  for (const brand of brands) {
+    if (titleLower.includes(brand.toLowerCase())) {
+      return brand;
+    }
+  }
+  
+  return 'Unknown';
+}
+
+/**
+ * Extract model from product title
+ */
+export function extractModel(title, brand = '') {
+  if (!title) return 'Unknown';
+  
+  let model = title;
+  
+  if (brand && brand !== 'Unknown') {
+    model = model.replace(new RegExp(brand, 'gi'), '').trim();
+  }
+  
+  const words = model.split(' ').filter(word => word.length > 0);
+  if (words.length > 2) {
+    return words.slice(0, 3).join(' ');
+  }
+  
+  return model || 'Unknown';
+}
+
+/**
+ * Slugify string for identifiers
+ */
+export function slugify(str) {
+  return String(str || '')
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 24);
+}
+
+/**
+ * Format date to YYYYMMDD
+ */
+export function formatDateYYYYMMDD(date) {
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}${month}${day}`;
+}
+
+/**
+ * Get platform emoji
+ */
+export function getPlatformEmoji(platform) {
+  const emojis = {
+    'eBay': '🪙',
+    'Amazon': '📦',
+    'Vinted': '👕',
+    'Facebook Marketplace': '📘',
+    'Depop': '🛍️',
+    'Gumtree': '🌳',
+    'Manual': '✋',
+    'Other': '🛒'
+  };
+  return emojis[platform] || '🛒';
+}
+
+/**
+ * Generate unique identifier
+ */
+export function generateId(prefix = 'id') {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
+/**
+ * Deep clone object
+ */
+export function deepClone(obj) {
+  if (obj === null || typeof obj !== 'object') return obj;
+  if (obj instanceof Date) return new Date(obj.getTime());
+  if (obj instanceof Array) return obj.map(item => deepClone(item));
+  if (typeof obj === 'object') {
+    const cloned = {};
+    Object.keys(obj).forEach(key => {
+      cloned[key] = deepClone(obj[key]);
+    });
+    return cloned;
+  }
+}
+
+/**
+ * Safe JSON parse
+ */
+export function safeJSONParse(str, defaultValue = null) {
+  try {
+    return JSON.parse(str);
+  } catch (error) {
+    console.warn('JSON parse error:', error);
+    return defaultValue;
+  }
+}
+
+/**
+ * Debounce function calls
+ */
+export function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+/**
+ * Throttle function calls
+ */
+export function throttle(func, limit) {
+  let inThrottle;
+  return function executedFunction(...args) {
+    if (!inThrottle) {
+      func.apply(this, args);
+      inThrottle = true;
+      setTimeout(() => inThrottle = false, limit);
+    }
+  };
+}
