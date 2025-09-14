@@ -99,7 +99,7 @@ class OAuthService {
         // Build OAuth URL - force fresh authentication
         const oauthUrl = API_ENDPOINTS.AUTH;
         const returnUrl = window.location.href;
-        const fullOAuthUrl = `${oauthUrl}?return_url=${encodeURIComponent(returnUrl)}&force_reauth=1`;
+        const fullOAuthUrl = `${oauthUrl}?return_url=${encodeURIComponent(returnUrl)}&force_reauth=1&user_id=ljmukdev`;
         
         debugLog('Opening OAuth in popup window', { url: fullOAuthUrl });
         
@@ -219,7 +219,7 @@ class OAuthService {
       // Fallback: direct redirect
       const oauthUrl = API_ENDPOINTS.AUTH;
       const returnUrl = window.location.href;
-      const fullOAuthUrl = `${oauthUrl}?return_url=${encodeURIComponent(returnUrl)}&force_reauth=1`;
+      const fullOAuthUrl = `${oauthUrl}?return_url=${encodeURIComponent(returnUrl)}&force_reauth=1&user_id=ljmukdev`;
       
       debugLog('Redirecting to OAuth URL', { url: fullOAuthUrl });
       window.location.href = fullOAuthUrl;
