@@ -3,7 +3,7 @@
  * Handles all purchase-related API calls
  */
 
-import { getJSON, postJSON, putJSON, deleteJSON, withRetry, withTimeout, handleHttpError } from '../../core/http.js';
+import { getJSON, postJSON, putJSON, withRetry, withTimeout, handleHttpError } from '../../core/http.js';
 import { API_ENDPOINTS, debugLog } from '../../core/config.js';
 
 /**

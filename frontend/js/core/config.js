@@ -17,8 +17,8 @@ export const USE_SAMPLE = urlParams.get('sample') === '1' ||
 // API endpoints
 export const API_ENDPOINTS = {
   PURCHASES: `${EBAY_SERVICE_BASE}/api/ebay/default_user/purchases`,
-  INVENTORY: '/api/inventory', // Placeholder
-  SALES: '/api/sales', // Placeholder
+  INVENTORY: '/api/inventory',
+  SALES: '/api/sales',
   AUTH: `${EBAY_SERVICE_BASE}/ebay-oauth/login`
 };
 
@@ -70,11 +70,13 @@ export function validateConfig() {
 }
 
 // Initialize configuration
-debugLog('Configuration loaded'); debugLog('PURCHASES endpoint:', API_ENDPOINTS.PURCHASES, {
+debugLog('Configuration loaded', {
   EBAY_SERVICE_BASE,
   FORCE_LIVE,
   USE_SAMPLE,
   FEATURES
 });
+
+debugLog('PURCHASES endpoint:', API_ENDPOINTS.PURCHASES);
 
 validateConfig();
