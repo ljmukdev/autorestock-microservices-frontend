@@ -58,14 +58,6 @@ export function validateConfig() {
     issues.push('EBAY_SERVICE_BASE must be a valid URL');
   }
   
-  // Test API endpoint construction
-  try {
-    new URL(API_ENDPOINTS.PURCHASES);
-    debugLog('PURCHASES endpoint validated:', API_ENDPOINTS.PURCHASES);
-  } catch (error) {
-    issues.push(Invalid PURCHASES endpoint: );
-  }
-  
   if (FORCE_LIVE && USE_SAMPLE) {
     issues.push('Cannot force live mode and use sample mode simultaneously');
   }
@@ -78,7 +70,7 @@ export function validateConfig() {
 }
 
 // Initialize configuration
-debugLog('Configuration loaded', {
+debugLog('Configuration loaded'); debugLog('PURCHASES endpoint:', API_ENDPOINTS.PURCHASES, {
   EBAY_SERVICE_BASE,
   FORCE_LIVE,
   USE_SAMPLE,
