@@ -76,10 +76,17 @@ class OAuthService {
       return this.authPromise;
     }
 
-    debugLog('Handling auth failure, starting silent OAuth flow', { failedUrl });
+    debugLog('Handling auth failure, starting direct OAuth redirect', { failedUrl });
     
-    // No visible message - silent authentication
-    return this.startOAuthFlow();
+    // Use direct redirect instead of popup to avoid blocking
+    const oauthUrl = API_ENDPOINTS.AUTH;
+    const returnUrl = window.location.href;
+    const fullOAuthUrl = `${oauthUrl}?return_url=${encodeURIComponent(returnUrl)}&force_reauth=1&user_id=ljmukdev`;
+    
+    debugLog('Redirecting to OAuth URL', { url: fullOAuthUrl });
+    window.location.href = fullOAuthUrl;
+    
+    return false; // Will redirect, so return false
   }
 
   /**
@@ -112,8 +119,10 @@ class OAuthService {
         
         if (!authWindow) {
           this.isAuthenticating = false;
-          debugLog('Failed to open OAuth popup - popup blocked?');
-          reject(new Error('Popup blocked. Please allow popups for this site.'));
+          debugLog('Failed to open OAuth popup - popup blocked, trying direct redirect');
+          // Instead of rejecting, try direct redirect
+          window.location.href = fullOAuthUrl;
+          reject(new Error('Popup blocked. Redirecting to OAuth page.'));
           return;
         }
         
@@ -210,22 +219,15 @@ class OAuthService {
   async authenticate() {
     debugLog('Manual authentication triggered - forcing new token');
     
-    try {
-      // Try popup first
-      return await this.startOAuthFlow();
-    } catch (error) {
-      debugLog('Popup OAuth failed, trying direct redirect', error);
-      
-      // Fallback: direct redirect
-      const oauthUrl = API_ENDPOINTS.AUTH;
-      const returnUrl = window.location.href;
-      const fullOAuthUrl = `${oauthUrl}?return_url=${encodeURIComponent(returnUrl)}&force_reauth=1&user_id=ljmukdev`;
-      
-      debugLog('Redirecting to OAuth URL', { url: fullOAuthUrl });
-      window.location.href = fullOAuthUrl;
-      
-      return false; // Will redirect, so return false
-    }
+    // Use direct redirect instead of popup to avoid blocking issues
+    const oauthUrl = API_ENDPOINTS.AUTH;
+    const returnUrl = window.location.href;
+    const fullOAuthUrl = `${oauthUrl}?return_url=${encodeURIComponent(returnUrl)}&force_reauth=1&user_id=ljmukdev`;
+    
+    debugLog('Redirecting to OAuth URL', { url: fullOAuthUrl });
+    window.location.href = fullOAuthUrl;
+    
+    return false; // Will redirect, so return false
   }
 
   /**
