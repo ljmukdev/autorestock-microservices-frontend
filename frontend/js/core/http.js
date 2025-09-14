@@ -1,12 +1,22 @@
 /**
- * StockPilot HTTP Client
- * Strict fetch wrapper with error handling and retry logic
+ * StockPilot HTTP Client with OAuth Auto-Redirect
  */
 
 import { DEFAULT_REQUEST_OPTIONS, debugLog } from './config.js';
 
+// Global OAuth redirect handler
+let oauthRedirectHandler = null;
+
 /**
- * Strict fetch that throws on non-2xx responses
+ * Set the OAuth redirect handler
+ */
+export function setOAuthRedirectHandler(handler) {
+  oauthRedirectHandler = handler;
+  debugLog('OAuth redirect handler registered');
+}
+
+/**
+ * Strict fetch that throws on non-2xx responses and handles auth failures
  */
 export async function fetchJSONStrict(url, options = {}) {
   const mergedOptions = {
@@ -25,6 +35,22 @@ export async function fetchJSONStrict(url, options = {}) {
     
     if (!response.ok) {
       const errorText = await response.text().catch(() => '');
+      
+      // Check for authentication failures
+      if (response.status === 401 || response.status === 403) {
+        debugLog('Authentication failure detected', { status: response.status, url });
+        
+        // Check if error indicates OAuth token issues
+        if (errorText.includes('token') || errorText.includes('unauthorized') || errorText.includes('authentication')) {
+          debugLog('OAuth token appears expired, triggering redirect');
+          
+          if (oauthRedirectHandler) {
+            // Give a small delay to allow current operation to complete
+            setTimeout(() => oauthRedirectHandler(url), 100);
+          }
+        }
+      }
+      
       const error = new Error(`HTTP ${response.status} ${response.statusText} @ ${url}\n${errorText}`);
       error.status = response.status;
       error.statusText = response.statusText;
@@ -96,6 +122,12 @@ export async function withRetry(requestFn, maxRetries = 3, delay = 1000) {
     } catch (error) {
       lastError = error;
       
+      // Don't retry on auth errors - let OAuth redirect handle it
+      if (error.status === 401 || error.status === 403) {
+        throw error;
+      }
+      
+      // Don't retry on client errors (4xx)
       if (error.status >= 400 && error.status < 500) {
         throw error;
       }
@@ -130,7 +162,7 @@ export function handleHttpError(error) {
   if (error.status === 401) {
     return {
       type: 'auth_required',
-      message: 'Authentication required. Please log in.',
+      message: 'Authentication required. Redirecting to sign in...',
       action: 'redirect_to_auth'
     };
   }
@@ -138,8 +170,8 @@ export function handleHttpError(error) {
   if (error.status === 403) {
     return {
       type: 'forbidden',
-      message: 'Access denied. Insufficient permissions.',
-      action: 'contact_admin'
+      message: 'Access denied. Please re-authenticate.',
+      action: 'redirect_to_auth'
     };
   }
   

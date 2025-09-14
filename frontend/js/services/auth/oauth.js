@@ -1,217 +1,192 @@
 /**
- * StockPilot OAuth Service
- * Handles eBay OAuth authentication
+ * StockPilot OAuth Service with Auto-Redirect
  */
 
 import { API_ENDPOINTS, debugLog } from '../../core/config.js';
-import { updateStatusBar } from '../../core/utils.js';
+import { setOAuthRedirectHandler } from '../../core/http.js';
 
 class OAuthService {
   constructor() {
-    this.isAuthenticated = false;
-    this.authToken = null;
-    this.baseUrl = API_ENDPOINTS.AUTH.replace('/login', '');
+    this.isAuthenticating = false;
+    this.authWindow = null;
+    this.authPromise = null;
+    
+    // Register this service as the OAuth redirect handler
+    setOAuthRedirectHandler((failedUrl) => this.handleAuthFailure(failedUrl));
   }
 
   /**
    * Check if user is authenticated
-   * @returns {boolean} Authentication status
-   */
-  isUserAuthenticated() {
-    return this.isAuthenticated && this.authToken !== null;
-  }
-
-  /**
-   * Initiate OAuth login
-   * @returns {Promise<void>}
-   */
-  async initiateLogin() {
-    debugLog('Initiating OAuth login');
-    
-    try {
-      updateStatusBar({ message: 'Redirecting to eBay authentication...', type: 'info' });
-      
-      // Redirect to OAuth login URL
-      window.location.href = API_ENDPOINTS.AUTH;
-    } catch (error) {
-      debugLog('Error initiating OAuth login', error);
-      updateStatusBar({ 
-        message: `❌ Login error: ${error.message}`, 
-        type: 'error' 
-      });
-      throw error;
-    }
-  }
-
-  /**
-   * Handle OAuth callback
-   * @param {string} code - Authorization code
-   * @returns {Promise<boolean>} Success status
-   */
-  async handleCallback(code) {
-    debugLog('Handling OAuth callback', { code: code ? 'present' : 'missing' });
-    
-    if (!code) {
-      throw new Error('No authorization code provided');
-    }
-
-    try {
-      updateStatusBar({ message: 'Completing authentication...', type: 'info' });
-      
-      // Exchange code for token (placeholder)
-      const response = await fetch(`${this.baseUrl}/callback`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code })
-      });
-
-      if (!response.ok) {
-        throw new Error(`OAuth callback failed: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      this.authToken = data.token;
-      this.isAuthenticated = true;
-      
-      updateStatusBar({ 
-        message: '✅ Authentication successful', 
-        type: 'success' 
-      });
-      
-      debugLog('OAuth authentication completed');
-      return true;
-    } catch (error) {
-      debugLog('Error handling OAuth callback', error);
-      updateStatusBar({ 
-        message: `❌ Authentication failed: ${error.message}`, 
-        type: 'error' 
-      });
-      throw error;
-    }
-  }
-
-  /**
-   * Logout user
-   * @returns {Promise<void>}
-   */
-  async logout() {
-    debugLog('Logging out user');
-    
-    try {
-      if (this.authToken) {
-        // Call logout endpoint (placeholder)
-        await fetch(`${this.baseUrl}/logout`, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.authToken}`
-          }
-        });
-      }
-      
-      this.authToken = null;
-      this.isAuthenticated = false;
-      
-      updateStatusBar({ 
-        message: 'Logged out successfully', 
-        type: 'info' 
-      });
-      
-      debugLog('User logged out');
-    } catch (error) {
-      debugLog('Error during logout', error);
-      // Still clear local state even if server logout fails
-      this.authToken = null;
-      this.isAuthenticated = false;
-    }
-  }
-
-  /**
-   * Get authentication headers
-   * @returns {Object} Headers with auth token
-   */
-  getAuthHeaders() {
-    if (!this.isAuthenticated || !this.authToken) {
-      return {};
-    }
-    
-    return {
-      'Authorization': `Bearer ${this.authToken}`
-    };
-  }
-
-  /**
-   * Check authentication status from server
-   * @returns {Promise<boolean>} Authentication status
    */
   async checkAuthStatus() {
     try {
-      // Skip status check for now - endpoint doesn't exist
-      this.isAuthenticated = false;
-      this.authToken = null;
-      return false;
+      // Try to make a simple request to check auth status
+      const response = await fetch(`${API_ENDPOINTS.PURCHASES}?limit=1`);
+      const isAuthenticated = response.ok;
+      
+      debugLog('Auth status check', { authenticated: isAuthenticated, status: response.status });
+      return isAuthenticated;
     } catch (error) {
-      debugLog('Error checking auth status', error);
-      this.isAuthenticated = false;
-      this.authToken = null;
+      debugLog('Auth status check failed', error);
       return false;
     }
   }
 
   /**
-   * Show OAuth modal
-   * @param {string} message - Modal message
+   * Handle authentication failure - automatically redirect to OAuth
    */
-  showOAuthModal(message = 'Authentication required') {
-    // Create modal if it doesn't exist
-    let modal = document.getElementById('oauth-modal');
-    if (!modal) {
-      modal = document.createElement('div');
-      modal.id = 'oauth-modal';
-      modal.className = 'modal-overlay';
-      modal.innerHTML = `
-        <div class="modal-content">
-          <div class="modal-header">
-            <h3 class="modal-title">🔐 Authentication Required</h3>
-            <button class="close-btn" id="oauth-modal-close">&times;</button>
-          </div>
-          <div class="modal-body">
-            <p>${message}</p>
-            <p>Please click the button below to securely log in with eBay.</p>
-            <button id="oauth-login-btn" class="btn btn-primary">🔑 Login with eBay</button>
-          </div>
-        </div>
-      `;
-      document.body.appendChild(modal);
-      
-      // Bind events
-      const closeBtn = document.getElementById('oauth-modal-close');
-      const loginBtn = document.getElementById('oauth-login-btn');
-      
-      if (closeBtn) {
-        closeBtn.addEventListener('click', () => this.hideOAuthModal());
-      }
-      if (loginBtn) {
-        loginBtn.addEventListener('click', () => this.initiateLogin());
-      }
-      modal.addEventListener('click', (e) => {
-        if (e.target === modal) this.hideOAuthModal();
-      });
+  async handleAuthFailure(failedUrl) {
+    if (this.isAuthenticating) {
+      debugLog('Already authenticating, waiting for current process');
+      return this.authPromise;
     }
+
+    debugLog('Handling auth failure, starting OAuth flow', { failedUrl });
     
-    modal.style.display = 'flex';
-    debugLog('OAuth modal shown');
+    // Show user-friendly message
+    this.showAuthMessage('Session expired. Redirecting to eBay sign-in...');
+    
+    // Start OAuth flow
+    return this.startOAuthFlow();
   }
 
   /**
-   * Hide OAuth modal
+   * Start OAuth authentication flow
    */
-  hideOAuthModal() {
-    const modal = document.getElementById('oauth-modal');
-    if (modal) {
-      modal.style.display = 'none';
-      debugLog('OAuth modal hidden');
+  async startOAuthFlow() {
+    if (this.isAuthenticating) {
+      return this.authPromise;
     }
+
+    this.isAuthenticating = true;
+    
+    this.authPromise = new Promise((resolve, reject) => {
+      try {
+        debugLog('Starting OAuth flow');
+        
+        // Build OAuth URL
+        const oauthUrl = API_ENDPOINTS.AUTH;
+        const returnUrl = window.location.href;
+        const fullOAuthUrl = `${oauthUrl}?return_url=${encodeURIComponent(returnUrl)}`;
+        
+        debugLog('Opening OAuth window', { url: fullOAuthUrl });
+        
+        // Open OAuth in popup window
+        this.authWindow = window.open(
+          fullOAuthUrl,
+          'ebay_oauth',
+          'width=600,height=700,scrollbars=yes,resizable=yes,status=yes'
+        );
+
+        if (!this.authWindow) {
+          throw new Error('Popup blocked. Please allow popups and try again.');
+        }
+
+        // Monitor the popup window
+        const checkClosed = setInterval(() => {
+          if (this.authWindow.closed) {
+            clearInterval(checkClosed);
+            this.isAuthenticating = false;
+            
+            // Check if authentication was successful
+            setTimeout(async () => {
+              const isAuth = await this.checkAuthStatus();
+              if (isAuth) {
+                debugLog('OAuth completed successfully');
+                this.hideAuthMessage();
+                resolve(true);
+                // Refresh the page to reload with new auth
+                window.location.reload();
+              } else {
+                debugLog('OAuth window closed without successful auth');
+                this.showAuthMessage('Authentication cancelled or failed. Please try again.');
+                resolve(false);
+              }
+            }, 1000);
+          }
+        }, 1000);
+
+        // Timeout after 5 minutes
+        setTimeout(() => {
+          if (this.authWindow && !this.authWindow.closed) {
+            this.authWindow.close();
+            clearInterval(checkClosed);
+            this.isAuthenticating = false;
+            this.showAuthMessage('Authentication timed out. Please try again.');
+            reject(new Error('OAuth timeout'));
+          }
+        }, 300000);
+
+      } catch (error) {
+        this.isAuthenticating = false;
+        this.showAuthMessage(`Authentication error: ${error.message}`);
+        reject(error);
+      }
+    });
+
+    return this.authPromise;
+  }
+
+  /**
+   * Manually trigger OAuth flow
+   */
+  async authenticate() {
+    debugLog('Manual authentication triggered');
+    return this.startOAuthFlow();
+  }
+
+  /**
+   * Show authentication message to user
+   */
+  showAuthMessage(message) {
+    const existingMessage = document.getElementById('oauth-message');
+    if (existingMessage) {
+      existingMessage.remove();
+    }
+
+    const messageDiv = document.createElement('div');
+    messageDiv.id = 'oauth-message';
+    messageDiv.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      z-index: 10000;
+      text-align: center;
+      border-left: 4px solid #3b82f6;
+    `;
+    
+    messageDiv.innerHTML = `
+      <div style="margin-bottom: 10px; font-size: 16px; color: #1a365d;">
+        🔐 eBay Authentication
+      </div>
+      <div style="color: #4a5568;">
+        ${message}
+      </div>
+    `;
+
+    document.body.appendChild(messageDiv);
+  }
+
+  /**
+   * Hide authentication message
+   */
+  hideAuthMessage() {
+    const existingMessage = document.getElementById('oauth-message');
+    if (existingMessage) {
+      existingMessage.remove();
+    }
+  }
+
+  /**
+   * Get authentication status
+   */
+  isAuthenticated() {
+    return this.checkAuthStatus();
   }
 }
 
