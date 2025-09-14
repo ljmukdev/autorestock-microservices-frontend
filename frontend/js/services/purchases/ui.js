@@ -456,13 +456,19 @@ export function renderPurchaseDetailsModal(purchase) {
         <h3>💰 Financial Breakdown</h3>
         <table class="purchase-details-table">
           <tr><td>Item Price:</td><td>${formatCurrency(pricePaid)}</td></tr>
+          <tr><td>Unit Price:</td><td>${formatCurrency(pricePaid)}</td></tr>
           <tr><td>Shipping Cost:</td><td>${formatCurrency(shippingCost)}</td></tr>
+          <tr><td>VAT:</td><td>${formatCurrency(purchase.vat || tax)}</td></tr>
           <tr><td>Fees:</td><td>${formatCurrency(fees)}</td></tr>
-          <tr><td>Tax:</td><td>${formatCurrency(tax)}</td></tr>
           <tr><td>Discount:</td><td style="color: #059669;">-${formatCurrency(discount)}</td></tr>
           <tr><td><strong>Subtotal:</strong></td><td><strong>${formatCurrency(subtotal)}</strong></td></tr>
-          <tr><td><strong>Total Amount:</strong></td><td><strong style="color: #059669; font-size: 1.1rem;">${formatCurrency(total)}</strong></td></tr>
+          <tr><td><strong>Order Total:</strong></td><td><strong style="color: #059669; font-size: 1.1rem;">${formatCurrency(total)}</strong></td></tr>
         </table>
+        ${purchase.vat ? `
+        <div class="vat-notice">
+          <small>*VAT collected on this transaction based on applicable laws.</small>
+        </div>
+        ` : ''}
       </div>
 
       <div class="purchase-details-section">
@@ -491,26 +497,65 @@ export function renderPurchaseDetailsModal(purchase) {
       </div>
 
       <div class="purchase-details-section">
-        <h3>👤 Seller & Shipping</h3>
+        <h3>👤 Seller Information</h3>
         <table class="purchase-details-table">
           <tr><td>Seller Username:</td><td>${purchase.seller_username || 'N/A'}</td></tr>
           <tr><td>Seller ID:</td><td>${purchase.seller_id || purchase.sellerId || 'N/A'}</td></tr>
           <tr><td>Seller Rating:</td><td>${purchase.seller_rating || 'N/A'}</td></tr>
-          <tr><td>Tracking Number:</td><td>${purchase.tracking_ref || purchase.trackingNumber || 'N/A'}</td></tr>
-          <tr><td>Carrier:</td><td>${purchase.carrier || purchase.shipping_carrier || 'N/A'}</td></tr>
-          <tr><td>Shipping Method:</td><td>${purchase.shipping_method || 'N/A'}</td></tr>
-          <tr><td>Delivery Status:</td><td>${purchase.delivery_status || 'N/A'}</td></tr>
+          <tr><td>Item Number:</td><td>${purchase.item_number || purchase.itemId || 'N/A'}</td></tr>
+          <tr><td>Returns Accepted:</td><td>${purchase.returns_accepted ? 'Yes' : 'No'}</td></tr>
         </table>
       </div>
 
       <div class="purchase-details-section">
-        <h3>📍 Location & Address</h3>
+        <h3>📦 Tracking & Delivery</h3>
         <table class="purchase-details-table">
-          <tr><td>Shipping Address:</td><td>${purchase.shipping_address || 'N/A'}</td></tr>
-          <tr><td>Billing Address:</td><td>${purchase.billing_address || 'N/A'}</td></tr>
+          <tr><td>Tracking Number:</td><td>${purchase.tracking_ref || purchase.trackingNumber || 'N/A'}</td></tr>
+          <tr><td>Carrier:</td><td>${purchase.carrier || purchase.shipping_carrier || 'N/A'}</td></tr>
+          <tr><td>Shipping Method:</td><td>${purchase.shipping_method || 'N/A'}</td></tr>
+          <tr><td>Delivery Status:</td><td>${purchase.delivery_status || 'N/A'}</td></tr>
+          <tr><td>Expected Delivery:</td><td>${purchase.expected_delivery || purchase.arriving_by || 'N/A'}</td></tr>
+          <tr><td>Delivery Progress:</td><td>${purchase.delivery_progress || 'N/A'}</td></tr>
+        </table>
+        ${purchase.tracking_ref ? `
+        <div class="tracking-actions">
+          <button class="btn btn-small btn-primary" onclick="window.open('https://www.royalmail.com/track-your-item#/tracking-results/${purchase.tracking_ref}', '_blank')">
+            📦 Track Package
+          </button>
+        </div>
+        ` : ''}
+      </div>
+
+      <div class="purchase-details-section">
+        <h3>📍 Delivery Address</h3>
+        <div class="address-display">
+          ${purchase.delivery_address ? `
+            <div class="address-block">
+              <strong>${purchase.delivery_name || 'Delivery Address'}</strong><br>
+              ${purchase.delivery_address.replace(/\n/g, '<br>')}
+            </div>
+          ` : `
+            <div class="address-block">
+              <strong>Shipping Address:</strong><br>
+              ${purchase.shipping_address || 'N/A'}
+            </div>
+          `}
+        </div>
+        <table class="purchase-details-table">
           <tr><td>Country:</td><td>${purchase.country || 'N/A'}</td></tr>
           <tr><td>Currency:</td><td>${purchase.currency || 'GBP'}</td></tr>
           <tr><td>Language:</td><td>${purchase.language || 'en'}</td></tr>
+        </table>
+      </div>
+
+      <div class="purchase-details-section">
+        <h3>💳 Payment Details</h3>
+        <table class="purchase-details-table">
+          <tr><td>Payment Method:</td><td>${purchase.payment_method || 'N/A'}</td></tr>
+          <tr><td>Card Ending:</td><td>${purchase.card_ending || 'N/A'}</td></tr>
+          <tr><td>Payment Status:</td><td>${purchase.payment_status || 'N/A'}</td></tr>
+          <tr><td>Payment Date:</td><td>${formatShortDate(purchase.payment_date || purchase.paidDate)}</td></tr>
+          <tr><td>Payment Name:</td><td>${purchase.payment_name || 'N/A'}</td></tr>
         </table>
       </div>
     </div>

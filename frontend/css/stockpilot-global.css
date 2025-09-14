@@ -1047,6 +1047,37 @@ body {
     border-top: 1px solid #f3f4f6;
 }
 
+.tracking-actions {
+    margin-top: 12px;
+    text-align: center;
+}
+
+.address-display {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 12px;
+}
+
+.address-block {
+    line-height: 1.5;
+    color: #1a365d;
+}
+
+.vat-notice {
+    margin-top: 8px;
+    padding: 8px;
+    background: #f0f9ff;
+    border-left: 3px solid #0ea5e9;
+    border-radius: 4px;
+}
+
+.vat-notice small {
+    color: #0369a1;
+    font-style: italic;
+}
+
 .purchase-notes {
     background: #fef3c7;
     padding: 12px;
