@@ -395,19 +395,38 @@ class StockPilotAPI {
     // ===== EBAY SPECIFIC METHODS =====
     
     /**
-     * Get eBay orders
-     * @returns {Promise} eBay orders data
+     * Get eBay orders (purchases)
+     * @param {number} limit - Number of orders to retrieve
+     * @returns {Promise} eBay purchase orders
      */
-    async getEbayOrders() {
-        return this.request('/api/ebay/orders');
+    async getEbayOrders(limit = 10) {
+        return this.request(`https://stockpilot-ebay-oauth-production.up.railway.app/api/ebay/default_user/purchases?limit=${limit}`);
     }
 
     /**
-     * Get eBay orders for purchases
+     * Get eBay orders for purchases (alias)
+     * @param {number} limit - Number of orders to retrieve
      * @returns {Promise} eBay purchase orders
      */
-    async getEbayOrdersForPurchases() {
-        return this.request('/api/ebay/orders/for-purchases');
+    async getEbayOrdersForPurchases(limit = 10) {
+        return this.getEbayOrders(limit);
+    }
+
+    /**
+     * Get eBay sales data
+     * @param {number} limit - Number of sales to retrieve
+     * @returns {Promise} eBay sales data
+     */
+    async getEbaySales(limit = 10) {
+        return this.request(`https://stockpilot-ebay-oauth-production.up.railway.app/api/ebay/default_user/sales?limit=${limit}`);
+    }
+
+    /**
+     * Get eBay account summary
+     * @returns {Promise} eBay account data
+     */
+    async getEbayAccountSummary() {
+        return this.request('https://stockpilot-ebay-oauth-production.up.railway.app/api/ebay/default_user/account-summary');
     }
 
     /**
@@ -415,7 +434,7 @@ class StockPilotAPI {
      * @returns {Promise} eBay service test result
      */
     async testEbayService() {
-        return this.request('/api/ebay/test');
+        return this.request('https://stockpilot-ebay-oauth-production.up.railway.app/api/ebay/default_user/test');
     }
 
     // ===== UTILITY METHODS =====

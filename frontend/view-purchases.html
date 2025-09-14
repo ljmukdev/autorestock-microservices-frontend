@@ -329,12 +329,47 @@
     async function loadPurchases() {
       showLoading();
       try {
-        // Load from localStorage since we're using eBay data now
+        console.log('🔄 Loading purchases from live eBay service...');
+        showStatus('🔄 Loading live eBay purchases...', 'info');
+        
+        // Try to load from live eBay service first
+        try {
+          const response = await fetch('https://stockpilot-ebay-oauth-production.up.railway.app/api/ebay/default_user/purchases?limit=100', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log('✅ Live eBay data loaded:', data);
+            
+            if (data.success && data.data && data.data.orders && data.data.orders.length > 0) {
+              // Convert eBay data to our format
+              const purchases = convertEbayDataToPurchases(data.data);
+              currentPurchases = purchases;
+              displayPurchases(purchases);
+              updateStatusBar(purchases);
+              updatePurchaseHistoryCount(purchases);
+              showStatus(`✅ Live eBay data loaded! Found ${purchases.length} purchases`, 'success');
+              return;
+            } else {
+              console.log('📦 No live eBay purchases found, checking localStorage...');
+            }
+          } else {
+            console.log('⚠️ Live eBay service unavailable, checking localStorage...');
+          }
+        } catch (ebayError) {
+          console.log('⚠️ Live eBay service error, checking localStorage:', ebayError.message);
+        }
+        
+        // Fallback to localStorage
         const storedPurchases = localStorage.getItem('stockpilot_purchases');
         if (!storedPurchases) {
           console.log('📦 No stored purchases found, showing empty state');
           displayPurchases([]);
-          showStatus('📦 No purchases found. Click "Sync Purchases" to load eBay data.', 'info');
+          showStatus('📦 No purchases found. Click "Sync eBay" to load live data.', 'info');
           return;
         }
         const data = JSON.parse(storedPurchases);
@@ -344,7 +379,7 @@
         displayPurchases(purchases);
         updateStatusBar(purchases);
         updatePurchaseHistoryCount(purchases);
-        showStatus(`✅ Successfully loaded ${purchases.length} purchases`, 'success');
+        showStatus(`✅ Loaded ${purchases.length} stored purchases`, 'success');
       } catch (error) {
         console.error('❌ Error loading purchases:', error);
         showError(error);

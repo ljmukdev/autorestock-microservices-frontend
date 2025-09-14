@@ -297,3 +297,4 @@ function showMessage(message, type = 'info') {
 // Export for global access
 window.initializeOAuthIntegration = initializeOAuthIntegration;
 window.newSyncFromPurchases = newSyncFromPurchases;
+
