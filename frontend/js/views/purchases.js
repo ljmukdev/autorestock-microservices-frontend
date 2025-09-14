@@ -5,9 +5,10 @@
 
 import { purchasesService } from '../services/purchases/index.js';
 import { router } from '../core/router.js';
-import { $, $all } from '../core/utils.js';
+import { $, $all, showModal } from '../core/utils.js';
 import { debugLog } from '../core/config.js';
 import { showSuccess, showError, showInfo } from '../components/toasts.js';
+import { renderPurchaseDetailsModal } from '../services/purchases/ui.js';
 
 class PurchasesView {
   constructor() {
@@ -283,8 +284,32 @@ class PurchasesView {
    */
   handlePurchaseClick(purchaseId) {
     debugLog(`Purchase clicked: ${purchaseId}`);
-    showInfo('Purchase details coming soon...');
-    // TODO: Implement purchase details modal
+    
+    // Find the purchase data
+    const purchase = purchasesService.getCurrentPurchases().find(p => 
+      (p._id || p.id) === purchaseId
+    );
+    
+    if (!purchase) {
+      showError('Purchase not found');
+      return;
+    }
+    
+    // Generate modal content
+    const productName = purchase.product_name || purchase.items?.[0]?.productName || 'Unknown Item';
+    const brand = purchase.brand || purchase.supplier || 'Unknown';
+    const modalTitle = `${brand} ${productName}`;
+    const modalContent = renderPurchaseDetailsModal(purchase);
+    
+    // Show modal
+    showModal({
+      title: modalTitle,
+      content: modalContent,
+      size: 'large',
+      onClose: () => {
+        debugLog('Purchase details modal closed');
+      }
+    });
   }
 
   /**

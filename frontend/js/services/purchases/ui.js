@@ -402,64 +402,83 @@ function calculateTotal(purchase) {
 export function renderPurchaseDetailsModal(purchase) {
   const formatCurrency = (amount) => money(amount);
   const formatDate = (date) => !date ? 'N/A' : new Date(date).toLocaleString();
+  const formatShortDate = (date) => !date ? 'N/A' : new Date(date).toLocaleDateString('en-GB');
   
   const formatItems = (items) => {
     if (!items || !Array.isArray(items)) return '<p>No items</p>';
     return items.map(item => `
-      <div style="padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px; margin: 4px 0;">
-        <strong>${item.productName || item.name || 'Unknown Item'}</strong><br>
-        <small>SKU: ${item.sku || 'N/A'} | Qty: ${item.quantity || 1} | Price: ${formatCurrency(item.unitPrice)} | Total: ${formatCurrency(item.totalPrice)}</small>
+      <div class="purchase-item">
+        <div class="purchase-item-name">${item.productName || item.name || 'Unknown Item'}</div>
+        <div class="purchase-item-details">
+          <div><strong>SKU:</strong> ${item.sku || 'N/A'}</div>
+          <div><strong>Qty:</strong> ${item.quantity || 1}</div>
+          <div><strong>Unit Price:</strong> ${formatCurrency(item.unitPrice)}</div>
+          <div><strong>Total:</strong> ${formatCurrency(item.totalPrice)}</div>
+        </div>
       </div>
     `).join('');
   };
 
+  const total = calculateTotal(purchase);
+  const productName = purchase.product_name || purchase.items?.[0]?.productName || 'Unknown Item';
+  const brand = purchase.brand || purchase.supplier || 'Unknown';
+
   return `
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-      <div>
-        <h3 style="margin-top: 0; color: #1a365d;">Basic Information</h3>
-        <table style="width: 100%; border-collapse: collapse;">
-          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">ID:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.identifier || purchase._id || purchase.id || 'N/A'}</td></tr>
-          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Category:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.category || 'N/A'}</td></tr>
-          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Brand:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.brand || purchase.supplier || 'N/A'}</td></tr>
-          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Model:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.model || 'N/A'}</td></tr>
-          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Source:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.source || 'N/A'}</td></tr>
-          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Status:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.status || 'N/A'}</td></tr>
+    <div class="purchase-details-grid">
+      <div class="purchase-details-section">
+        <h3>📦 Product Information</h3>
+        <table class="purchase-details-table">
+          <tr><td>Product Name:</td><td>${productName}</td></tr>
+          <tr><td>Brand:</td><td>${brand}</td></tr>
+          <tr><td>Model:</td><td>${purchase.model || 'N/A'}</td></tr>
+          <tr><td>Category:</td><td>${purchase.category || 'N/A'}</td></tr>
+          <tr><td>Platform:</td><td>${purchase.platform || 'N/A'}</td></tr>
+          <tr><td>Source:</td><td>${purchase.source || 'N/A'}</td></tr>
         </table>
       </div>
 
-      <div>
-        <h3 style="margin-top: 0; color: #1a365d;">Financial Information</h3>
-        <table style="width: 100%; border-collapse: collapse;">
-          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Price Paid:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatCurrency(purchase.price_paid)}</td></tr>
-          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Shipping Cost:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatCurrency(purchase.shipping_cost)}</td></tr>
-          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Fees:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatCurrency(purchase.fees)}</td></tr>
-          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Total Amount:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #059669;">${formatCurrency(purchase.totalAmount)}</td></tr>
+      <div class="purchase-details-section">
+        <h3>💰 Financial Details</h3>
+        <table class="purchase-details-table">
+          <tr><td>Price Paid:</td><td>${formatCurrency(purchase.price_paid || 0)}</td></tr>
+          <tr><td>Shipping Cost:</td><td>${formatCurrency(purchase.shipping_cost || 0)}</td></tr>
+          <tr><td>Fees:</td><td>${formatCurrency(purchase.fees || 0)}</td></tr>
+          <tr><td><strong>Total Amount:</strong></td><td><strong style="color: #059669; font-size: 1.1rem;">${formatCurrency(total)}</strong></td></tr>
+        </table>
+      </div>
+
+      <div class="purchase-details-section">
+        <h3>📋 Order Information</h3>
+        <table class="purchase-details-table">
+          <tr><td>Order ID:</td><td>${purchase.order_id || 'N/A'}</td></tr>
+          <tr><td>Purchase ID:</td><td>${purchase.identifier || purchase._id || purchase.id || 'N/A'}</td></tr>
+          <tr><td>Status:</td><td><span class="status-badge status-${(purchase.status || purchase.delivery_status || 'unknown').toLowerCase().replace(/\s+/g, '-')}">${purchase.status || purchase.delivery_status || 'Unknown'}</span></td></tr>
+          <tr><td>Purchase Date:</td><td>${formatShortDate(purchase.purchase_date || purchase.orderDate)}</td></tr>
+          <tr><td>Created:</td><td>${formatShortDate(purchase.createdAt)}</td></tr>
+        </table>
+      </div>
+
+      <div class="purchase-details-section">
+        <h3>👤 Seller Information</h3>
+        <table class="purchase-details-table">
+          <tr><td>Seller:</td><td>${purchase.seller_username || 'N/A'}</td></tr>
+          <tr><td>Tracking Ref:</td><td>${purchase.tracking_ref || 'N/A'}</td></tr>
+          <tr><td>Delivery Status:</td><td>${purchase.delivery_status || 'N/A'}</td></tr>
         </table>
       </div>
     </div>
 
-    <div style="margin-top: 20px;">
-      <h3 style="color: #1a365d;">Items</h3>
-      ${formatItems(purchase.items)}
-    </div>
-
-    <div style="margin-top: 20px;">
-      <h3 style="color: #1a365d;">Additional Information</h3>
-      <table style="width: 100%; border-collapse: collapse;">
-        <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Order ID:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.order_id || 'N/A'}</td></tr>
-        <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Seller:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.seller_username || 'N/A'}</td></tr>
-        <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Date of Purchase:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatDate(purchase.dateOfPurchase || purchase.orderDate)}</td></tr>
-        <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Created:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatDate(purchase.createdAt)}</td></tr>
-        <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Tracking Ref:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.tracking_ref || 'N/A'}</td></tr>
-      </table>
+    <div class="purchase-details-section">
+      <h3>🛍️ Items in Purchase</h3>
+      <div class="purchase-items-list">
+        ${formatItems(purchase.items)}
+      </div>
     </div>
 
     ${purchase.notes ? `
-    <div style="margin-top: 20px;">
-      <h3 style="color: #1a365d;">Notes</h3>
-      <div style="padding: 12px; background: #f9fafb; border-radius: 6px; border-left: 4px solid #3b82f6;">
-        ${purchase.notes}
-      </div>
+    <div class="purchase-notes">
+      <h4>📝 Notes</h4>
+      <p>${purchase.notes}</p>
     </div>
     ` : ''}
   `;

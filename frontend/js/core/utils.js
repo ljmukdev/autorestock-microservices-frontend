@@ -226,3 +226,77 @@ export function throttle(func, limit) {
     }
   };
 }
+
+/**
+ * Create and show modal
+ */
+export function showModal({ title, content, onClose = null, size = 'medium' }) {
+  // Remove existing modal if any
+  const existingModal = document.getElementById('purchase-modal');
+  if (existingModal) {
+    existingModal.remove();
+  }
+
+  const modal = document.createElement('div');
+  modal.id = 'purchase-modal';
+  modal.className = 'modal-overlay';
+  
+  const sizeClass = size === 'large' ? 'modal-large' : size === 'small' ? 'modal-small' : 'modal-medium';
+  
+  modal.innerHTML = `
+    <div class="modal-content ${sizeClass}">
+      <div class="modal-header">
+        <h2 class="modal-title">${title}</h2>
+        <button class="modal-close" id="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        ${content}
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="modal-close-footer">Close</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // Add event listeners
+  const closeBtn = modal.querySelector('#modal-close-btn');
+  const closeFooterBtn = modal.querySelector('#modal-close-footer');
+  
+  const closeModal = () => {
+    modal.remove();
+    if (onClose) onClose();
+  };
+
+  closeBtn.addEventListener('click', closeModal);
+  closeFooterBtn.addEventListener('click', closeModal);
+  
+  // Close on overlay click
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      closeModal();
+    }
+  });
+
+  // Close on Escape key
+  const handleEscape = (e) => {
+    if (e.key === 'Escape') {
+      closeModal();
+      document.removeEventListener('keydown', handleEscape);
+    }
+  };
+  document.addEventListener('keydown', handleEscape);
+
+  return modal;
+}
+
+/**
+ * Close modal
+ */
+export function closeModal() {
+  const modal = document.getElementById('purchase-modal');
+  if (modal) {
+    modal.remove();
+  }
+}
