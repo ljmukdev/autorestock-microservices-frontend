@@ -24,6 +24,109 @@ export function renderPurchaseCards(purchases, options = {}) {
 }
 
 /**
+ * Render purchase list (table format)
+ * @param {Array} purchases - Array of purchase objects
+ * @param {Object} options - Render options
+ * @returns {string} HTML string
+ */
+export function renderPurchaseList(purchases, options = {}) {
+  if (!purchases || purchases.length === 0) {
+    return renderEmptyState(options.emptyMessage || 'No purchases found');
+  }
+
+  debugLog(`Rendering ${purchases.length} purchases in list format`);
+
+  const {
+    showActions = true,
+    showDetails = true
+  } = options;
+
+  const tableRows = purchases.map(purchase => renderPurchaseListRow(purchase, options));
+
+  return `
+    <div class="purchase-list-container">
+      <table class="purchase-list-table">
+        <thead>
+          <tr>
+            <th style="width: 40px;">📦</th>
+            <th>Product</th>
+            <th style="width: 100px;">Platform</th>
+            <th style="width: 100px;">Amount</th>
+            <th style="width: 120px;">Date</th>
+            <th style="width: 100px;">Status</th>
+            ${showActions ? '<th style="width: 200px;">Actions</th>' : ''}
+          </tr>
+        </thead>
+        <tbody>
+          ${tableRows.join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+/**
+ * Render single purchase list row
+ * @param {Object} purchase - Purchase object
+ * @param {Object} options - Render options
+ * @returns {string} HTML string
+ */
+function renderPurchaseListRow(purchase, options = {}) {
+  const {
+    showActions = true,
+    showDetails = true
+  } = options;
+
+  const timeAgoStr = timeAgo(new Date(purchase.orderDate || purchase.purchase_date || purchase.createdAt));
+  const platformEmoji = getPlatformEmoji(purchase.platform || 'Unknown');
+  const total = calculateTotal(purchase);
+  const productName = purchase.product_name || purchase.items?.[0]?.productName || 'Unknown Item';
+  const brand = purchase.brand || purchase.supplier || 'Unknown';
+  const status = purchase.status || purchase.delivery_status || 'Unknown';
+  const purchaseDate = formatDate(purchase.purchase_date || purchase.orderDate, { dateStyle: 'short' });
+
+  const actionsHtml = showActions ? renderPurchaseListActions(purchase) : '';
+
+  return `
+    <tr class="purchase-list-row" data-id="${purchase._id || purchase.id}" style="cursor: pointer;" title="Click to view details">
+      <td class="purchase-icon-cell">${platformEmoji}</td>
+      <td class="purchase-product-cell">
+        <div class="purchase-product-name"><strong>${brand} ${productName}</strong></div>
+        <div class="purchase-product-details">
+          ${purchase.seller_username ? `Seller: ${purchase.seller_username}` : ''}
+          ${purchase.order_id ? ` • Order: ${purchase.order_id}` : ''}
+        </div>
+      </td>
+      <td class="purchase-platform-cell">${purchase.platform || 'Unknown'}</td>
+      <td class="purchase-amount-cell"><strong>${money(total)}</strong></td>
+      <td class="purchase-date-cell">${purchaseDate}</td>
+      <td class="purchase-status-cell">
+        <span class="status-badge status-${status.toLowerCase().replace(/\s+/g, '-')}">${status}</span>
+      </td>
+      ${showActions ? `<td class="purchase-actions-cell">${actionsHtml}</td>` : ''}
+    </tr>
+  `;
+}
+
+/**
+ * Render purchase actions for list view
+ * @param {Object} purchase - Purchase object
+ * @returns {string} HTML string
+ */
+function renderPurchaseListActions(purchase) {
+  const purchaseId = purchase._id || purchase.id;
+  
+  return `
+    <div class="purchase-list-actions">
+      <button class="btn btn-small action-stage" data-action="stage" data-id="${purchaseId}" title="Stage for processing">🔍</button>
+      <button class="btn btn-small action-split" data-action="split" data-id="${purchaseId}" title="Split purchase">✂️</button>
+      <button class="btn btn-small action-inventory" data-action="inventory" data-id="${purchaseId}" title="Move to inventory">📦</button>
+      <button class="btn btn-small action-delete" data-action="delete" data-id="${purchaseId}" title="Delete purchase">🗑️</button>
+    </div>
+  `;
+}
+
+/**
  * Render single purchase card
  * @param {Object} purchase - Purchase object
  * @param {Object} options - Render options
@@ -218,7 +321,8 @@ export function renderPurchaseHistory(purchases, options = {}) {
   const {
     showHeader = true,
     showActions = true,
-    title = '📊 Purchase History & Staging'
+    title = '📊 Purchase History & Staging',
+    viewMode = 'list' // 'list' or 'cards'
   } = options;
 
   const headerHtml = showHeader ? `
@@ -231,13 +335,15 @@ export function renderPurchaseHistory(purchases, options = {}) {
     </div>
   ` : '';
 
-  const cardsHtml = renderPurchaseCards(purchases, options);
+  const contentHtml = viewMode === 'list' ? 
+    renderPurchaseList(purchases, options) : 
+    renderPurchaseCards(purchases, options);
 
   return `
     <div class="recent-activity">
       ${headerHtml}
       <div id="purchaseHistoryContent">
-        ${cardsHtml}
+        ${contentHtml}
       </div>
     </div>
   `;

@@ -95,7 +95,7 @@ class PurchasesView {
       syncBtn.addEventListener('click', () => this.handleEbaySync());
     }
 
-    // Purchase card actions
+    // Purchase actions (both cards and list)
     this.container.addEventListener('click', (e) => {
       const actionBtn = e.target.closest('button[data-action]');
       if (actionBtn) {
@@ -105,8 +105,8 @@ class PurchasesView {
         return;
       }
 
-      // Purchase card click
-      const purchaseCard = e.target.closest('.purchase-card');
+      // Purchase card/row click
+      const purchaseCard = e.target.closest('.purchase-card, .purchase-list-row');
       if (purchaseCard) {
         const purchaseId = purchaseCard.getAttribute('data-id');
         this.handlePurchaseClick(purchaseId);

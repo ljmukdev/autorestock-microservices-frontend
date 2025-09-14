@@ -206,6 +206,7 @@ class PurchasesService {
     const {
       showStatusBar = true,
       showHistory = true,
+      viewMode = 'list',
       ...renderOptions
     } = options;
 
@@ -248,7 +249,7 @@ class PurchasesService {
           </div>
         `;
       } else {
-        html += renderPurchaseHistory(this.currentPurchases, renderOptions);
+        html += renderPurchaseHistory(this.currentPurchases, { ...renderOptions, viewMode });
       }
     }
 
