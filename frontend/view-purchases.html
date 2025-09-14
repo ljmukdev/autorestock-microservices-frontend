@@ -912,7 +912,7 @@
       
       // Check if we have real purchase data
       const hasRealData = syncData.success && syncData.data && 
-                         (syncData.data.recentPurchases || syncData.data.summary?.totalPurchases > 0);
+                         (syncData.data.orders?.length > 0 || syncData.data.recentPurchases?.length > 0 || syncData.data.summary?.totalPurchases > 0);
       
       if (hasRealData) {
         // Convert eBay data to our format
@@ -942,22 +942,37 @@
     function convertEbayDataToPurchases(ebayData) {
       const purchases = [];
       
-      if (ebayData.recentPurchases && Array.isArray(ebayData.recentPurchases)) {
-        ebayData.recentPurchases.forEach((item, index) => {
+      // Handle both old format (recentPurchases) and new format (orders)
+      const orders = ebayData.orders || ebayData.recentPurchases || [];
+      
+      if (Array.isArray(orders) && orders.length > 0) {
+        orders.forEach((order, index) => {
+          // Extract item details from the order
+          const firstItem = order.lineItems && order.lineItems[0];
+          const itemTitle = firstItem ? firstItem.productName || firstItem.title : 'eBay Purchase';
+          const itemPrice = firstItem ? (firstItem.unitPrice || firstItem.price || 0) : (order.total || 0);
+          
           purchases.push({
-            id: `ebay_${index}_${Date.now()}`,
-            purchase_date: item.date || new Date().toISOString().split('T')[0],
+            id: `ebay_${order.orderId || index}_${Date.now()}`,
+            _id: `ebay_${order.orderId || index}_${Date.now()}`,
+            purchase_date: order.creationTime ? new Date(order.creationTime).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            orderDate: order.creationTime || new Date().toISOString(),
             platform: 'eBay',
-            brand: extractBrand(item.title),
-            model: extractModel(item.title),
-            product_name: item.title,
-            purchase_price: item.price || 0,
-            total_paid: item.price || 0,
-            delivery_status: 'Delivered',
-            seller: item.seller || 'Unknown',
-            notes: `eBay purchase: ${item.title}`,
+            brand: extractBrand(itemTitle),
+            model: extractModel(itemTitle),
+            product_name: itemTitle,
+            purchase_price: itemPrice,
+            total_paid: order.total || itemPrice,
+            totalAmount: order.total || itemPrice,
+            delivery_status: order.orderStatus || 'Delivered',
+            seller: order.seller || 'Unknown',
+            seller_username: order.seller || 'Unknown',
+            notes: `eBay purchase: ${itemTitle}`,
             source: 'ebay-oauth',
-            created_at: new Date().toISOString()
+            created_at: new Date().toISOString(),
+            items: order.lineItems || [],
+            order_id: order.orderId,
+            status: order.orderStatus || 'Delivered'
           });
         });
       }
