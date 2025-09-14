@@ -15,18 +15,57 @@ class OAuthService {
     setOAuthRedirectHandler((failedUrl) => this.handleAuthFailure(failedUrl));
   }
 
-  /**
-   * Check if user is authenticated
+    /**
+   * Check if user is authenticated by testing actual data response
    */
   async checkAuthStatus() {
     try {
-      // Try to make a simple request to check auth status
-      const response = await fetch(`${API_ENDPOINTS.PURCHASES}?limit=1`);
-      const isAuthenticated = response.ok;
+      debugLog('Checking eBay OAuth authentication status...');
       
-      debugLog('Auth status check', { authenticated: isAuthenticated, status: response.status });
+      const response = await fetch(`${API_ENDPOINTS.PURCHASES}?limit=1`);
+      
+      if (!response.ok) {
+        debugLog('Auth status check - HTTP error', { status: response.status });
+        return false;
+      }
+      
+      const data = await response.json();
+      debugLog('Auth check response data:', data);
+      
+      // Check if we have actual purchase orders or if it's an auth issue
+      const hasOrders = data.data && (data.data.orders?.length > 0 || data.data.recentPurchases?.length > 0);
+      const hasValidResponse = data.success === true;
+      
+      // If no orders but response is successful, check if it's due to no purchases vs auth failure
+      if (!hasOrders && hasValidResponse) {
+        // Look for indicators that suggest auth is working but no purchases exist
+        const hasValidUserData = data.data && (
+          data.data.summary || 
+          data.data.user || 
+          data.data.orderSummary ||
+          Object.keys(data.data).length > 2
+        );
+        
+        if (!hasValidUserData) {
+          debugLog('No valid user data found - likely auth issue');
+          return false;
+        }
+      }
+      
+      const isAuthenticated = hasValidResponse;
+      debugLog('Auth status determined', { 
+        authenticated: isAuthenticated,
+        hasOrders,
+        hasValidResponse,
+        dataKeys: data.data ? Object.keys(data.data) : []
+      });
+      
       return isAuthenticated;
     } catch (error) {
+      debugLog('Auth status check failed', error);
+      return false;
+    }
+  } catch (error) {
       debugLog('Auth status check failed', error);
       return false;
     }
@@ -189,6 +228,27 @@ class OAuthService {
     return this.checkAuthStatus();
   }
 }
+
+
+  /**
+   * Test what the eBay service actually returns (for debugging)
+   */
+  async testEbayResponse() {
+    try {
+      const response = await fetch(`${API_ENDPOINTS.PURCHASES}?limit=1`);
+      const data = await response.json();
+      
+      console.log('=== EBAY SERVICE RAW RESPONSE ===');
+      console.log('Status:', response.status);
+      console.log('Data:', data);
+      console.log('Data keys:', data.data ? Object.keys(data.data) : 'No data object');
+      console.log('================================');
+      
+      return data;
+    } catch (error) {
+      console.error('eBay test failed:', error);
+    }
+  }
 
 // Create and export service instance
 export const oauthService = new OAuthService();
