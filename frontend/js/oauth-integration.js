@@ -298,3 +298,4 @@ function showMessage(message, type = 'info') {
 window.initializeOAuthIntegration = initializeOAuthIntegration;
 window.newSyncFromPurchases = newSyncFromPurchases;
 
+

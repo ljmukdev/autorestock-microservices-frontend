@@ -113,6 +113,11 @@
       box-shadow: 0 0 0 3px rgba(255,255,255,.8); 
     }
     
+    .spa-nav-tab.home { 
+      background: linear-gradient(135deg,#1a365d,#2c5282); 
+      color: white; 
+    }
+    
     .spa-nav-tab.purchases { 
       background: linear-gradient(135deg,#67B292,#5A9B7F); 
       color: white; 
@@ -123,8 +128,33 @@
       color: white; 
     }
     
+    .spa-nav-tab.consumables { 
+      background: linear-gradient(135deg,#38A169,#2F855A); 
+      color: white; 
+    }
+    
+    .spa-nav-tab.log-sale { 
+      background: linear-gradient(135deg,#48BB78,#38A169); 
+      color: white; 
+    }
+    
     .spa-nav-tab.sales { 
       background: linear-gradient(135deg,#805AD5,#6B46C1); 
+      color: white; 
+    }
+    
+    .spa-nav-tab.email-import { 
+      background: linear-gradient(135deg,#3182CE,#2B6CB0); 
+      color: white; 
+    }
+    
+    .spa-nav-tab.reports { 
+      background: linear-gradient(135deg,#667EEA,#5A67D8); 
+      color: white; 
+    }
+    
+    .spa-nav-tab.settings { 
+      background: linear-gradient(135deg,#2D3748,#1A202C); 
       color: white; 
     }
 
@@ -227,9 +257,15 @@
     <!-- Navigation -->
     <div class="spa-nav-tabs-container">
       <div class="spa-nav-tabs">
+        <button class="spa-nav-tab home" data-tab="home" aria-selected="false">🏠 Home</button>
         <button class="spa-nav-tab purchases active" data-tab="purchases" aria-selected="true">🛒 Purchases</button>
         <button class="spa-nav-tab inventory" data-tab="inventory" aria-selected="false">📦 Inventory</button>
-        <button class="spa-nav-tab sales" data-tab="sales" aria-selected="false">💰 Sales</button>
+        <button class="spa-nav-tab consumables" data-tab="consumables" aria-selected="false">🧰 Consumables</button>
+        <button class="spa-nav-tab log-sale" data-tab="log-sale" aria-selected="false">💰 Log Sale</button>
+        <button class="spa-nav-tab sales" data-tab="sales" aria-selected="false">📊 View Sales</button>
+        <button class="spa-nav-tab email-import" data-tab="email-import" aria-selected="false">📧 Email Import</button>
+        <button class="spa-nav-tab reports" data-tab="reports" aria-selected="false">📈 Reports</button>
+        <button class="spa-nav-tab settings" data-tab="settings" aria-selected="false">⚙️ Settings</button>
       </div>
     </div>
 
@@ -244,6 +280,13 @@
       </div>
 
       <!-- Tab Sections -->
+      <div id="tab-home" class="spa-tab-section">
+        <div class="spa-loading">
+          <div class="spa-spinner"></div>
+          <p>Loading home dashboard...</p>
+        </div>
+      </div>
+
       <div id="tab-purchases" class="spa-tab-section active">
         <div class="spa-loading">
           <div class="spa-spinner"></div>
@@ -258,10 +301,45 @@
         </div>
       </div>
 
+      <div id="tab-consumables" class="spa-tab-section">
+        <div class="spa-loading">
+          <div class="spa-spinner"></div>
+          <p>Loading consumables module...</p>
+        </div>
+      </div>
+
+      <div id="tab-log-sale" class="spa-tab-section">
+        <div class="spa-loading">
+          <div class="spa-spinner"></div>
+          <p>Loading log sale module...</p>
+        </div>
+      </div>
+
       <div id="tab-sales" class="spa-tab-section">
         <div class="spa-loading">
           <div class="spa-spinner"></div>
           <p>Loading sales module...</p>
+        </div>
+      </div>
+
+      <div id="tab-email-import" class="spa-tab-section">
+        <div class="spa-loading">
+          <div class="spa-spinner"></div>
+          <p>Loading email import module...</p>
+        </div>
+      </div>
+
+      <div id="tab-reports" class="spa-tab-section">
+        <div class="spa-loading">
+          <div class="spa-spinner"></div>
+          <p>Loading reports module...</p>
+        </div>
+      </div>
+
+      <div id="tab-settings" class="spa-tab-section">
+        <div class="spa-loading">
+          <div class="spa-spinner"></div>
+          <p>Loading settings module...</p>
         </div>
       </div>
     </div>

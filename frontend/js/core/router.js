@@ -3,7 +3,8 @@
  * Tab-based navigation without history API
  */
 
-import { $, $all, debugLog } from './utils.js';
+import { $, $all } from './utils.js';
+import { debugLog } from './config.js';
 
 class SimpleRouter {
   constructor() {

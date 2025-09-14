@@ -5,7 +5,8 @@
 
 import { purchasesService } from '../services/purchases/index.js';
 import { router } from '../core/router.js';
-import { $, $all, debugLog } from '../core/utils.js';
+import { $, $all } from '../core/utils.js';
+import { debugLog } from '../core/config.js';
 import { showSuccess, showError } from '../components/toasts.js';
 
 class PurchasesView {

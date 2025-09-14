@@ -3,7 +3,8 @@
  * Defensive mapping of eBay payloads to normalized purchase format
  */
 
-import { extractBrand, extractModel, slugify, formatDateYYYYMMDD, debugLog } from '../../core/utils.js';
+import { extractBrand, extractModel, slugify, formatDateYYYYMMDD } from '../../core/utils.js';
+import { debugLog } from '../../core/config.js';
 
 /**
  * Map eBay data to normalized purchase format

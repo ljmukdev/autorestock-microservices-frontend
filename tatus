@@ -24,3 +24,6 @@ microservices/settings-service
 package.json
 setup-railway.ps1
 start-frontend.ps1
+[33m904f13f[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m refactor(frontend): modular SPA aligned to backend microservices; purchases split into service modules; live/sample controls; CSP-safe
+[33mf2cb2dc[m update: strict live/sample mode + improved sync for purchases view
+[33me675feb[m Update frontend to use live eBay data with proper JSON parsing
