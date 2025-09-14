@@ -74,8 +74,9 @@ function mapSingleOrder(order, index) {
   const model = extractModel(title, brand);
   
   // Extract money values
-  const purchasePrice = extractMoney(firstItem.unitPrice || firstItem.price || order.total || 0);
+  const purchasePrice = extractMoney(firstItem.unitPrice || firstItem.price || firstItem.TotalTransactionPrice || 0);
   const totalPaid = extractOrderTotal(order, lineItems);
+  const shippingCost = extractShippingCost(order, lineItems);
   
   // Extract dates
   const orderDate = extractDate(order);
@@ -108,6 +109,7 @@ function mapSingleOrder(order, index) {
     purchase_price: purchasePrice,
     total_paid: totalPaid,
     totalAmount: totalPaid,
+    shipping_cost: shippingCost,
     delivery_status: order.orderStatus || order.status || 'Delivered',
     source: 'ebay-oauth',
     created_at: new Date().toISOString(),
@@ -141,7 +143,7 @@ function extractLineItems(order) {
   for (const path of possiblePaths) {
     const items = getNestedValue(order, path);
     if (Array.isArray(items) && items.length > 0) {
-      return items;
+      return items.map(item => mapEbayLineItem(item));
     }
   }
 
@@ -149,8 +151,25 @@ function extractLineItems(order) {
   return [{
     productName: order.title || order.productName || 'eBay Purchase',
     quantity: 1,
-    unitPrice: order.total || order.price || 0
+    unitPrice: order.total || order.price || 0,
+    totalPrice: order.total || order.price || 0
   }];
+}
+
+/**
+ * Map eBay line item data to standardized format
+ * @param {Object} item - eBay line item
+ * @returns {Object} Mapped line item
+ */
+function mapEbayLineItem(item) {
+  return {
+    productName: item.title || item.productName || item.Title || 'eBay Item',
+    quantity: item.quantity || item.QuantityPurchased || 1,
+    unitPrice: extractMoney(item.unitPrice || item.price || item.TotalTransactionPrice || item.CurrentPrice || 0),
+    totalPrice: extractMoney(item.totalPrice || item.TotalPrice || 0),
+    sku: item.sku || item.itemId || item.ItemID || '',
+    description: item.description || item.Title || ''
+  };
 }
 
 /**
@@ -186,6 +205,7 @@ function extractTitle(item, order) {
  * @returns {number} Order total
  */
 function extractOrderTotal(order, lineItems) {
+  // First try to get the total from the order level
   const totalFields = [
     'total',
     'orderTotal',
@@ -208,13 +228,61 @@ function extractOrderTotal(order, lineItems) {
     }
   }
 
-  // Fallback: sum line items
+  // Try to get total from line items (for eBay XML data)
   if (lineItems && lineItems.length > 0) {
+    // Look for TotalPrice in line items (includes shipping)
+    for (const item of lineItems) {
+      const totalPrice = extractMoney(item.totalPrice || item.TotalPrice || 0);
+      if (totalPrice > 0) {
+        return totalPrice;
+      }
+    }
+    
+    // Fallback: sum individual prices
     return lineItems.reduce((sum, item) => {
-      const price = extractMoney(item.unitPrice || item.price || 0);
+      const price = extractMoney(item.unitPrice || item.price || item.TotalTransactionPrice || 0);
       const quantity = item.quantity || 1;
       return sum + (price * quantity);
     }, 0);
+  }
+
+  return 0;
+}
+
+/**
+ * Extract shipping cost from order or line items
+ * @param {Object} order - Order object
+ * @param {Array} lineItems - Line items array
+ * @returns {number} Shipping cost
+ */
+function extractShippingCost(order, lineItems) {
+  // Look for shipping cost in order level
+  const shippingFields = [
+    'shipping_cost',
+    'shippingCost',
+    'shipping.cost',
+    'shippingDetails.shippingServiceOptions.shippingServiceCost',
+    'ShippingServiceCost'
+  ];
+
+  for (const field of shippingFields) {
+    const value = getNestedValue(order, field);
+    if (value !== null && value !== undefined) {
+      const cost = extractMoney(value);
+      if (cost > 0) {
+        return cost;
+      }
+    }
+  }
+
+  // Look for shipping cost in line items
+  if (lineItems && lineItems.length > 0) {
+    for (const item of lineItems) {
+      const shippingCost = extractMoney(item.shippingCost || item.ShippingServiceCost || 0);
+      if (shippingCost > 0) {
+        return shippingCost;
+      }
+    }
   }
 
   return 0;
