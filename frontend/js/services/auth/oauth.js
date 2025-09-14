@@ -68,7 +68,7 @@ class OAuthService {
   }
 
   /**
-   * Handle authentication failure - automatically redirect to OAuth
+   * Handle authentication failure - automatically redirect to OAuth (silent)
    */
   async handleAuthFailure(failedUrl) {
     if (this.isAuthenticating) {
@@ -76,17 +76,14 @@ class OAuthService {
       return this.authPromise;
     }
 
-    debugLog('Handling auth failure, starting OAuth flow', { failedUrl });
+    debugLog('Handling auth failure, starting silent OAuth flow', { failedUrl });
     
-    // Show user-friendly message
-    this.showAuthMessage('Session expired. Redirecting to eBay sign-in...');
-    
-    // Start OAuth flow
+    // No visible message - silent authentication
     return this.startOAuthFlow();
   }
 
   /**
-   * Start OAuth authentication flow
+   * Start OAuth authentication flow (silent)
    */
   async startOAuthFlow() {
     if (this.isAuthenticating) {
@@ -97,64 +94,98 @@ class OAuthService {
     
     this.authPromise = new Promise((resolve, reject) => {
       try {
-        debugLog('Starting OAuth flow');
+        debugLog('Starting silent OAuth flow');
         
         // Build OAuth URL - force fresh authentication
         const oauthUrl = API_ENDPOINTS.AUTH;
         const returnUrl = window.location.href;
         const fullOAuthUrl = `${oauthUrl}?return_url=${encodeURIComponent(returnUrl)}&force_reauth=1`;
         
-        debugLog('Opening OAuth window', { url: fullOAuthUrl });
+        debugLog('Opening OAuth in hidden iframe', { url: fullOAuthUrl });
         
-        // Open OAuth in popup window
-        this.authWindow = window.open(
-          fullOAuthUrl,
-          'ebay_oauth',
-          'width=600,height=700,scrollbars=yes,resizable=yes,status=yes'
-        );
+        // Create hidden iframe for silent OAuth
+        const iframe = document.createElement('iframe');
+        iframe.style.cssText = `
+          position: fixed;
+          top: -1000px;
+          left: -1000px;
+          width: 1px;
+          height: 1px;
+          border: none;
+          opacity: 0;
+          pointer-events: none;
+        `;
+        iframe.src = fullOAuthUrl;
+        iframe.name = 'ebay_oauth_silent';
+        
+        document.body.appendChild(iframe);
+        this.authWindow = iframe;
 
-        if (!this.authWindow) {
-          throw new Error('Popup blocked. Please allow popups and try again.');
-        }
-
-        // Monitor the popup window
-        const checkClosed = setInterval(() => {
-          if (this.authWindow.closed) {
-            clearInterval(checkClosed);
-            this.isAuthenticating = false;
+        // Monitor for OAuth completion via postMessage
+        const messageHandler = (event) => {
+          if (event.origin !== window.location.origin) return;
+          
+          if (event.data.type === 'oauth_complete') {
+            debugLog('OAuth completed via postMessage', event.data);
+            cleanup();
             
-            // Check if authentication was successful
-            setTimeout(async () => {
-              const isAuth = await this.checkAuthStatus();
-              if (isAuth) {
-                debugLog('OAuth completed successfully');
-                this.hideAuthMessage();
-                resolve(true);
-                // Refresh the page to reload with new auth
-                window.location.reload();
-              } else {
-                debugLog('OAuth window closed without successful auth');
-                this.showAuthMessage('Authentication cancelled or failed. Please try again.');
-                resolve(false);
-              }
-            }, 1000);
+            if (event.data.success) {
+              debugLog('Silent OAuth completed successfully');
+              resolve(true);
+              // Refresh the page to reload with new auth
+              setTimeout(() => window.location.reload(), 500);
+            } else {
+              debugLog('Silent OAuth failed');
+              resolve(false);
+            }
+          }
+        };
+
+        window.addEventListener('message', messageHandler);
+
+        const cleanup = () => {
+          this.isAuthenticating = false;
+          window.removeEventListener('message', messageHandler);
+          if (iframe && iframe.parentNode) {
+            iframe.parentNode.removeChild(iframe);
+          }
+        };
+
+        // Fallback: check auth status periodically
+        let checkCount = 0;
+        const maxChecks = 30; // 30 seconds
+        const checkInterval = setInterval(async () => {
+          checkCount++;
+          
+          if (checkCount >= maxChecks) {
+            clearInterval(checkInterval);
+            cleanup();
+            debugLog('Silent OAuth timeout');
+            resolve(false);
+            return;
+          }
+
+          const isAuth = await this.checkAuthStatus();
+          if (isAuth) {
+            clearInterval(checkInterval);
+            cleanup();
+            debugLog('Silent OAuth completed successfully (fallback check)');
+            resolve(true);
+            setTimeout(() => window.location.reload(), 500);
           }
         }, 1000);
 
-        // Timeout after 5 minutes
+        // Timeout after 2 minutes
         setTimeout(() => {
-          if (this.authWindow && !this.authWindow.closed) {
-            this.authWindow.close();
-            clearInterval(checkClosed);
-            this.isAuthenticating = false;
-            this.showAuthMessage('Authentication timed out. Please try again.');
-            reject(new Error('OAuth timeout'));
-          }
-        }, 300000);
+          clearInterval(checkInterval);
+          cleanup();
+          debugLog('Silent OAuth timeout');
+          resolve(false);
+        }, 120000);
 
       } catch (error) {
         this.isAuthenticating = false;
-        this.showAuthMessage(`Authentication error: ${error.message}`);
+        debugLog('Silent OAuth error', error);
         reject(error);
       }
     });
@@ -163,14 +194,12 @@ class OAuthService {
   }
 
   /**
-   * Manually trigger OAuth flow - forces new token
+   * Manually trigger OAuth flow - forces new token (silent)
    */
   async authenticate() {
     debugLog('Manual authentication triggered - forcing new token');
     
-    // Show message about getting new token
-    this.showAuthMessage('Getting fresh eBay authentication token...');
-    
+    // No visible message - silent authentication
     return this.startOAuthFlow();
   }
 

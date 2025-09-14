@@ -117,19 +117,40 @@ class PurchasesView {
   }
 
   /**
-   * Handle eBay login action
+   * Handle eBay login action (silent)
    */
   async handleEbayLogin() {
     debugLog('Handling eBay login');
     
     try {
-      showInfo('Starting eBay authentication...');
-      const { oauthService } = await import("../services/auth/oauth.js");
-      await oauthService.authenticate();
-      showSuccess('eBay authentication completed successfully');
+      // Show subtle loading state on the button
+      const btn = this.container.querySelector('#btn-ebay-login');
+      if (btn) {
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '⏳ Authenticating...';
+        btn.disabled = true;
+        
+        const { oauthService } = await import("../services/auth/oauth.js");
+        await oauthService.authenticate();
+        
+        // Restore button state
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
     } catch (error) {
       debugLog('eBay login error', error);
-      showError(`eBay authentication failed: ${error.message}`);
+      
+      // Restore button state on error
+      const btn = this.container.querySelector('#btn-ebay-login');
+      if (btn) {
+        btn.innerHTML = '🔐 eBay Login';
+        btn.disabled = false;
+      }
+      
+      // Only show error if it's not a silent failure
+      if (error.message && !error.message.includes('timeout')) {
+        showError(`eBay authentication failed: ${error.message}`);
+      }
     }
   }
 
