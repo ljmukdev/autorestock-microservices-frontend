@@ -125,7 +125,7 @@ class ToastManager {
     // Add close button event
     if (toast.closable) {
       const closeBtn = toastElement.querySelector('.toast-close');
-      closeBtn.onclick = () => this.remove(toast.id);
+      closeBtn.addEventListener('click', () => this.remove(toast.id));
     }
 
     this.container.appendChild(toastElement);

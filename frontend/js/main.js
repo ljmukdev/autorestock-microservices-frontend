@@ -5,6 +5,7 @@
 
 import { router } from './core/router.js';
 import { debugLog, validateConfig } from './core/config.js';
+import { delegate } from './core/dom.js';
 import { homeView } from './views/home.js';
 import { purchasesView } from './views/purchases.js';
 import { inventoryService } from './services/inventory/index.js';

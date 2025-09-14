@@ -152,19 +152,21 @@ export function renderLoadingState(message = 'Loading purchases...') {
  * Render error state
  * @param {string} message - Error message
  * @param {Function} onRetry - Retry callback
- * @returns {string} HTML string
+ * @returns {Element} DOM element
  */
 export function renderErrorState(message, onRetry = null) {
-  const retryButton = onRetry ? 
-    `<button class="btn btn-primary" onclick="(${onRetry.toString()})()">🔄 Try Again</button>` : '';
-  
-  return `
-    <div class="spa-error">
-      <h4>❌ Failed to Load Purchases</h4>
-      <p><strong>Error:</strong> ${message}</p>
-      ${retryButton}
-    </div>
+  const div = document.createElement('div');
+  div.className = 'spa-error';
+  div.innerHTML = `
+    <h4>❌ Failed to Load Purchases</h4>
+    <p><strong>Error:</strong> ${message}</p>
+    ${onRetry ? `<button class="btn btn-primary" data-action="purchases-retry">🔄 Try Again</button>` : ''}
   `;
+  if (onRetry) {
+    const btn = div.querySelector('[data-action="purchases-retry"]');
+    btn?.addEventListener('click', () => onRetry());
+  }
+  return div;
 }
 
 /**

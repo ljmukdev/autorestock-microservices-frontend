@@ -185,11 +185,18 @@ class OAuthService {
       document.body.appendChild(modal);
       
       // Bind events
-      document.getElementById('oauth-modal-close').onclick = () => this.hideOAuthModal();
-      document.getElementById('oauth-login-btn').onclick = () => this.initiateLogin();
-      modal.onclick = (e) => {
+      const closeBtn = document.getElementById('oauth-modal-close');
+      const loginBtn = document.getElementById('oauth-login-btn');
+      
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => this.hideOAuthModal());
+      }
+      if (loginBtn) {
+        loginBtn.addEventListener('click', () => this.initiateLogin());
+      }
+      modal.addEventListener('click', (e) => {
         if (e.target === modal) this.hideOAuthModal();
-      };
+      });
     }
     
     modal.style.display = 'flex';

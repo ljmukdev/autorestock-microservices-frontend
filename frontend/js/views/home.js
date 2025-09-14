@@ -4,6 +4,7 @@
  */
 
 import { debugLog } from '../core/config.js';
+import { delegate } from '../core/dom.js';
 
 class HomeView {
   constructor() {
@@ -21,6 +22,7 @@ class HomeView {
 
     try {
       this.render();
+      this.bindEvents();
       this.isInitialized = true;
       debugLog('Home view initialized');
     } catch (error) {
@@ -64,10 +66,10 @@ class HomeView {
         <div class="card">
           <h4 class="section-title-small">Quick Actions</h4>
           <div class="nav-buttons">
-            <button class="nav-btn" onclick="router.navigateToTab('purchases')">🛒 View Purchases</button>
-            <button class="nav-btn" onclick="router.navigateToTab('inventory')">📦 Manage Inventory</button>
-            <button class="nav-btn" onclick="router.navigateToTab('sales')">💰 View Sales</button>
-            <button class="nav-btn" onclick="router.navigateToTab('reports')">📈 Generate Reports</button>
+            <button class="nav-btn" data-go-tab="purchases">🛒 View Purchases</button>
+            <button class="nav-btn" data-go-tab="inventory">📦 Manage Inventory</button>
+            <button class="nav-btn" data-go-tab="sales">💰 View Sales</button>
+            <button class="nav-btn" data-go-tab="reports">📈 Generate Reports</button>
           </div>
         </div>
       </div>
@@ -78,12 +80,26 @@ class HomeView {
   }
 
   /**
+   * Bind event listeners
+   */
+  bindEvents() {
+    if (!this.container) return;
+
+    // Local delegation limited to this view root
+    delegate('click', '[data-go-tab]', (e, el) => {
+      const tab = el.getAttribute('data-go-tab');
+      window.router?.navigateToTab?.(tab);
+    }, this.container);
+  }
+
+  /**
    * Refresh view
    */
   async refresh() {
     if (!this.isInitialized) return;
     debugLog('Refreshing home view');
     this.render();
+    this.bindEvents();
   }
 
   /**

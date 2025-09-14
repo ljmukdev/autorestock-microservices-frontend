@@ -278,16 +278,16 @@ export function showLoading(element, message = 'Loading...') {
 export function showError(element, message, onRetry = null) {
   if (!element) return;
   
-  const retryButton = onRetry ? 
-    `<button class="btn btn-primary" onclick="(${onRetry.toString()})()">🔄 Try Again</button>` : '';
-  
   element.innerHTML = `
     <div class="spa-error">
       <h4>❌ Error</h4>
       <p>${message}</p>
-      ${retryButton}
-    </div>
-  `;
+      ${onRetry ? `<button class="btn btn-primary" data-action="util-retry">🔄 Try Again</button>` : ''}
+    </div>`;
+  if (onRetry) {
+    const btn = element.querySelector('[data-action="util-retry"]');
+    btn?.addEventListener('click', () => onRetry());
+  }
 }
 
 /**

@@ -194,17 +194,22 @@ class SimpleRouter {
    * @param {Function} onRetry - Retry callback
    */
   showTabError(tabName, message, onRetry = null) {
-    const retryButton = onRetry ? 
-      `<button class="btn btn-primary" onclick="(${onRetry.toString()})()">🔄 Try Again</button>` : '';
-    
-    const content = `
-      <div class="spa-error">
-        <h4>❌ Error</h4>
-        <p>${message}</p>
-        ${retryButton}
-      </div>
+    const wrapper = document.createElement('div');
+    wrapper.className = 'spa-error';
+    wrapper.innerHTML = `
+      <h4>❌ Error</h4>
+      <p>${message}</p>
+      ${onRetry ? `<button class="btn btn-primary" data-action="router-retry">🔄 Try Again</button>` : ''}
     `;
-    this.setTabContent(tabName, content);
+    this.setTabContent(tabName, '');
+    const section = document.getElementById(`tab-${tabName}`);
+    if (section) {
+      section.appendChild(wrapper);
+      if (onRetry) {
+        const btn = wrapper.querySelector('[data-action="router-retry"]');
+        btn?.addEventListener('click', () => onRetry());
+      }
+    }
   }
 }
 

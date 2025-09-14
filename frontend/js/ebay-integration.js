@@ -392,16 +392,23 @@ class EbayIntegration {
     document.body.appendChild(modal);
 
     // Handle button clicks
-    document.getElementById('start-oauth-btn').onclick = async () => {
-      document.body.removeChild(modal);
-      document.head.removeChild(style);
-      await this.startOAuthFlow();
-    };
-
-    document.getElementById('cancel-auth-btn').onclick = () => {
-      document.body.removeChild(modal);
-      document.head.removeChild(style);
-    };
+    const startBtn = document.getElementById('start-oauth-btn');
+    const cancelBtn = document.getElementById('cancel-auth-btn');
+    
+    if (startBtn) {
+      startBtn.addEventListener('click', async () => {
+        document.body.removeChild(modal);
+        document.head.removeChild(style);
+        await this.startOAuthFlow();
+      });
+    }
+    
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => {
+        document.body.removeChild(modal);
+        document.head.removeChild(style);
+      });
+    }
   }
 }
 

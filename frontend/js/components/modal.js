@@ -129,16 +129,16 @@ class Modal {
     // Close button
     const closeBtn = this.element.querySelector('.close-btn');
     if (closeBtn) {
-      closeBtn.onclick = () => this.hide();
+      closeBtn.addEventListener('click', () => this.hide());
     }
 
     // Backdrop click
     if (this.options.backdrop) {
-      this.element.onclick = (e) => {
+      this.element.addEventListener('click', (e) => {
         if (e.target === this.element) {
           this.hide();
         }
-      };
+      });
     }
 
     // Keyboard events

@@ -279,7 +279,8 @@ class PurchasesService {
   showError(container, message, onRetry = null) {
     if (!container) return;
     
-    container.innerHTML = renderErrorState(message, onRetry);
+    container.innerHTML = '';
+    container.appendChild(renderErrorState(message, onRetry));
     debugLog('Showing error state', message);
   }
 
