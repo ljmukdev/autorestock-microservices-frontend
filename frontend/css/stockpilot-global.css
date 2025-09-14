@@ -718,6 +718,22 @@ body {
     vertical-align: middle;
 }
 
+.purchase-checkbox-cell {
+    text-align: center;
+    width: 40px;
+}
+
+.purchase-checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #667eea;
+}
+
+.purchase-checkbox:hover {
+    transform: scale(1.1);
+}
+
 .purchase-icon-cell {
     text-align: center;
     font-size: 18px;

@@ -48,6 +48,9 @@ export function renderPurchaseList(purchases, options = {}) {
       <table class="purchase-list-table">
         <thead>
           <tr>
+            <th style="width: 40px;">
+              <input type="checkbox" id="select-all-purchases" class="purchase-checkbox" title="Select all purchases">
+            </th>
             <th style="width: 40px;">📦</th>
             <th>Product</th>
             <th style="width: 100px;">Platform</th>
@@ -89,6 +92,9 @@ function renderPurchaseListRow(purchase, options = {}) {
 
   return `
     <tr class="purchase-list-row" data-id="${purchase._id || purchase.id}" style="cursor: pointer;" title="Click to view details">
+      <td class="purchase-checkbox-cell">
+        <input type="checkbox" class="purchase-checkbox" data-purchase-id="${purchase._id || purchase.id}" title="Select this purchase">
+      </td>
       <td class="purchase-icon-cell">${platformEmoji}</td>
       <td class="purchase-product-cell">
         <div class="purchase-product-name"><strong>${brand} ${productName}</strong></div>

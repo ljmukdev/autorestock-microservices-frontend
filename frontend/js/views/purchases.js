@@ -97,6 +97,18 @@ class PurchasesView {
 
     // Purchase actions (both cards and list)
     this.container.addEventListener('click', (e) => {
+      // Handle checkbox clicks
+      if (e.target.type === 'checkbox' && e.target.classList.contains('purchase-checkbox')) {
+        e.stopPropagation(); // Prevent row click when clicking checkbox
+        
+        if (e.target.id === 'select-all-purchases') {
+          this.handleSelectAllChange(e.target);
+        } else {
+          this.handleCheckboxChange(e.target);
+        }
+        return;
+      }
+
       const actionBtn = e.target.closest('button[data-action]');
       if (actionBtn) {
         const action = actionBtn.getAttribute('data-action');
@@ -105,9 +117,9 @@ class PurchasesView {
         return;
       }
 
-      // Purchase card/row click
+      // Purchase card/row click (but not if clicking checkbox)
       const purchaseCard = e.target.closest('.purchase-card, .purchase-list-row');
-      if (purchaseCard) {
+      if (purchaseCard && !e.target.closest('.purchase-checkbox-cell')) {
         const purchaseId = purchaseCard.getAttribute('data-id');
         this.handlePurchaseClick(purchaseId);
       }
@@ -273,6 +285,89 @@ class PurchasesView {
     debugLog(`Purchase clicked: ${purchaseId}`);
     showInfo('Purchase details coming soon...');
     // TODO: Implement purchase details modal
+  }
+
+  /**
+   * Handle select all checkbox change
+   * @param {HTMLInputElement} selectAllCheckbox - Select all checkbox element
+   */
+  handleSelectAllChange(selectAllCheckbox) {
+    const isChecked = selectAllCheckbox.checked;
+    const allCheckboxes = this.container.querySelectorAll('.purchase-checkbox:not(#select-all-purchases)');
+    
+    debugLog(`Select all changed: ${isChecked}`);
+    
+    // Update all individual checkboxes
+    allCheckboxes.forEach(checkbox => {
+      checkbox.checked = isChecked;
+    });
+    
+    // Update selected count display
+    this.updateSelectedCount();
+  }
+
+  /**
+   * Handle checkbox change
+   * @param {HTMLInputElement} checkbox - Checkbox element
+   */
+  handleCheckboxChange(checkbox) {
+    const purchaseId = checkbox.getAttribute('data-purchase-id');
+    const isChecked = checkbox.checked;
+    
+    debugLog(`Checkbox changed for purchase ${purchaseId}: ${isChecked}`);
+    
+    // Update select all checkbox state
+    this.updateSelectAllState();
+    
+    // Update selected count display
+    this.updateSelectedCount();
+  }
+
+  /**
+   * Update select all checkbox state
+   */
+  updateSelectAllState() {
+    const selectAllCheckbox = this.container.querySelector('#select-all-purchases');
+    if (!selectAllCheckbox) return;
+
+    const allCheckboxes = this.container.querySelectorAll('.purchase-checkbox:not(#select-all-purchases)');
+    const checkedCheckboxes = this.container.querySelectorAll('.purchase-checkbox:not(#select-all-purchases):checked');
+    
+    if (checkedCheckboxes.length === 0) {
+      selectAllCheckbox.indeterminate = false;
+      selectAllCheckbox.checked = false;
+    } else if (checkedCheckboxes.length === allCheckboxes.length) {
+      selectAllCheckbox.indeterminate = false;
+      selectAllCheckbox.checked = true;
+    } else {
+      selectAllCheckbox.indeterminate = true;
+      selectAllCheckbox.checked = false;
+    }
+  }
+
+  /**
+   * Update selected count display
+   */
+  updateSelectedCount() {
+    const checkedCheckboxes = this.container.querySelectorAll('.purchase-checkbox:not(#select-all-purchases):checked');
+    const count = checkedCheckboxes.length;
+    
+    // Update status bar or add selected count display
+    debugLog(`${count} purchases selected`);
+    
+    // You can add a selected count display here if needed
+    if (count > 0) {
+      showInfo(`${count} purchase${count > 1 ? 's' : ''} selected`);
+    }
+  }
+
+  /**
+   * Get selected purchase IDs
+   * @returns {Array} Array of selected purchase IDs
+   */
+  getSelectedPurchases() {
+    const checkedCheckboxes = this.container.querySelectorAll('.purchase-checkbox:not(#select-all-purchases):checked');
+    return Array.from(checkedCheckboxes).map(cb => cb.getAttribute('data-purchase-id'));
   }
 
   /**
