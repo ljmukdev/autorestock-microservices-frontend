@@ -6,7 +6,7 @@
   <!-- CSP: allow eBay OAuth service + Railway apps -->
   <meta http-equiv="Content-Security-Policy" content="connect-src 'self' https://*.up.railway.app https://stockpilot-ebay-oauth-production.up.railway.app">
   <title>StockPilot - Modular SPA</title>
-  <link rel="stylesheet" href="css/stockpilot-global.css">
+  <link rel="stylesheet" href="frontend/css/stockpilot-global.css">
   <style>
     /* SPA-specific styles */
     .spa-container { 
@@ -247,7 +247,7 @@
   <div class="spa-container">
     <!-- Header -->
     <div class="spa-header">
-      <img src="images/stockpilot-logo.png" alt="StockPilot Logo" class="spa-header-logo">
+      <img src="frontend/images/stockpilot-logo.png" alt="StockPilot Logo" class="spa-header-logo">
       <div class="spa-header-text">
         <h1>🛒 StockPilot - Modular SPA</h1>
         <p>Microservices-aligned frontend for purchase management, inventory, and sales</p>
@@ -346,6 +346,6 @@
   </div>
 
   <!-- Single module entry point -->
-  <script type="module" src="./js/main.js"></script>
+  <script type="module" src="frontend/js/main.js"></script>
 </body>
 </html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StockPilot - Purchase Management & Staging</title>
+  <meta http-equiv="refresh" content="0; url=app.html#/purchases">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .redirect-container {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      padding: 40px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(26, 54, 93, 0.15);
+      max-width: 500px;
+    }
+    .logo {
+      font-size: 3rem;
+      margin-bottom: 20px;
+    }
+    h1 {
+      color: #1a365d;
+      margin-bottom: 20px;
+    }
+    p {
+      color: #2D3748;
+      margin-bottom: 30px;
+    }
+    .btn {
+      background: linear-gradient(135deg, #67B292, #5A9B7F);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: all 0.3s ease;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(26, 54, 93, 0.2);
+    }
+  </style>
+</head>
+<body>
+  <div class="redirect-container">
+    <div class="logo">🛒</div>
+    <h1>StockPilot</h1>
+    <p>Redirecting to the new Purchase Management interface...</p>
+    <a href="app.html#/purchases" class="btn">Go to Purchase Management</a>
+    <p style="font-size: 14px; color: #718096; margin-top: 20px;">
+      If you're not redirected automatically, <a href="app.html#/purchases" style="color: #67B292;">click here</a>.
+    </p>
+  </div>
+  
+  <script>
+    // Immediate redirect
+    window.location.href = 'app.html#/purchases';
+  </script>
+</body>
+</html>
