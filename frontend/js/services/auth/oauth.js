@@ -83,7 +83,7 @@ class OAuthService {
   }
 
   /**
-   * Start OAuth authentication flow (silent)
+   * Start OAuth authentication flow (popup window)
    */
   async startOAuthFlow() {
     if (this.isAuthenticating) {
@@ -94,34 +94,32 @@ class OAuthService {
     
     this.authPromise = new Promise((resolve, reject) => {
       try {
-        debugLog('Starting silent OAuth flow');
+        debugLog('Starting OAuth flow with popup window');
         
         // Build OAuth URL - force fresh authentication
         const oauthUrl = API_ENDPOINTS.AUTH;
         const returnUrl = window.location.href;
         const fullOAuthUrl = `${oauthUrl}?return_url=${encodeURIComponent(returnUrl)}&force_reauth=1`;
         
-        debugLog('Opening OAuth in hidden iframe', { url: fullOAuthUrl });
+        debugLog('Opening OAuth in popup window', { url: fullOAuthUrl });
         
-        // Create hidden iframe for silent OAuth
-        const iframe = document.createElement('iframe');
-        iframe.style.cssText = `
-          position: fixed;
-          top: -1000px;
-          left: -1000px;
-          width: 1px;
-          height: 1px;
-          border: none;
-          opacity: 0;
-          pointer-events: none;
-        `;
-        iframe.src = fullOAuthUrl;
-        iframe.name = 'ebay_oauth_silent';
+        // Open OAuth in popup window
+        const authWindow = window.open(
+          fullOAuthUrl, 
+          'ebay_oauth', 
+          'width=600,height=700,scrollbars=yes,resizable=yes,status=yes,toolbar=no,menubar=no,location=no'
+        );
         
-        document.body.appendChild(iframe);
-        this.authWindow = iframe;
+        if (!authWindow) {
+          this.isAuthenticating = false;
+          debugLog('Failed to open OAuth popup - popup blocked?');
+          reject(new Error('Popup blocked. Please allow popups for this site.'));
+          return;
+        }
+        
+        this.authWindow = authWindow;
 
-        // Monitor for OAuth completion via postMessage
+        // Monitor for OAuth completion
         const messageHandler = (event) => {
           if (event.origin !== window.location.origin) return;
           
@@ -130,12 +128,12 @@ class OAuthService {
             cleanup();
             
             if (event.data.success) {
-              debugLog('Silent OAuth completed successfully');
+              debugLog('OAuth completed successfully');
               resolve(true);
               // Refresh the page to reload with new auth
               setTimeout(() => window.location.reload(), 500);
             } else {
-              debugLog('Silent OAuth failed');
+              debugLog('OAuth failed');
               resolve(false);
             }
           }
@@ -146,21 +144,32 @@ class OAuthService {
         const cleanup = () => {
           this.isAuthenticating = false;
           window.removeEventListener('message', messageHandler);
-          if (iframe && iframe.parentNode) {
-            iframe.parentNode.removeChild(iframe);
+          if (authWindow && !authWindow.closed) {
+            authWindow.close();
           }
         };
 
+        // Monitor window close
+        const checkClosed = setInterval(() => {
+          if (authWindow.closed) {
+            clearInterval(checkClosed);
+            cleanup();
+            debugLog('OAuth window closed by user');
+            resolve(false);
+          }
+        }, 1000);
+
         // Fallback: check auth status periodically
         let checkCount = 0;
-        const maxChecks = 30; // 30 seconds
+        const maxChecks = 60; // 60 seconds
         const checkInterval = setInterval(async () => {
           checkCount++;
           
           if (checkCount >= maxChecks) {
             clearInterval(checkInterval);
+            clearInterval(checkClosed);
             cleanup();
-            debugLog('Silent OAuth timeout');
+            debugLog('OAuth timeout');
             resolve(false);
             return;
           }
@@ -168,8 +177,9 @@ class OAuthService {
           const isAuth = await this.checkAuthStatus();
           if (isAuth) {
             clearInterval(checkInterval);
+            clearInterval(checkClosed);
             cleanup();
-            debugLog('Silent OAuth completed successfully (fallback check)');
+            debugLog('OAuth completed successfully (fallback check)');
             resolve(true);
             setTimeout(() => window.location.reload(), 500);
           }
@@ -178,14 +188,15 @@ class OAuthService {
         // Timeout after 2 minutes
         setTimeout(() => {
           clearInterval(checkInterval);
+          clearInterval(checkClosed);
           cleanup();
-          debugLog('Silent OAuth timeout');
+          debugLog('OAuth timeout');
           resolve(false);
         }, 120000);
 
       } catch (error) {
         this.isAuthenticating = false;
-        debugLog('Silent OAuth error', error);
+        debugLog('OAuth error', error);
         reject(error);
       }
     });
@@ -194,13 +205,27 @@ class OAuthService {
   }
 
   /**
-   * Manually trigger OAuth flow - forces new token (silent)
+   * Manually trigger OAuth flow - forces new token
    */
   async authenticate() {
     debugLog('Manual authentication triggered - forcing new token');
     
-    // No visible message - silent authentication
-    return this.startOAuthFlow();
+    try {
+      // Try popup first
+      return await this.startOAuthFlow();
+    } catch (error) {
+      debugLog('Popup OAuth failed, trying direct redirect', error);
+      
+      // Fallback: direct redirect
+      const oauthUrl = API_ENDPOINTS.AUTH;
+      const returnUrl = window.location.href;
+      const fullOAuthUrl = `${oauthUrl}?return_url=${encodeURIComponent(returnUrl)}&force_reauth=1`;
+      
+      debugLog('Redirecting to OAuth URL', { url: fullOAuthUrl });
+      window.location.href = fullOAuthUrl;
+      
+      return false; // Will redirect, so return false
+    }
   }
 
   /**
