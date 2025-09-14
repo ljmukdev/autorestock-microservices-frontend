@@ -1,11 +1,12 @@
+<!-- File: frontend/view-purchases.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <!-- CSP: allow eBay OAuth service + Railway apps -->
   <meta http-equiv="Content-Security-Policy" content="connect-src 'self' https://stockpilot-ebay-oauth-production.up.railway.app https://*.railway.app https://*.up.railway.app">
   <title>StockPilot - Purchase Management & Staging</title>
-  <!-- CSP fix for eBay service connections -->
   <style>
     /* Original page styling */
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin:0; padding:15px; background:linear-gradient(135deg,#1a365d 0%,#2c5282 100%); min-height:100vh; }
@@ -91,7 +92,7 @@
     .mp-btn[disabled] { opacity:.65; cursor:not-allowed; }
     .mp-btn-ghost { background:#eef2f7; color:#1a365d; }
     .mp-alert { padding:10px 12px; border-radius:8px; margin-bottom:8px; font-weight:600; }
-    .mp-alert-error { background: rgba(239,68,68,.08); color:#b91c1c; border:1px solid rgba(239,68,68,.3); }
+    .mp-alert-error { background: rgba(239,68,68,.08); color: #b91c1c; border:1px solid rgba(239,68,68,.3); }
     @media (max-width: 480px), (max-height: 560px) { .mp-backdrop { align-items: stretch; padding: 0; } .mp-modal { width: 100vw; max-height: 100vh; border-radius: 0; } }
   </style>
 </head>
@@ -286,7 +287,7 @@
         <input type="number" id="ebay-price-min" placeholder="Min Price" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 100px;">
         <input type="number" id="ebay-price-max" placeholder="Max Price" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 100px;">
       </div>
-      
+
       <!-- Selection controls -->
       <div style="display: flex; gap: 10px; margin-bottom: 20px; align-items: center;">
         <button id="ebay-select-all" class="btn btn-secondary" style="padding: 6px 12px;">Select All</button>
@@ -294,7 +295,7 @@
         <span id="ebay-selection-count" style="margin-left: 10px; font-weight: bold; color: #059669;">0 items selected</span>
         <button id="ebay-import-selected" class="btn" style="background: #059669; color: white; padding: 6px 12px; margin-left: auto;">Import Selected</button>
       </div>
-      
+
       <!-- Items grid -->
       <div id="ebay-items-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; max-height: 60vh; overflow-y: auto;">
         <!-- Items will be loaded here -->
@@ -304,1328 +305,1082 @@
 </div>
 
 <script>
-    console.log('🛒 StockPilot Purchase Management & Staging loaded');
+  console.log('🛒 StockPilot Purchase Management & Staging loaded');
 
-    let currentPurchases = [];
+  let currentPurchases = [];
 
-    document.addEventListener('DOMContentLoaded', function() {
-      try {
-        loadPurchases();
+  // === Runtime flags (query params) ===
+  const urlParams = new URLSearchParams(window.location.search);
+  const FORCE_LIVE = urlParams.get('live') === '1';     // ?live=1 -> enforce live only (no sample/local)
+  const USE_SAMPLE = urlParams.get('sample') === '1';   // ?sample=1 -> explicit sample-only mode
 
-        const addBtn = document.getElementById('btn-add-purchase');
-        const refreshBtn = document.getElementById('btn-refresh');
-        const ebaySyncBtn = document.getElementById('btn-ebay-sync');
-        if (addBtn) addBtn.addEventListener('click', openManualPurchaseModal);
-        if (refreshBtn) refreshBtn.addEventListener('click', loadPurchases);
-        if (ebaySyncBtn) ebaySyncBtn.addEventListener('click', syncEbayPurchases);
+  // Strict fetch: throw with body on non-2xx
+  async function fetchJSONStrict(url, opts = {}) {
+    const res = await fetch(url, { ...opts, headers: { 'Content-Type': 'application/json', ...(opts.headers||{}) } });
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      const err = new Error(`HTTP ${res.status} ${res.statusText} @ ${url}\n${text}`);
+      err.status = res.status;
+      err.body = text;
+      throw err;
+    }
+    return res.json();
+  }
 
-        setupManualPurchaseModal();
-      } catch (e) {
-        console.error('Bootstrap error:', e);
-        showStatus('❌ UI bootstrap error. Check console.', 'error');
-      }
-    });
+  document.addEventListener('DOMContentLoaded', function() {
+    try {
+      loadPurchases();
 
-    async function loadPurchases() {
-      showLoading();
-      try {
-        console.log('🔄 Loading purchases from live eBay service...');
-        showStatus('🔄 Loading live eBay purchases...', 'info');
-        
-        // Try to load from live eBay service first
-        try {
-          const response = await fetch('https://stockpilot-ebay-oauth-production.up.railway.app/api/ebay/default_user/purchases?limit=100', {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            console.log('✅ Live eBay data loaded:', data);
-            
-            if (data.success && data.data && data.data.orders && data.data.orders.length > 0) {
-              // Convert eBay data to our format
+      const addBtn = document.getElementById('btn-add-purchase');
+      const refreshBtn = document.getElementById('btn-refresh');
+      const ebaySyncBtn = document.getElementById('btn-ebay-sync');
+      if (addBtn) addBtn.addEventListener('click', openManualPurchaseModal);
+      if (refreshBtn) refreshBtn.addEventListener('click', loadPurchases);
+      if (ebaySyncBtn) ebaySyncBtn.addEventListener('click', syncEbayPurchases);
+
+      setupManualPurchaseModal();
+    } catch (e) {
+      console.error('Bootstrap error:', e);
+      showStatus('❌ UI bootstrap error. Check console.', 'error');
+    }
+  });
+
+  async function loadPurchases() {
+    showLoading();
+    try {
+      console.log('🔄 Loading purchases...');
+      showStatus('🔄 Loading purchases...', 'info');
+
+      // Live only (default) – NO silent fallback to localStorage
+      if (FORCE_LIVE || !USE_SAMPLE) {
+        // Try OAuth wrapper if present first (helps surface 401->oauth)
+        if (typeof window.oauthApiWrapper !== 'undefined') {
+          try {
+            const data = await window.oauthApiWrapper.getPurchases({ limit: 100 });
+            if (data && data.success && data.data && (data.data.orders?.length > 0 || data.data.recentPurchases?.length > 0)) {
               const purchases = convertEbayDataToPurchases(data.data);
               currentPurchases = purchases;
               displayPurchases(purchases);
               updateStatusBar(purchases);
               updatePurchaseHistoryCount(purchases);
-              showStatus(`✅ Live eBay data loaded! Found ${purchases.length} purchases`, 'success');
+              showStatus(`✅ Live eBay data (OAuth) loaded (${purchases.length})`, 'success');
               return;
-            } else {
-              console.log('📦 No live eBay purchases found, checking localStorage...');
             }
-          } else {
-            console.log('⚠️ Live eBay service unavailable, checking localStorage...');
+          } catch (oauthErr) {
+            console.warn('OAuth wrapper failed, falling back to direct API:', oauthErr);
           }
-        } catch (ebayError) {
-          console.log('⚠️ Live eBay service error, checking localStorage:', ebayError.message);
         }
-        
-        // Fallback to localStorage
-        const storedPurchases = localStorage.getItem('stockpilot_purchases');
-        if (!storedPurchases) {
-          console.log('📦 No stored purchases found, showing empty state');
-          displayPurchases([]);
-          showStatus('📦 No purchases found. Click "Sync eBay" to load live data.', 'info');
+
+        // Direct API call
+        const data = await fetchJSONStrict('https://stockpilot-ebay-oauth-production.up.railway.app/api/ebay/default_user/purchases?limit=100');
+        if (data.success && data.data && (data.data.orders?.length > 0 || data.data.recentPurchases?.length > 0)) {
+          const purchases = convertEbayDataToPurchases(data.data);
+          currentPurchases = purchases;
+          displayPurchases(purchases);
+          updateStatusBar(purchases);
+          updatePurchaseHistoryCount(purchases);
+          showStatus(`✅ Live eBay data loaded (${purchases.length} purchases)`, 'success');
           return;
         }
-        const data = JSON.parse(storedPurchases);
-        const purchases = data.purchases || data;
-        if (!Array.isArray(purchases)) throw new Error('Invalid data format from localStorage');
-        currentPurchases = purchases;
-        displayPurchases(purchases);
-        updateStatusBar(purchases);
-        updatePurchaseHistoryCount(purchases);
-        showStatus(`✅ Loaded ${purchases.length} stored purchases`, 'success');
-      } catch (error) {
-        console.error('❌ Error loading purchases:', error);
-        showError(error);
+
+        throw new Error('Live service returned no purchases.');
       }
-    }
 
-    function showLoading() {
-      const container = document.getElementById('purchaseHistoryContent');
-      container.innerHTML = `
-        <div class="loading-spinner"></div>
-        <p style="text-align:center; color:#1a365d; margin-top:10px;">Loading your purchase history...</p>
-      `;
-    }
-
-    function showError(error) {
-      const container = document.getElementById('purchaseHistoryContent');
-      container.innerHTML = `
-        <div class="error-message">
-          <h4>❌ Failed to Load Purchases</h4>
-          <p><strong>Error:</strong> ${error.message}</p>
-          <button class="retry-btn" id="btn-retry-load">🔄 Try Again</button>
-        </div>
-      `;
-      const retry = document.getElementById('btn-retry-load');
-      if (retry) retry.addEventListener('click', loadPurchases);
-      showStatus(`❌ Error loading purchases: ${error.message}`, 'error');
-    }
-
-    function displayPurchases(purchases) {
-      const container = document.getElementById('purchaseHistoryContent');
-      if (!purchases || purchases.length === 0) {
-        container.innerHTML = `
-          <div style="text-align:center; padding:40px 20px; color:#1a365d;">
-            <h4>📭 No Purchases Found</h4>
-            <button class="retry-btn" id="btn-retry-empty">🔄 Try Again</button>
-          </div>
-        `;
-        const btn = document.getElementById('btn-retry-empty');
-        if (btn) btn.addEventListener('click', loadPurchases);
+      // Explicit sample mode
+      if (USE_SAMPLE) {
+        console.warn('⚠️ Using sample data by request (?sample=1)');
+        loadSampleData();
         return;
       }
 
-      const cards = purchases.map(purchase => {
-        const timeAgo = getTimeAgo(new Date(purchase.orderDate || purchase.purchase_date || purchase.createdAt));
-        const platformEmoji = getPlatformEmoji(purchase.platform || 'Unknown');
-        const total = (() => {
-          const a = Number(purchase.totalAmount ?? NaN);
-          const b = Number(purchase.total_paid ?? NaN);
-          if (!isNaN(a)) return a;
-          if (!isNaN(b)) return b;
-          const c = (Number(purchase.price_paid||0) + Number(purchase.shipping_cost||0) + Number(purchase.fees||0));
-          return c;
-        })().toFixed(2);
+      throw new Error('No data source available');
 
-        return `
-          <div class="purchase-card" data-id="${purchase._id || purchase.id}" style="cursor: pointer;" title="Click to view details">
-            <div class="purchase-icon">${platformEmoji}</div>
-            <div class="purchase-text">
-              <div><strong>${purchase.supplier || purchase.brand || 'Unknown'} ${purchase.items?.[0]?.productName || purchase.model || 'Item'}</strong></div>
-              <div style="font-size:11px; color:#666; margin-top:2px;">
-                ${purchase.platform || 'Unknown'} • ${timeAgo} • ${purchase.category || 'Uncategorized'}
-              </div>
-            </div>
-            <div class="purchase-amount">£${total}</div>
-            <div class="staging-controls">
-              <button class="staging-btn stage" data-action="stage" data-id="${purchase._id || purchase.id}">🔍 Stage</button>
-              <button class="staging-btn split" data-action="split" data-id="${purchase._id || purchase.id}">✂️ Split</button>
-              <button class="staging-btn inventory" data-action="inventory" data-id="${purchase._id || purchase.id}">📦 Inventory</button>
-              <button class="staging-btn delete" data-action="delete" data-id="${purchase._id || purchase.id}" style="background: #dc2626; color: white;">🗑️ Delete</button>
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      container.innerHTML = cards;
-
-      container.onclick = (e) => {
-        const btn = e.target.closest('button[data-action]');
-        if (btn) {
-          // Handle button clicks
-          const id = btn.getAttribute('data-id');
-          const action = btn.getAttribute('data-action');
-          if (action === 'stage') showStatus('🔍 Staging…','info');
-          if (action === 'split') showStatus('✂️ Splitting…','info');
-          if (action === 'inventory') showStatus('📦 Added to inventory','success');
-          if (action === 'delete') confirmDeletePurchase(id);
-          return;
-        }
-        
-        // Handle purchase card clicks
-        const card = e.target.closest('.purchase-card');
-        if (card) {
-          const id = card.getAttribute('data-id');
-          showPurchaseDetails(id);
-        }
-      };
+    } catch (error) {
+      console.error('❌ Error loading purchases:', error);
+      showError(error);
     }
+  }
 
-    function updateStatusBar(purchases) {
-      const totalInvestment = purchases.reduce((sum, p) => {
-        if (p.totalAmount != null) return sum + Number(p.totalAmount || 0);
-        if (p.total_paid != null) return sum + Number(p.total_paid || 0);
-        return sum + Number(p.price_paid || 0) + Number(p.shipping_cost || 0) + Number(p.fees || 0);
-      }, 0);
-      const averagePurchase = purchases.length ? totalInvestment / purchases.length : 0;
+  function showLoading() {
+    const container = document.getElementById('purchaseHistoryContent');
+    container.innerHTML = `
+      <div class="loading-spinner"></div>
+      <p style="text-align:center; color:#1a365d; margin-top:10px;">Loading your purchase history...</p>
+    `;
+  }
 
-      document.getElementById('status-total-investment').textContent = `£${totalInvestment.toFixed(2)}`;
-      document.getElementById('status-purchase-count').textContent = purchases.length;
-      document.getElementById('status-avg-purchase').textContent = `£${averagePurchase.toFixed(2)}`;
-      document.getElementById('last-sync').textContent = new Date().toLocaleTimeString();
+  function showError(error) {
+    const container = document.getElementById('purchaseHistoryContent');
+    container.innerHTML = `
+      <div class="error-message">
+        <h4>❌ Failed to Load Purchases</h4>
+        <p><strong>Error:</strong> ${error.message}</p>
+        <button class="retry-btn" id="btn-retry-load">🔄 Try Again</button>
+      </div>
+    `;
+    const retry = document.getElementById('btn-retry-load');
+    if (retry) retry.addEventListener('click', loadPurchases);
+    showStatus(`❌ Error loading purchases: ${error.message}`, 'error');
+  }
 
-      const manual = purchases.filter(p => (p.source === 'manual') || !p.source).length;
-      const auto = purchases.length - manual;
-      document.getElementById('source-breakdown').textContent = `${manual} manual, ${auto} auto`;
-      document.getElementById('monthly-change').textContent = '+12%';
-    }
-
-    function updatePurchaseHistoryCount(purchases) {
-      document.getElementById('purchaseHistoryCount').textContent = `${purchases.length} items`;
-    }
-
-    function getPlatformEmoji(platform){ const e={ 'eBay':'🏪','Amazon':'📦','Vinted':'👕','Facebook Marketplace':'📘','Depop':'🛍️','Gumtree':'🌳'}; return e[platform]||'🛒'; }
-    function getTimeAgo(date){ const now=new Date(); const s=Math.floor((now-date)/1000); if(s<60) return 'just now'; if(s<3600) return `${Math.floor(s/60)}m ago`; if(s<86400) return `${Math.floor(s/3600)}h ago`; if(s<604800) return `${Math.floor(s/86400)}d ago`; return `${Math.floor(s/604800)}w ago`; }
-    function showStatus(message, type){ const el=document.getElementById('statusMessage'); el.innerHTML=`<div class="status ${type}">${message}</div>`; setTimeout(()=>{ el.innerHTML=''; },5000); }
-
-    /* ===== Modal logic (no inline handlers, no external CDNs) ===== */
-    function setupManualPurchaseModal() {
-      const backdrop = document.getElementById('mp-backdrop');
-      const closeBtn = document.getElementById('mp-close');
-      const cancelBtn = document.getElementById('mp-cancel');
-      const form = document.getElementById('mp-form');
-      const errorEl = document.getElementById('mp-error');
-      const statusSel = form.querySelector('select[name="status"]');
-      const returnWrap = document.getElementById('mp-return-wrapper');
-
-      // --- Dropdown lists with "Add new…" + localStorage persistence ---
-      const LISTS = {
-        category: { key:'sp_categories', defaults:['Electronics','Audio','Phones','Accessories','Tools','Clothing'] },
-        brand: { key:'sp_brands', defaults:['Apple','Samsung','Sony','Bose','Generic'] },
-        source: { key:'sp_sources', defaults:['Other','Auction','Vinted','Regular Stock','eBay','Amazon'] },
-        shipping_provider: { key:'sp_shippers', defaults:['Royal Mail','EVRi','DPD','UPS','FedEx','DHL','Yodel','Parcelforce'] }
-      };
-
-      function loadList(key, defaults){ try{ const s=localStorage.getItem(key); return s? JSON.parse(s) : defaults.slice(); }catch(_){ return defaults.slice(); } }
-      function saveList(key, arr){ try{ localStorage.setItem(key, JSON.stringify(arr)); }catch(_){} }
-
-      function populateSelect(sel, items, selectedValue){
-        sel.innerHTML = '';
-        const placeholder = document.createElement('option');
-        placeholder.value = ''; placeholder.textContent = '-- Select --';
-        sel.appendChild(placeholder);
-        items.forEach(v => {
-          const opt = document.createElement('option');
-          opt.value = v; opt.textContent = v;
-          if (selectedValue && selectedValue === v) opt.selected = true;
-          sel.appendChild(opt);
-        });
-        const add = document.createElement('option');
-        add.value = '__add_new__'; add.textContent = '➕ Add new…';
-        sel.appendChild(add);
-      }
-
-      function wireAddNew(sel, listCfg){
-        sel.addEventListener('change', () => {
-          if (sel.value !== '__add_new__') return;
-          const label = sel.getAttribute('data-label') || 'item';
-          const newItem = window.prompt(`Add new ${label}:`);
-          if (newItem && newItem.trim()) {
-            const clean = newItem.trim();
-            const arr = loadList(listCfg.key, listCfg.defaults);
-            if (!arr.includes(clean)) {
-              arr.push(clean);
-              arr.sort((a,b)=>a.localeCompare(b));
-              saveList(listCfg.key, arr);
-            }
-            populateSelect(sel, arr, clean);
-          } else {
-            populateSelect(sel, loadList(listCfg.key, listCfg.defaults), '');
-          }
-        });
-      }
-
-      // Initialize dropdowns
-      (function initDropdowns(){
-        const cfgs = [
-          { name:'category', ...LISTS.category },
-          { name:'brand', ...LISTS.brand },
-          { name:'source', ...LISTS.source },
-          { name:'shipping_provider', ...LISTS.shipping_provider }
-        ];
-        cfgs.forEach(cfg => {
-          const sel = form.querySelector(`select[name="${cfg.name}"]`);
-          if (!sel) return;
-          const arr = loadList(cfg.key, cfg.defaults);
-          const selected = (cfg.name==='source' && arr.includes('Other')) ? 'Other' : '';
-          populateSelect(sel, arr, selected);
-          wireAddNew(sel, cfg);
-        });
-      })();
-
-      // default date today
-      const dateInput = form.querySelector('input[name="dateOfPurchase"]');
-      dateInput.value = new Date().toISOString().slice(0,10);
-
-      statusSel.addEventListener('change', () => {
-        const show = statusSel.value === 'Returned';
-        returnWrap.classList.toggle('mp-hidden', !show);
-      });
-
-      function hideError(){ errorEl.classList.add('mp-hidden'); errorEl.textContent=''; }
-      function showErrorMsg(msg){ errorEl.textContent = `❌ ${msg}`; errorEl.classList.remove('mp-hidden'); }
-
-      // ===== Identifier auto-generation & uniqueness =====
-      const idInput = form.querySelector('input[name="identifier"]');
-      let idTouched = false;
-      idInput.addEventListener('input', () => { idTouched = true; });
-
-      const genFields = ['category','brand','model','generation','dateOfPurchase'];
-      genFields.forEach(name => {
-        const el = form.querySelector(`[name="${name}"]`);
-        if (!el) return;
-        el.addEventListener('input', maybeAutoFillId);
-        el.addEventListener('change', maybeAutoFillId);
-      });
-
-      function maybeAutoFillId(){
-        if (idTouched) return;
-        const base = buildBaseIdentifier(form);
-        const unique = ensureUniqueIdentifier(base);
-        idInput.value = unique;
-      }
-
-      function buildBaseIdentifier(formEl){
-        const cat = slug(formEl.category.value);
-        const brand = slug(formEl.brand.value);
-        const model = slug(formEl.model.value);
-        const gen = slug(formEl.generation.value);
-        const date = formEl.dateOfPurchase.value ? yyyymmdd(formEl.dateOfPurchase.value) : yyyymmdd(new Date());
-        const parts = [cat, brand, model, gen].filter(Boolean);
-        const head = parts.length ? parts.join('-') : 'PURCHASE';
-        return `${head}-${date}`;
-      }
-
-      function yyyymmdd(val){
-        const d = (val instanceof Date) ? val : new Date(val + 'T00:00:00');
-        const y = d.getFullYear();
-        const m = String(d.getMonth()+1).padStart(2,'0');
-        const da = String(d.getDate()).padStart(2,'0');
-        return `${y}${m}${da}`;
-      }
-
-      function slug(str){
-        return String(str || '')
-          .trim()
-          .toUpperCase()
-          .replace(/[^A-Z0-9]+/g,'-')
-          .replace(/^-+|-+$/g,'')
-          .slice(0,24);
-      }
-
-      function ensureUniqueIdentifier(baseId){
-        const base = slug(baseId).replace(/-+/g,'-');
-        const existing = new Set(
-          (currentPurchases || [])
-            .map(p => (p.identifier || p.Identifier || '').toString().toUpperCase())
-            .filter(Boolean)
-        );
-        if (!existing.has(base)) return base;
-        // Try suffixes -001..-999
-        for (let i=1;i<1000;i++){
-          const cand = `${base}-${String(i).padStart(3,'0')}`;
-          if (!existing.has(cand)) return cand;
-        }
-        // Fallback with random 4-char
-        const rand = Math.random().toString(36).slice(2,6).toUpperCase();
-        return `${base}-${rand}`;
-      }
-
-      // Autofill on open
-      maybeAutoFillId();
-
-      closeBtn.addEventListener('click', closeManualPurchaseModal);
-      cancelBtn.addEventListener('click', closeManualPurchaseModal);
-      backdrop.addEventListener('click', (e)=>{ if(e.target === backdrop) closeManualPurchaseModal(); });
-      document.addEventListener('keydown', (e)=>{ if(!backdrop.classList.contains('mp-hidden') && e.key==='Escape') closeManualPurchaseModal(); });
-
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        hideError();
-
-        const dateVal = form.dateOfPurchase.value;
-        if (!dateVal) { showErrorMsg('Date of purchase is required.'); return; }
-        const nn = (v) => v === '' || v === null || isNaN(Number(v)) ? 0 : Number(v);
-        if (nn(form.price_paid.value) < 0) { showErrorMsg('Price paid cannot be negative.'); return; }
-        if (nn(form.shipping_cost.value) < 0) { showErrorMsg('Shipping cost cannot be negative.'); return; }
-        if (nn(form.fees.value) < 0) { showErrorMsg('Fees cannot be negative.'); return; }
-
-        // Finalize identifier: use user-entered or auto base, then ensure unique
-        const entered = form.identifier.value.trim();
-        const finalBase = entered ? slug(entered) : buildBaseIdentifier(form);
-        const finalIdentifier = ensureUniqueIdentifier(finalBase);
-        if (entered && finalIdentifier !== entered.toUpperCase()) {
-          showStatus(`ℹ️ Identifier adjusted to ${finalIdentifier} to avoid a duplicate.`, 'info');
-        }
-
-        const photosArr = (form.photos.value || '').split(',').map(s=>s.trim()).filter(Boolean);
-        const payload = {
-          identifier: finalIdentifier,
-          category: form.category.value || undefined,
-          brand: form.brand.value || undefined,
-          model: form.model.value || undefined,
-          generation: form.generation.value || undefined,
-          source: form.source.value || 'Other',
-          seller_username: form.seller_username.value || undefined,
-          order_id: form.order_id.value || undefined,
-          dateOfPurchase: dateVal,
-          price_paid: form.price_paid.value === '' ? 0 : Number(form.price_paid.value),
-          shipping_cost: form.shipping_cost.value === '' ? 0 : Number(form.shipping_cost.value),
-          fees: form.fees.value === '' ? 0 : Number(form.fees.value),
-          tracking_ref: form.tracking_ref.value || undefined,
-          shipping_provider: form.shipping_provider.value || undefined,
-          status: form.status.value,
-          return_reason: form.status.value === 'Returned' ? (form.return_reason.value || '') : undefined,
-          parts_total: form.parts_total.value === '' ? undefined : Number(form.parts_total.value),
-          photos: photosArr,
-          video_url: form.video_url.value || undefined,
-          notes: form.notes.value || undefined
-        };
-
-        const submitBtn = document.getElementById('mp-submit');
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Saving…';
-
-        try {
-          console.log('🚀 Starting purchase save...');
-          console.log('📦 Payload:', payload);
-          console.log('🌐 Fetching URL:', '/api/purchases');
-          console.log('📍 Current domain:', window.location.origin);
-          console.log('🕐 Timestamp:', new Date().toISOString());
-          
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => {
-            console.log('⏰ Request timed out after 30 seconds');
-            controller.abort();
-          }, 30000); // 30 second timeout
-          
-          console.log('📡 Saving to localStorage...');
-          // Save to localStorage since we're using eBay data now
-          const existingPurchases = JSON.parse(localStorage.getItem('stockpilot_purchases') || '[]');
-          existingPurchases.push(payload);
-          localStorage.setItem('stockpilot_purchases', JSON.stringify(existingPurchases));
-          
-          // Simulate API response
-          const res = {
-            ok: true,
-            json: async () => ({ success: true, purchase: payload })
-          };
-          
-          clearTimeout(timeoutId);
-          console.log('✅ Purchase saved to localStorage successfully');
-          if (!res.ok) {
-            throw new Error('Failed to save purchase');
-          }
-          showStatus('✅ Purchase saved', 'success');
-          closeManualPurchaseModal();
-          if (window.loadPurchases) loadPurchases();
-        } catch (err) {
-          console.error('Purchase save error:', err);
-          if (err.name === 'AbortError') {
-            showErrorMsg('Request timed out after 30 seconds. Please check if the server is running.');
-          } else {
-            showErrorMsg(err.message);
-          }
-        } finally {
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'Save Purchase';
-        }
-      });
-    }
-
-    function openManualPurchaseModal(){
-      document.getElementById('mp-backdrop').classList.remove('mp-hidden');
-      document.body.classList.add('no-scroll');
-    }
-    function closeManualPurchaseModal(){
-      document.getElementById('mp-backdrop').classList.add('mp-hidden');
-      document.body.classList.remove('no-scroll');
-    }
-
-    // Delete confirmation with failsafe
-    function confirmDeletePurchase(purchaseId) {
-      // Create confirmation modal
-      const modal = document.createElement('div');
-      modal.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 10000;
-      `;
-      
-      modal.innerHTML = `
-        <div style="
-          background: white;
-          padding: 30px;
-          border-radius: 12px;
-          max-width: 400px;
-          width: 90%;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        ">
-          <h3 style="margin: 0 0 15px 0; color: #dc2626; font-size: 18px;">🗑️ Delete Purchase</h3>
-          <p style="margin: 0 0 20px 0; color: #374151; line-height: 1.5;">
-            Are you sure you want to delete this purchase? This action cannot be undone.
-          </p>
-          <p style="margin: 0 0 15px 0; color: #dc2626; font-weight: 600; font-size: 14px;">
-            Type "delete" to confirm:
-          </p>
-          <input type="text" id="delete-confirmation-input" placeholder="Type 'delete' here" style="
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #e5e7eb;
-            border-radius: 6px;
-            font-size: 14px;
-            margin-bottom: 20px;
-          ">
-          <div style="display: flex; gap: 10px; justify-content: flex-end;">
-            <button id="cancel-delete" style="
-              padding: 10px 20px;
-              border: 1px solid #d1d5db;
-              background: white;
-              color: #374151;
-              border-radius: 6px;
-              cursor: pointer;
-              font-weight: 500;
-            ">Cancel</button>
-            <button id="confirm-delete" disabled style="
-              padding: 10px 20px;
-              border: none;
-              background: #dc2626;
-              color: white;
-              border-radius: 6px;
-              cursor: pointer;
-              font-weight: 600;
-              opacity: 0.5;
-            ">Delete Purchase</button>
-          </div>
+  function displayPurchases(purchases) {
+    const container = document.getElementById('purchaseHistoryContent');
+    if (!purchases || purchases.length === 0) {
+      container.innerHTML = `
+        <div style="text-align:center; padding:40px 20px; color:#1a365d;">
+          <h4>📭 No Purchases Found</h4>
+          <button class="retry-btn" id="btn-retry-empty">🔄 Try Again</button>
         </div>
       `;
-      
-      document.body.appendChild(modal);
-      
-      const input = modal.querySelector('#delete-confirmation-input');
-      const confirmBtn = modal.querySelector('#confirm-delete');
-      const cancelBtn = modal.querySelector('#cancel-delete');
-      
-      // Enable/disable delete button based on input
-      input.addEventListener('input', (e) => {
-        const isValid = e.target.value.toLowerCase() === 'delete';
-        confirmBtn.disabled = !isValid;
-        confirmBtn.style.opacity = isValid ? '1' : '0.5';
-      });
-      
-      // Handle confirmation
-      confirmBtn.addEventListener('click', () => {
-        if (input.value.toLowerCase() === 'delete') {
-          deletePurchase(purchaseId);
-          document.body.removeChild(modal);
-        }
-      });
-      
-      // Handle cancel
-      cancelBtn.addEventListener('click', () => {
-        document.body.removeChild(modal);
-      });
-      
-      // Close on backdrop click
-      modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-          document.body.removeChild(modal);
-        }
-      });
-      
-      // Focus input
-      input.focus();
+      const btn = document.getElementById('btn-retry-empty');
+      if (btn) btn.addEventListener('click', loadPurchases);
+      return;
     }
 
-    // Delete purchase function
-    async function deletePurchase(purchaseId) {
-      try {
-        console.log('🗑️ Deleting purchase:', purchaseId);
-        showStatus('🗑️ Deleting purchase...', 'info');
-        
-        // Delete from localStorage since we're using eBay data now
-        const existingPurchases = JSON.parse(localStorage.getItem('stockpilot_purchases') || '[]');
-        const updatedPurchases = existingPurchases.filter(p => p.identifier !== purchaseId);
-        localStorage.setItem('stockpilot_purchases', JSON.stringify(updatedPurchases));
-        
-        // Simulate API response
-        const response = {
-          ok: true,
-          json: async () => ({ success: true, message: 'Purchase deleted' })
-        };
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.details || errorData.error || `HTTP ${response.status}`);
-        }
-        
-        const result = await response.json();
-        console.log('✅ Purchase deleted successfully:', result);
-        showStatus('✅ Purchase deleted successfully', 'success');
-        
-        // Reload purchases to update the list
-        loadPurchases();
-        
-      } catch (error) {
-        console.error('❌ Error deleting purchase:', error);
-        showStatus(`❌ Failed to delete purchase: ${error.message}`, 'error');
-      }
-    }
+    const cards = purchases.map(purchase => {
+      const timeAgo = getTimeAgo(new Date(purchase.orderDate || purchase.purchase_date || purchase.createdAt));
+      const platformEmoji = getPlatformEmoji(purchase.platform || 'Unknown');
+      const total = (() => {
+        const a = Number(purchase.totalAmount ?? NaN);
+        const b = Number(purchase.total_paid ?? NaN);
+        if (!isNaN(a)) return a;
+        if (!isNaN(b)) return b;
+        const c = (Number(purchase.price_paid||0) + Number(purchase.shipping_cost||0) + Number(purchase.fees||0));
+        return c;
+      })().toFixed(2);
 
-    // Process eBay sync data
-    async function processEbaySyncData(syncData) {
-      console.log('📊 Processing eBay sync data:', syncData);
-      
-      // Check if we have real purchase data
-      const hasRealData = syncData.success && syncData.data && 
-                         (syncData.data.orders?.length > 0 || syncData.data.recentPurchases?.length > 0 || syncData.data.summary?.totalPurchases > 0);
-      
-      if (hasRealData) {
-        // Convert eBay data to our format
-        const purchases = convertEbayDataToPurchases(syncData.data);
-        
-        const statusMessage = `✅ Real eBay purchases loaded! Found ${purchases.length} actual purchases`;
-        showStatus(statusMessage, 'success');
-        
-        // Display the real purchases
-        displayPurchases(purchases);
-        updateStatusBar(purchases);
-        
-        // Show marketplace browser with real data
-        showEbayMarketplaceBrowser(purchases, [], [], 'real_purchases', 'Real eBay purchase data');
-        
-      } else {
-        // Fallback to sample data
-        const statusMessage = `⚠️ Sample data loaded! Real purchase data not available`;
-        showStatus(statusMessage, 'warning');
-        
-        // Load sample data
-        loadSampleData();
-      }
-    }
-
-    // Convert eBay data to our purchase format
-    function convertEbayDataToPurchases(ebayData) {
-      const purchases = [];
-      
-      // Handle both old format (recentPurchases) and new format (orders)
-      const orders = ebayData.orders || ebayData.recentPurchases || [];
-      
-      if (Array.isArray(orders) && orders.length > 0) {
-        orders.forEach((order, index) => {
-          // Extract item details from the order
-          const firstItem = order.lineItems && order.lineItems[0];
-          const itemTitle = firstItem ? firstItem.productName || firstItem.title : 'eBay Purchase';
-          const itemPrice = firstItem ? (firstItem.unitPrice || firstItem.price || 0) : (order.total || 0);
-          
-          purchases.push({
-            id: `ebay_${order.orderId || index}_${Date.now()}`,
-            _id: `ebay_${order.orderId || index}_${Date.now()}`,
-            purchase_date: order.creationTime ? new Date(order.creationTime).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-            orderDate: order.creationTime || new Date().toISOString(),
-            platform: 'eBay',
-            brand: extractBrand(itemTitle),
-            model: extractModel(itemTitle),
-            product_name: itemTitle,
-            purchase_price: itemPrice,
-            total_paid: order.total || itemPrice,
-            totalAmount: order.total || itemPrice,
-            delivery_status: order.orderStatus || 'Delivered',
-            seller: order.seller || 'Unknown',
-            seller_username: order.seller || 'Unknown',
-            notes: `eBay purchase: ${itemTitle}`,
-            source: 'ebay-oauth',
-            created_at: new Date().toISOString(),
-            items: order.lineItems || [],
-            order_id: order.orderId,
-            status: order.orderStatus || 'Delivered'
-          });
-        });
-      }
-      
-      return purchases;
-    }
-
-    // Helper functions for data extraction
-    function extractBrand(title) {
-      const brands = ['Apple', 'Samsung', 'Sony', 'Bose', 'Sonos', 'LG'];
-      const titleLower = title.toLowerCase();
-      
-      for (const brand of brands) {
-        if (titleLower.includes(brand.toLowerCase())) {
-          return brand;
-        }
-      }
-      
-      return 'Unknown';
-    }
-
-    function extractModel(title) {
-      const words = title.split(' ');
-      if (words.length > 2) {
-        return words.slice(1, 4).join(' ');
-      }
-      return title;
-    }
-
-    // Load sample data fallback
-    function loadSampleData() {
-      const samplePurchases = [
-        {
-          id: 'sample_1',
-          purchase_date: '2025-09-10',
-          platform: 'eBay',
-          brand: 'Apple',
-          model: 'AirPods Pro',
-          purchase_price: 89.99,
-          total_paid: 94.98,
-          delivery_status: 'Delivered',
-          seller: 'tech_deals',
-          notes: 'Sample purchase data'
-        }
-      ];
-      
-      displayPurchases(samplePurchases);
-      updateStatusBar(samplePurchases);
-    }
-
-    // eBay purchase sync function with OAuth integration
-    async function syncEbayPurchases() {
-      const syncBtn = document.getElementById('btn-ebay-sync');
-      const originalText = syncBtn.textContent;
-      
-      try {
-        // Show loading state
-        syncBtn.disabled = true;
-        syncBtn.textContent = '⏳ Syncing...';
-        showStatus('🛒 Starting eBay purchase sync...', 'info');
-        
-        console.log('🔄 Starting eBay purchase sync...');
-        
-        // Use OAuth API wrapper if available
-        if (typeof window.oauthApiWrapper !== 'undefined') {
-          console.log('📡 Using OAuth API wrapper...');
-          showStatus('📡 Connecting to eBay with OAuth...', 'info');
-          
-          const result = await window.oauthApiWrapper.getPurchases({ 
-            limit: 100,
-            startDate: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 year ago
-            endDate: new Date().toISOString().split('T')[0], // today
-            getRecent: 'true'
-          });
-          
-          if (result.oauth_required) {
-            // OAuth modal will be shown automatically
-            showStatus('🔐 eBay authentication required. OAuth modal will appear...', 'info');
-            return;
-          }
-          
-          if (result.success && result.data) {
-            const syncData = result.data;
-            console.log('✅ eBay data loaded via OAuth:', syncData);
-            
-            // Process the real eBay data
-            await processEbaySyncData(syncData);
-            return;
-          } else {
-            throw new Error(result.error || 'OAuth sync failed');
-          }
-        }
-        
-        // Fallback to direct API call
-        console.log('📡 Fetching eBay purchase data directly...');
-        showStatus('📡 Fetching eBay purchase data...', 'info');
-        
-        const syncResponse = await fetch('https://stockpilot-ebay-oauth-production.up.railway.app/api/ebay/default_user/purchases?limit=100', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        if (!syncResponse.ok) {
-          const errorData = await syncResponse.json();
-          
-          // If authentication is required, show OAuth option
-          if (errorData.oauth_required || errorData.redirect_required) {
-            showStatus('🔐 eBay authentication required. Click to authorize...', 'info');
-            
-            // Add a button to start OAuth
-            const authBtn = document.createElement('button');
-            authBtn.textContent = '🔐 Authorize eBay';
-            authBtn.style.cssText = `
-              background: #0064d2;
-              color: white;
-              border: none;
-              padding: 10px 20px;
-              border-radius: 6px;
-              cursor: pointer;
-              font-weight: 600;
-              margin-top: 10px;
-            `;
-            authBtn.onclick = () => {
-              window.location.href = 'https://stockpilot-ebay-oauth-production.up.railway.app/ebay-oauth/login';
-            };
-            
-            // Show the button in the status area
-            const statusEl = document.querySelector('.status-message');
-            if (statusEl) {
-              statusEl.appendChild(document.createElement('br'));
-              statusEl.appendChild(authBtn);
-            }
-            
-            return;
-          }
-          
-          throw new Error(errorData.message || errorData.error || 'Sync failed');
-        }
-        
-        const syncData = await syncResponse.json();
-        console.log('✅ eBay data loaded:', syncData);
-        
-        // Process the eBay sync data
-        await processEbaySyncData(syncData);
-        
-      } catch (error) {
-        console.error('❌ eBay sync error:', error);
-        showStatus(`❌ eBay sync failed: ${error.message}`, 'error');
-      } finally {
-        // Reset button state
-        syncBtn.disabled = false;
-        syncBtn.textContent = originalText;
-      }
-    }
-
-    // Show purchase details modal
-    async function showPurchaseDetails(purchaseId) {
-      try {
-        console.log('Loading purchase details for:', purchaseId);
-        
-        // Find the purchase in current data
-        const purchase = currentPurchases.find(p => (p._id || p.id) === purchaseId);
-        if (!purchase) {
-          showStatus('❌ Purchase not found', 'error');
-          return;
-        }
-        
-        // Show modal
-        const modal = document.getElementById('purchase-details-modal');
-        const content = document.getElementById('purchase-details-content');
-        
-        // Generate purchase details HTML
-        const detailsHtml = generatePurchaseDetailsHtml(purchase);
-        content.innerHTML = detailsHtml;
-        
-        modal.style.display = 'flex';
-        
-        // Setup modal close handlers
-        const closeBtn = document.getElementById('purchase-details-close');
-        const closeBtn2 = document.getElementById('purchase-details-close-btn');
-        
-        const closeModal = () => {
-          modal.style.display = 'none';
-        };
-        
-        closeBtn.onclick = closeModal;
-        closeBtn2.onclick = closeModal;
-        
-        // Close on backdrop click
-        modal.onclick = (e) => {
-          if (e.target === modal) closeModal();
-        };
-        
-      } catch (error) {
-        console.error('Error loading purchase details:', error);
-        showStatus('❌ Failed to load purchase details', 'error');
-      }
-    }
-
-    // Generate HTML for purchase details
-    function generatePurchaseDetailsHtml(purchase) {
-      const formatDate = (date) => {
-        if (!date) return 'N/A';
-        return new Date(date).toLocaleString();
-      };
-      
-      const formatCurrency = (amount) => {
-        if (amount == null) return '£0.00';
-        return `£${Number(amount).toFixed(2)}`;
-      };
-      
-      const formatItems = (items) => {
-        if (!items || !Array.isArray(items)) return '<p>No items</p>';
-        return items.map(item => `
-          <div style="padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px; margin: 4px 0;">
-            <strong>${item.productName || item.name || 'Unknown Item'}</strong><br>
-            <small>SKU: ${item.sku || 'N/A'} | Qty: ${item.quantity || 1} | Price: ${formatCurrency(item.unitPrice)} | Total: ${formatCurrency(item.totalPrice)}</small>
-          </div>
-        `).join('');
-      };
-      
       return `
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-          <div>
-            <h3 style="margin-top: 0; color: #1a365d;">Basic Information</h3>
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">ID:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.identifier || purchase._id || purchase.id || 'N/A'}</td></tr>
-              <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Category:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.category || 'N/A'}</td></tr>
-              <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Brand:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.brand || purchase.supplier || 'N/A'}</td></tr>
-              <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Model:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.model || 'N/A'}</td></tr>
-              <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Source:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.source || 'N/A'}</td></tr>
-              <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Status:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.status || 'N/A'}</td></tr>
-            </table>
+        <div class="purchase-card" data-id="${purchase._id || purchase.id}" style="cursor: pointer;" title="Click to view details">
+          <div class="purchase-icon">${platformEmoji}</div>
+          <div class="purchase-text">
+            <div><strong>${purchase.supplier || purchase.brand || 'Unknown'} ${purchase.items?.[0]?.productName || purchase.model || 'Item'}</strong></div>
+            <div style="font-size:11px; color:#666; margin-top:2px;">
+              ${purchase.platform || 'Unknown'} • ${timeAgo} • ${purchase.category || 'Uncategorized'}
+            </div>
           </div>
-          
-          <div>
-            <h3 style="margin-top: 0; color: #1a365d;">Financial Information</h3>
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Price Paid:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatCurrency(purchase.price_paid)}</td></tr>
-              <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Shipping Cost:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatCurrency(purchase.shipping_cost)}</td></tr>
-              <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Fees:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatCurrency(purchase.fees)}</td></tr>
-              <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Total Amount:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #059669;">${formatCurrency(purchase.totalAmount)}</td></tr>
-            </table>
+          <div class="purchase-amount">£${total}</div>
+          <div class="staging-controls">
+            <button class="staging-btn stage" data-action="stage" data-id="${purchase._id || purchase.id}">🔍 Stage</button>
+            <button class="staging-btn split" data-action="split" data-id="${purchase._id || purchase.id}">✂️ Split</button>
+            <button class="staging-btn inventory" data-action="inventory" data-id="${purchase._id || purchase.id}">📦 Inventory</button>
+            <button class="staging-btn delete" data-action="delete" data-id="${purchase._id || purchase.id}" style="background: #dc2626; color: white;">🗑️ Delete</button>
           </div>
         </div>
-        
-        <div style="margin-top: 20px;">
-          <h3 style="color: #1a365d;">Items</h3>
-          ${formatItems(purchase.items)}
+      `;
+    }).join('');
+
+    container.innerHTML = cards;
+
+    container.onclick = (e) => {
+      const btn = e.target.closest('button[data-action]');
+      if (btn) {
+        const id = btn.getAttribute('data-id');
+        const action = btn.getAttribute('data-action');
+        if (action === 'stage') showStatus('🔍 Staging…','info');
+        if (action === 'split') showStatus('✂️ Splitting…','info');
+        if (action === 'inventory') showStatus('📦 Added to inventory','success');
+        if (action === 'delete') confirmDeletePurchase(id);
+        return;
+      }
+
+      const card = e.target.closest('.purchase-card');
+      if (card) {
+        const id = card.getAttribute('data-id');
+        showPurchaseDetails(id);
+      }
+    };
+  }
+
+  function updateStatusBar(purchases) {
+    const totalInvestment = purchases.reduce((sum, p) => {
+      if (p.totalAmount != null) return sum + Number(p.totalAmount || 0);
+      if (p.total_paid != null) return sum + Number(p.total_paid || 0);
+      return sum + Number(p.price_paid || 0) + Number(p.shipping_cost || 0) + Number(p.fees || 0);
+    }, 0);
+    const averagePurchase = purchases.length ? totalInvestment / purchases.length : 0;
+
+    document.getElementById('status-total-investment').textContent = `£${totalInvestment.toFixed(2)}`;
+    document.getElementById('status-purchase-count').textContent = purchases.length;
+    document.getElementById('status-avg-purchase').textContent = `£${averagePurchase.toFixed(2)}`;
+    document.getElementById('last-sync').textContent = new Date().toLocaleTimeString();
+
+    const manual = purchases.filter(p => (p.source === 'manual') || !p.source).length;
+    const auto = purchases.length - manual;
+    document.getElementById('source-breakdown').textContent = `${manual} manual, ${auto} auto`;
+    document.getElementById('monthly-change').textContent = '+12%';
+  }
+
+  function updatePurchaseHistoryCount(purchases) {
+    document.getElementById('purchaseHistoryCount').textContent = `${purchases.length} items`;
+  }
+
+  function getPlatformEmoji(platform){ const e={ 'eBay':'🏪','Amazon':'📦','Vinted':'👕','Facebook Marketplace':'📘','Depop':'🛍️','Gumtree':'🌳'}; return e[platform]||'🛒'; }
+  function getTimeAgo(date){ const now=new Date(); const s=Math.floor((now-date)/1000); if(s<60) return 'just now'; if(s<3600) return `${Math.floor(s/60)}m ago`; if(s<86400) return `${Math.floor(s/3600)}h ago`; if(s<604800) return `${Math.floor(s/86400)}d ago`; return `${Math.floor(s/604800)}w ago`; }
+  function showStatus(message, type){ const el=document.getElementById('statusMessage'); el.innerHTML=`<div class="status ${type}">${message}</div>`; setTimeout(()=>{ el.innerHTML=''; },5000); }
+
+  /* ===== Modal logic (no inline handlers, no external CDNs) ===== */
+  function setupManualPurchaseModal() {
+    const backdrop = document.getElementById('mp-backdrop');
+    const closeBtn = document.getElementById('mp-close');
+    const cancelBtn = document.getElementById('mp-cancel');
+    const form = document.getElementById('mp-form');
+    const errorEl = document.getElementById('mp-error');
+    const statusSel = form.querySelector('select[name="status"]');
+    const returnWrap = document.getElementById('mp-return-wrapper');
+
+    // --- Dropdown lists with "Add new…" + localStorage persistence ---
+    const LISTS = {
+      category: { key:'sp_categories', defaults:['Electronics','Audio','Phones','Accessories','Tools','Clothing'] },
+      brand: { key:'sp_brands', defaults:['Apple','Samsung','Sony','Bose','Generic'] },
+      source: { key:'sp_sources', defaults:['Other','Auction','Vinted','Regular Stock','eBay','Amazon'] },
+      shipping_provider: { key:'sp_shippers', defaults:['Royal Mail','EVRi','DPD','UPS','FedEx','DHL','Yodel','Parcelforce'] }
+    };
+
+    function loadList(key, defaults){ try{ const s=localStorage.getItem(key); return s? JSON.parse(s) : defaults.slice(); }catch(_){ return defaults.slice(); } }
+    function saveList(key, arr){ try{ localStorage.setItem(key, JSON.stringify(arr)); }catch(_){} }
+
+    function populateSelect(sel, items, selectedValue){
+      sel.innerHTML = '';
+      const placeholder = document.createElement('option');
+      placeholder.value = ''; placeholder.textContent = '-- Select --';
+      sel.appendChild(placeholder);
+      items.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v; opt.textContent = v;
+        if (selectedValue && selectedValue === v) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      const add = document.createElement('option');
+      add.value = '__add_new__'; add.textContent = '➕ Add new…';
+      sel.appendChild(add);
+    }
+
+    function wireAddNew(sel, listCfg){
+      sel.addEventListener('change', () => {
+        if (sel.value !== '__add_new__') return;
+        const label = sel.getAttribute('data-label') || 'item';
+        const newItem = window.prompt(`Add new ${label}:`);
+        if (newItem && newItem.trim()) {
+          const clean = newItem.trim();
+          const arr = loadList(listCfg.key, listCfg.defaults);
+          if (!arr.includes(clean)) {
+            arr.push(clean);
+            arr.sort((a,b)=>a.localeCompare(b));
+            saveList(listCfg.key, arr);
+          }
+          populateSelect(sel, arr, clean);
+        } else {
+          populateSelect(sel, loadList(listCfg.key, listCfg.defaults), '');
+        }
+      });
+    }
+
+    (function initDropdowns(){
+      const cfgs = [
+        { name:'category', ...LISTS.category },
+        { name:'brand', ...LISTS.brand },
+        { name:'source', ...LISTS.source },
+        { name:'shipping_provider', ...LISTS.shipping_provider }
+      ];
+      cfgs.forEach(cfg => {
+        const sel = form.querySelector(`select[name="${cfg.name}"]`);
+        if (!sel) return;
+        const arr = loadList(cfg.key, cfg.defaults);
+        const selected = (cfg.name==='source' && arr.includes('Other')) ? 'Other' : '';
+        populateSelect(sel, arr, selected);
+        wireAddNew(sel, cfg);
+      });
+    })();
+
+    // default date today
+    const dateInput = form.querySelector('input[name="dateOfPurchase"]');
+    dateInput.value = new Date().toISOString().slice(0,10);
+
+    statusSel.addEventListener('change', () => {
+      const show = statusSel.value === 'Returned';
+      returnWrap.classList.toggle('mp-hidden', !show);
+    });
+
+    function hideError(){ errorEl.classList.add('mp-hidden'); errorEl.textContent=''; }
+    function showErrorMsg(msg){ errorEl.textContent = `❌ ${msg}`; errorEl.classList.remove('mp-hidden'); }
+
+    // ===== Identifier auto-generation & uniqueness =====
+    const idInput = form.querySelector('input[name="identifier"]');
+    let idTouched = false;
+    idInput.addEventListener('input', () => { idTouched = true; });
+
+    const genFields = ['category','brand','model','generation','dateOfPurchase'];
+    genFields.forEach(name => {
+      const el = form.querySelector(`[name="${name}"]`);
+      if (!el) return;
+      el.addEventListener('input', maybeAutoFillId);
+      el.addEventListener('change', maybeAutoFillId);
+    });
+
+    function maybeAutoFillId(){
+      if (idTouched) return;
+      const base = buildBaseIdentifier(form);
+      const unique = ensureUniqueIdentifier(base);
+      idInput.value = unique;
+    }
+
+    function buildBaseIdentifier(formEl){
+      const cat = slug(formEl.category.value);
+      const brand = slug(formEl.brand.value);
+      const model = slug(formEl.model.value);
+      const gen = slug(formEl.generation.value);
+      const date = formEl.dateOfPurchase.value ? yyyymmdd(formEl.dateOfPurchase.value) : yyyymmdd(new Date());
+      const parts = [cat, brand, model, gen].filter(Boolean);
+      const head = parts.length ? parts.join('-') : 'PURCHASE';
+      return `${head}-${date}`;
+    }
+
+    function yyyymmdd(val){
+      const d = (val instanceof Date) ? val : new Date(val + 'T00:00:00');
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,'0');
+      const da = String(d.getDate()).padStart(2,'0');
+      return `${y}${m}${da}`;
+    }
+
+    function slug(str){
+      return String(str || '')
+        .trim()
+        .toUpperCase()
+        .replace(/[^A-Z0-9]+/g,'-')
+        .replace(/^-+|-+$/g,'')
+        .slice(0,24);
+    }
+
+    function ensureUniqueIdentifier(baseId){
+      const base = slug(baseId).replace(/-+/g,'-');
+      const existing = new Set(
+        (currentPurchases || [])
+          .map(p => (p.identifier || p.Identifier || '').toString().toUpperCase())
+          .filter(Boolean)
+      );
+      if (!existing.has(base)) return base;
+      for (let i=1;i<1000;i++){
+        const cand = `${base}-${String(i).padStart(3,'0')}`;
+        if (!existing.has(cand)) return cand;
+      }
+      const rand = Math.random().toString(36).slice(2,6).toUpperCase();
+      return `${base}-${rand}`;
+    }
+
+    // Autofill on open
+    maybeAutoFillId();
+
+    closeBtn.addEventListener('click', closeManualPurchaseModal);
+    cancelBtn.addEventListener('click', closeManualPurchaseModal);
+    backdrop.addEventListener('click', (e)=>{ if(e.target === backdrop) closeManualPurchaseModal(); });
+    document.addEventListener('keydown', (e)=>{ if(!backdrop.classList.contains('mp-hidden') && e.key==='Escape') closeManualPurchaseModal(); });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideError();
+
+      const dateVal = form.dateOfPurchase.value;
+      if (!dateVal) { showErrorMsg('Date of purchase is required.'); return; }
+      const nn = (v) => v === '' || v === null || isNaN(Number(v)) ? 0 : Number(v);
+      if (nn(form.price_paid.value) < 0) { showErrorMsg('Price paid cannot be negative.'); return; }
+      if (nn(form.shipping_cost.value) < 0) { showErrorMsg('Shipping cost cannot be negative.'); return; }
+      if (nn(form.fees.value) < 0) { showErrorMsg('Fees cannot be negative.'); return; }
+
+      const entered = form.identifier.value.trim();
+      const finalBase = entered ? slug(entered) : buildBaseIdentifier(form);
+      const finalIdentifier = ensureUniqueIdentifier(finalBase);
+      if (entered && finalIdentifier !== entered.toUpperCase()) {
+        showStatus(`ℹ️ Identifier adjusted to ${finalIdentifier} to avoid a duplicate.`, 'info');
+      }
+
+      const photosArr = (form.photos.value || '').split(',').map(s=>s.trim()).filter(Boolean);
+      const payload = {
+        identifier: finalIdentifier,
+        category: form.category.value || undefined,
+        brand: form.brand.value || undefined,
+        model: form.model.value || undefined,
+        generation: form.generation.value || undefined,
+        source: form.source.value || 'Other',
+        seller_username: form.seller_username.value || undefined,
+        order_id: form.order_id.value || undefined,
+        dateOfPurchase: dateVal,
+        price_paid: form.price_paid.value === '' ? 0 : Number(form.price_paid.value),
+        shipping_cost: form.shipping_cost.value === '' ? 0 : Number(form.shipping_cost.value),
+        fees: form.fees.value === '' ? 0 : Number(form.fees.value),
+        tracking_ref: form.tracking_ref.value || undefined,
+        shipping_provider: form.shipping_provider.value || undefined,
+        status: form.status.value,
+        return_reason: form.status.value === 'Returned' ? (form.return_reason.value || '') : undefined,
+        parts_total: form.parts_total.value === '' ? undefined : Number(form.parts_total.value),
+        photos: photosArr,
+        video_url: form.video_url.value || undefined,
+        notes: form.notes.value || undefined
+      };
+
+      const submitBtn = document.getElementById('mp-submit');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Saving…';
+
+      try {
+        // Local persistence only (frontend demo)
+        const existingPurchases = JSON.parse(localStorage.getItem('stockpilot_purchases') || '[]');
+        existingPurchases.push(payload);
+        localStorage.setItem('stockpilot_purchases', JSON.stringify(existingPurchases));
+
+        showStatus('✅ Purchase saved (local)', 'success');
+        closeManualPurchaseModal();
+        if (window.loadPurchases) loadPurchases();
+      } catch (err) {
+        console.error('Purchase save error:', err);
+        showErrorMsg(err.message || 'Failed to save.');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Save Purchase';
+      }
+    });
+  }
+
+  function openManualPurchaseModal(){
+    document.getElementById('mp-backdrop').classList.remove('mp-hidden');
+    document.body.classList.add('no-scroll');
+  }
+  function closeManualPurchaseModal(){
+    document.getElementById('mp-backdrop').classList.add('mp-hidden');
+    document.body.classList.remove('no-scroll');
+  }
+
+  // Delete confirmation with failsafe
+  function confirmDeletePurchase(purchaseId) {
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 10000;
+    `;
+
+    modal.innerHTML = `
+      <div style="
+        background: white; padding: 30px; border-radius: 12px;
+        max-width: 400px; width: 90%;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      ">
+        <h3 style="margin: 0 0 15px 0; color: #dc2626; font-size: 18px;">🗑️ Delete Purchase</h3>
+        <p style="margin: 0 0 20px 0; color: #374151; line-height: 1.5;">
+          Are you sure you want to delete this purchase? This action cannot be undone.
+        </p>
+        <p style="margin: 0 0 15px 0; color: #dc2626; font-weight: 600; font-size: 14px;">
+          Type "delete" to confirm:
+        </p>
+        <input type="text" id="delete-confirmation-input" placeholder="Type 'delete' here" style="
+          width: 100%;
+          padding: 10px; border: 2px solid #e5e7eb;
+          border-radius: 6px; font-size: 14px; margin-bottom: 20px;
+        ">
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button id="cancel-delete" style="
+            padding: 10px 20px; border: 1px solid #d1d5db;
+            background: white; color: #374151; border-radius: 6px;
+            cursor: pointer; font-weight: 500;
+          ">Cancel</button>
+          <button id="confirm-delete" disabled style="
+            padding: 10px 20px; border: none; background: #dc2626;
+            color: white; border-radius: 6px; cursor: pointer;
+            font-weight: 600; opacity: 0.5;
+          ">Delete Purchase</button>
         </div>
-        
-        <div style="margin-top: 20px;">
-          <h3 style="color: #1a365d;">Additional Information</h3>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    const input = modal.querySelector('#delete-confirmation-input');
+    const confirmBtn = modal.querySelector('#confirm-delete');
+    const cancelBtn = modal.querySelector('#cancel-delete');
+
+    input.addEventListener('input', (e) => {
+      const isValid = e.target.value.toLowerCase() === 'delete';
+      confirmBtn.disabled = !isValid;
+      confirmBtn.style.opacity = isValid ? '1' : '0.5';
+    });
+
+    confirmBtn.addEventListener('click', () => {
+      if (input.value.toLowerCase() === 'delete') {
+        deletePurchase(purchaseId);
+        document.body.removeChild(modal);
+      }
+    });
+
+    cancelBtn.addEventListener('click', () => {
+      document.body.removeChild(modal);
+    });
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        document.body.removeChild(modal);
+      }
+    });
+
+    input.focus();
+  }
+
+  // Delete purchase function
+  async function deletePurchase(purchaseId) {
+    try {
+      console.log('🗑️ Deleting purchase:', purchaseId);
+      showStatus('🗑️ Deleting purchase...', 'info');
+
+      // Local-only delete (demo)
+      const existingPurchases = JSON.parse(localStorage.getItem('stockpilot_purchases') || '[]');
+      const updatedPurchases = existingPurchases.filter(p => (p.identifier !== purchaseId && (p._id||p.id) !== purchaseId));
+      localStorage.setItem('stockpilot_purchases', JSON.stringify(updatedPurchases));
+
+      showStatus('✅ Purchase deleted', 'success');
+      loadPurchases();
+    } catch (error) {
+      console.error('❌ Error deleting purchase:', error);
+      showStatus(`❌ Failed to delete purchase: ${error.message}`, 'error');
+    }
+  }
+
+  // Process eBay sync data
+  async function processEbaySyncData(syncData) {
+    console.log('📊 Processing eBay sync data:', syncData);
+
+    const hasRealData = syncData.success && syncData.data &&
+      (syncData.data.orders?.length > 0 || syncData.data.recentPurchases?.length > 0 || syncData.data.summary?.totalPurchases > 0);
+
+    if (hasRealData) {
+      const purchases = convertEbayDataToPurchases(syncData.data);
+      showStatus(`✅ Real eBay purchases loaded! Found ${purchases.length}`, 'success');
+      displayPurchases(purchases);
+      updateStatusBar(purchases);
+    } else {
+      // In strict mode we DO NOT silently show sample
+      throw new Error('Live service returned no purchases.');
+    }
+  }
+
+  // Convert eBay data to our purchase format
+  function convertEbayDataToPurchases(ebayData) {
+    const purchases = [];
+    const orders = ebayData.orders || ebayData.recentPurchases || [];
+
+    if (Array.isArray(orders) && orders.length > 0) {
+      orders.forEach((order, index) => {
+        const firstItem = order.lineItems && order.lineItems[0];
+        const itemTitle = firstItem ? firstItem.productName || firstItem.title : 'eBay Purchase';
+        const itemPrice = firstItem ? (firstItem.unitPrice || firstItem.price || 0) : (order.total || 0);
+
+        purchases.push({
+          id: `ebay_${order.orderId || index}_${Date.now()}`,
+          _id: `ebay_${order.orderId || index}_${Date.now()}`,
+          purchase_date: order.creationTime ? new Date(order.creationTime).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          orderDate: order.creationTime || new Date().toISOString(),
+          platform: 'eBay',
+          brand: extractBrand(itemTitle),
+          model: extractModel(itemTitle),
+          product_name: itemTitle,
+          purchase_price: itemPrice,
+          total_paid: order.total || itemPrice,
+          totalAmount: order.total || itemPrice,
+          delivery_status: order.orderStatus || 'Delivered',
+          seller: order.seller || 'Unknown',
+          seller_username: order.seller || 'Unknown',
+          notes: `eBay purchase: ${itemTitle}`,
+          source: 'ebay-oauth',
+          created_at: new Date().toISOString(),
+          items: order.lineItems || [],
+          order_id: order.orderId,
+          status: order.orderStatus || 'Delivered'
+        });
+      });
+    }
+
+    return purchases;
+  }
+
+  function extractBrand(title) {
+    const brands = ['Apple', 'Samsung', 'Sony', 'Bose', 'Sonos', 'LG'];
+    const titleLower = title.toLowerCase();
+    for (const brand of brands) {
+      if (titleLower.includes(brand.toLowerCase())) return brand;
+    }
+    return 'Unknown';
+  }
+
+  function extractModel(title) {
+    const words = title.split(' ');
+    if (words.length > 2) return words.slice(1, 4).join(' ');
+    return title;
+  }
+
+  // Sample data (only when ?sample=1)
+  function loadSampleData() {
+    const samplePurchases = [
+      {
+        id: 'sample_1',
+        purchase_date: '2025-09-10',
+        platform: 'eBay',
+        brand: 'Apple',
+        model: 'AirPods Pro',
+        purchase_price: 89.99,
+        total_paid: 94.98,
+        delivery_status: 'Delivered',
+        seller: 'tech_deals',
+        notes: 'Sample purchase data'
+      }
+    ];
+    currentPurchases = samplePurchases;
+    displayPurchases(samplePurchases);
+    updateStatusBar(samplePurchases);
+    updatePurchaseHistoryCount(samplePurchases);
+    showStatus('🧪 Sample data loaded', 'info');
+  }
+
+  // eBay purchase sync (strict live reload)
+  async function syncEbayPurchases() {
+    const btn = document.getElementById('btn-ebay-sync');
+    const originalText = btn.textContent;
+    try {
+      btn.disabled = true;
+      btn.textContent = '⏳ Syncing...';
+      showStatus('🛒 Syncing eBay purchases...', 'info');
+
+      // Prefer OAuth wrapper when present
+      if (typeof window.oauthApiWrapper !== 'undefined') {
+        const data = await window.oauthApiWrapper.getPurchases({ limit: 100 });
+        if (data && data.success && data.data) {
+          await processEbaySyncData(data);
+          return;
+        }
+        throw new Error('OAuth sync returned no data.');
+      }
+
+      // Direct API call
+      const data = await fetchJSONStrict('https://stockpilot-ebay-oauth-production.up.railway.app/api/ebay/default_user/purchases?limit=100');
+      if (data && data.success && data.data) {
+        await processEbaySyncData(data);
+        return;
+      }
+      throw new Error('Sync returned no data.');
+    } catch (err) {
+      console.error('❌ Sync error:', err);
+      showStatus(`❌ Sync failed: ${err.message}`, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
+  }
+
+  // Show purchase details modal
+  async function showPurchaseDetails(purchaseId) {
+    try {
+      console.log('Loading purchase details for:', purchaseId);
+      const purchase = currentPurchases.find(p => (p._id || p.id) === purchaseId);
+      if (!purchase) {
+        showStatus('❌ Purchase not found', 'error');
+        return;
+      }
+
+      const modal = document.getElementById('purchase-details-modal');
+      const content = document.getElementById('purchase-details-content');
+      const detailsHtml = generatePurchaseDetailsHtml(purchase);
+      content.innerHTML = detailsHtml;
+
+      modal.style.display = 'flex';
+      const closeBtn = document.getElementById('purchase-details-close');
+      const closeBtn2 = document.getElementById('purchase-details-close-btn');
+      const closeModal = () => { modal.style.display = 'none'; };
+      closeBtn.onclick = closeModal; closeBtn2.onclick = closeModal;
+      modal.onclick = (e) => { if (e.target === modal) closeModal(); };
+    } catch (error) {
+      console.error('Error loading purchase details:', error);
+      showStatus('❌ Failed to load purchase details', 'error');
+    }
+  }
+
+  function generatePurchaseDetailsHtml(purchase) {
+    const formatDate = (date) => !date ? 'N/A' : new Date(date).toLocaleString();
+    const formatCurrency = (amount) => amount == null ? '£0.00' : `£${Number(amount).toFixed(2)}`;
+    const formatItems = (items) => {
+      if (!items || !Array.isArray(items)) return '<p>No items</p>';
+      return items.map(item => `
+        <div style="padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px; margin: 4px 0;">
+          <strong>${item.productName || item.name || 'Unknown Item'}</strong><br>
+          <small>SKU: ${item.sku || 'N/A'} | Qty: ${item.quantity || 1} | Price: ${formatCurrency(item.unitPrice)} | Total: ${formatCurrency(item.totalPrice)}</small>
+        </div>
+      `).join('');
+    };
+
+    return `
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div>
+          <h3 style="margin-top: 0; color: #1a365d;">Basic Information</h3>
           <table style="width: 100%; border-collapse: collapse;">
-            <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Order ID:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.order_id || 'N/A'}</td></tr>
-            <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Seller:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.seller_username || 'N/A'}</td></tr>
-            <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Date of Purchase:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatDate(purchase.dateOfPurchase || purchase.orderDate)}</td></tr>
-            <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Created:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatDate(purchase.createdAt)}</td></tr>
-            <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Updated:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatDate(purchase.updatedAt)}</td></tr>
-            <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Tracking Ref:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.tracking_ref || 'N/A'}</td></tr>
+            <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">ID:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.identifier || purchase._id || purchase.id || 'N/A'}</td></tr>
+            <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Category:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.category || 'N/A'}</td></tr>
+            <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Brand:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.brand || purchase.supplier || 'N/A'}</td></tr>
+            <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Model:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.model || 'N/A'}</td></tr>
+            <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Source:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.source || 'N/A'}</td></tr>
+            <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Status:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.status || 'N/A'}</td></tr>
           </table>
         </div>
-        
-        ${purchase.notes ? `
-        <div style="margin-top: 20px;">
-          <h3 style="color: #1a365d;">Notes</h3>
-          <div style="padding: 12px; background: #f9fafb; border-radius: 6px; border-left: 4px solid #3b82f6;">
-            ${purchase.notes}
-          </div>
+
+        <div>
+          <h3 style="margin-top: 0; color: #1a365d;">Financial Information</h3>
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Price Paid:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatCurrency(purchase.price_paid)}</td></tr>
+            <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Shipping Cost:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatCurrency(purchase.shipping_cost)}</td></tr>
+            <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Fees:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatCurrency(purchase.fees)}</td></tr>
+            <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Total Amount:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #059669;">${formatCurrency(purchase.totalAmount)}</td></tr>
+          </table>
         </div>
-        ` : ''}
+      </div>
+
+      <div style="margin-top: 20px;">
+        <h3 style="color: #1a365d;">Items</h3>
+        ${formatItems(purchase.items)}
+      </div>
+
+      <div style="margin-top: 20px;">
+        <h3 style="color: #1a365d;">Additional Information</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Order ID:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.order_id || 'N/A'}</td></tr>
+          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Seller:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.seller_username || 'N/A'}</td></tr>
+          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Date of Purchase:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatDate(purchase.dateOfPurchase || purchase.orderDate)}</td></tr>
+          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Created:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatDate(purchase.createdAt)}</td></tr>
+          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Updated:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatDate(purchase.updatedAt)}</td></tr>
+          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Tracking Ref:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.tracking_ref || 'N/A'}</td></tr>
+        </table>
+      </div>
+
+      ${purchase.notes ? `
+      <div style="margin-top: 20px;">
+        <h3 style="color: #1a365d;">Notes</h3>
+        <div style="padding: 12px; background: #f9fafb; border-radius: 6px; border-left: 4px solid #3b82f6;">
+          ${purchase.notes}
+        </div>
+      </div>
+      ` : ''}
+    `;
+  }
+
+  // eBay Marketplace Browser Functions
+  let currentEbayItems = [];
+  let filteredEbayItems = [];
+
+  function showEbayMarketplaceBrowser(items, categories, brands, dataType = 'unknown', note = '') {
+    currentEbayItems = items;
+    filteredEbayItems = [...items];
+
+    const modal = document.getElementById('ebay-marketplace-modal');
+    modal.style.display = 'flex';
+
+    const modalTitle = modal.querySelector('h2');
+    modalTitle.textContent = dataType === 'real_purchases' ? 'eBay Purchase History Browser' : 'eBay Marketplace Browser';
+
+    const modalBody = modal.querySelector('.modal-body');
+    let noteElement = modalBody.querySelector('.data-type-note');
+    if (noteElement) noteElement.remove();
+
+    if (note) {
+      noteElement = document.createElement('div');
+      noteElement.className = 'data-type-note';
+      noteElement.style.cssText = `
+        padding: 10px; margin-bottom: 15px; border-radius: 6px; font-size: 14px;
+        ${dataType === 'real_purchases'
+          ? 'background: #f0fdf4; border: 1px solid #059669; color: #059669;'
+          : 'background: #fef3c7; border: 1px solid #f59e0b; color: #92400e;'}
       `;
+      noteElement.innerHTML = `<strong>📊 Data Source:</strong> ${note}`;
+      modalBody.insertBefore(noteElement, modalBody.firstChild);
     }
 
-    // eBay Marketplace Browser Functions
-    let currentEbayItems = [];
-    let filteredEbayItems = [];
+    populateEbayFilters(categories, brands);
+    renderEbayItems(filteredEbayItems, dataType);
+    setupEbayEventListeners();
+    updateEbaySelectionCount();
+  }
 
-    function showEbayMarketplaceBrowser(items, categories, brands, dataType = 'unknown', note = '') {
-      currentEbayItems = items;
-      filteredEbayItems = [...items];
-      
-      const modal = document.getElementById('ebay-marketplace-modal');
-      modal.style.display = 'flex';
-      
-      // Update modal title and add note
-      const modalTitle = modal.querySelector('h2');
-      modalTitle.textContent = dataType === 'real_purchases' ? 'eBay Purchase History Browser' : 'eBay Marketplace Browser';
-      
-      // Add data type note
-      const modalBody = modal.querySelector('.modal-body');
-      let noteElement = modalBody.querySelector('.data-type-note');
-      if (noteElement) {
-        noteElement.remove();
-      }
-      
-      if (note) {
-        noteElement = document.createElement('div');
-        noteElement.className = 'data-type-note';
-        noteElement.style.cssText = `
-          padding: 10px; 
-          margin-bottom: 15px; 
-          border-radius: 6px; 
-          font-size: 14px;
-          ${dataType === 'real_purchases' ? 
-            'background: #f0fdf4; border: 1px solid #059669; color: #059669;' : 
-            'background: #fef3c7; border: 1px solid #f59e0b; color: #92400e;'
-          }
-        `;
-        noteElement.innerHTML = `<strong>📊 Data Source:</strong> ${note}`;
-        modalBody.insertBefore(noteElement, modalBody.firstChild);
-      }
-      
-      // Populate filters
-      populateEbayFilters(categories, brands);
-      
-      // Render items
-      renderEbayItems(filteredEbayItems, dataType);
-      
-      // Setup event listeners
-      setupEbayEventListeners();
-      
-      // Update selection count
-      updateEbaySelectionCount();
+  function populateEbayFilters(categories, brands) {
+    const categoryFilter = document.getElementById('ebay-category-filter');
+    categoryFilter.innerHTML = '<option value="">All Categories</option>';
+    categories.forEach(cat => {
+      const option = document.createElement('option');
+      option.value = cat; option.textContent = cat;
+      categoryFilter.appendChild(option);
+    });
+
+    const brandFilter = document.getElementById('ebay-brand-filter');
+    brandFilter.innerHTML = '<option value="">All Brands</option>';
+    brands.forEach(brand => {
+      const option = document.createElement('option');
+      option.value = brand; option.textContent = brand;
+      brandFilter.appendChild(option);
+    });
+  }
+
+  function renderEbayItems(items, dataType = 'unknown') {
+    const grid = document.getElementById('ebay-items-grid');
+
+    if (items.length === 0) {
+      grid.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No items match your filters</p>';
+      return;
     }
 
-    function populateEbayFilters(categories, brands) {
-      // Populate category filter
-      const categoryFilter = document.getElementById('ebay-category-filter');
-      categoryFilter.innerHTML = '<option value="">All Categories</option>';
-      categories.forEach(cat => {
-        const option = document.createElement('option');
-        option.value = cat;
-        option.textContent = cat;
-        categoryFilter.appendChild(option);
-      });
-      
-      // Populate brand filter
-      const brandFilter = document.getElementById('ebay-brand-filter');
-      brandFilter.innerHTML = '<option value="">All Brands</option>';
-      brands.forEach(brand => {
-        const option = document.createElement('option');
-        option.value = brand;
-        option.textContent = brand;
-        brandFilter.appendChild(option);
-      });
-    }
+    const isRealData = dataType === 'real_purchases';
 
-    function renderEbayItems(items, dataType = 'unknown') {
-      const grid = document.getElementById('ebay-items-grid');
-      
-      if (items.length === 0) {
-        grid.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No items match your filters</p>';
-        return;
-      }
-      
-      const isRealData = dataType === 'real_purchases';
-      
-      const itemsHtml = items.map(item => {
-        const isSelected = item.isSelected;
-        const cardStyle = isSelected ? 
-          'border: 2px solid #059669; background: #f0fdf4;' : 
-          'border: 1px solid #e5e7eb; background: white;';
-        
-        const realDataBadge = isRealData ? 
-          '<span style="background: #059669; color: white; padding: 2px 6px; border-radius: 12px; font-size: 10px; margin-left: 4px;">REAL</span>' : 
-          '<span style="background: #f59e0b; color: white; padding: 2px 6px; border-radius: 12px; font-size: 10px; margin-left: 4px;">SAMPLE</span>';
-        
-        return `
-          <div class="ebay-item-card" data-id="${item.id}" style="${cardStyle} border-radius: 8px; padding: 12px; cursor: pointer; transition: all 0.2s;">
-            <div style="display: flex; align-items: flex-start; gap: 12px;">
-              <input type="checkbox" class="ebay-item-checkbox" data-id="${item.id}" ${isSelected ? 'checked' : ''} style="margin-top: 4px;">
-              <img src="${item.imageUrl}" alt="${item.title}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px;">
-              <div style="flex: 1; min-width: 0;">
-                <h4 style="margin: 0 0 8px 0; font-size: 14px; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
-                  ${item.title} ${realDataBadge}
-                </h4>
-                <div style="font-size: 12px; color: #666; margin-bottom: 4px;">
-                  <span style="background: #e5e7eb; padding: 2px 6px; border-radius: 12px; margin-right: 4px;">${item.category}</span>
-                  <span style="background: #e5e7eb; padding: 2px 6px; border-radius: 12px; margin-right: 4px;">${item.brand}</span>
-                  <span style="background: #e5e7eb; padding: 2px 6px; border-radius: 12px;">${item.condition}</span>
-                </div>
-                <div style="font-weight: bold; color: #059669; font-size: 16px;">£${item.price.toFixed(2)}</div>
-                <div style="font-size: 11px; color: #666; margin-top: 4px;">
-                  ${item.seller} (${(item.sellerRating * 100).toFixed(0)}%) • ${item.location} • ${item.timeLeft}
-                </div>
-                ${item.shippingCost > 0 ? `<div style="font-size: 11px; color: #666;">+ £${item.shippingCost.toFixed(2)} shipping</div>` : '<div style="font-size: 11px; color: #059669;">Free shipping</div>'}
-                ${isRealData ? '<div style="font-size: 10px; color: #059669; margin-top: 4px; font-weight: bold;">✓ Real Purchase Data</div>' : ''}
+    const itemsHtml = items.map(item => {
+      const isSelected = item.isSelected;
+      const cardStyle = isSelected ?
+        'border: 2px solid #059669; background: #f0fdf4;' :
+        'border: 1px solid #e5e7eb; background: white;';
+
+      const realDataBadge = isRealData ?
+        '<span style="background: #059669; color: white; padding: 2px 6px; border-radius: 12px; font-size: 10px; margin-left: 4px;">REAL</span>' :
+        '<span style="background: #f59e0b; color: white; padding: 2px 6px; border-radius: 12px; font-size: 10px; margin-left: 4px;">SAMPLE</span>';
+
+      return `
+        <div class="ebay-item-card" data-id="${item.id}" style="${cardStyle} border-radius: 8px; padding: 12px; cursor: pointer; transition: all 0.2s;">
+          <div style="display: flex; align-items: flex-start; gap: 12px;">
+            <input type="checkbox" class="ebay-item-checkbox" data-id="${item.id}" ${isSelected ? 'checked' : ''} style="margin-top: 4px;">
+            <img src="${item.imageUrl || ''}" alt="${item.title || ''}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px;">
+            <div style="flex: 1; min-width: 0;">
+              <h4 style="margin: 0 0 8px 0; font-size: 14px; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                ${item.title || ''} ${realDataBadge}
+              </h4>
+              <div style="font-size: 12px; color: #666; margin-bottom: 4px;">
+                <span style="background: #e5e7eb; padding: 2px 6px; border-radius: 12px; margin-right: 4px;">${item.category || '—'}</span>
+                <span style="background: #e5e7eb; padding: 2px 6px; border-radius: 12px; margin-right: 4px;">${item.brand || '—'}</span>
+                <span style="background: #e5e7eb; padding: 2px 6px; border-radius: 12px;">${item.condition || '—'}</span>
               </div>
+              <div style="font-weight: bold; color: #059669; font-size: 16px;">£${Number(item.price || 0).toFixed(2)}</div>
+              <div style="font-size: 11px; color: #666; margin-top: 4px;">
+                ${(item.seller || '—')} ${item.sellerRating != null ? `(${(item.sellerRating * 100).toFixed(0)}%)` : ''} • ${item.location || '—'} • ${item.timeLeft || ''}
+              </div>
+              ${item.shippingCost > 0 ? `<div style="font-size: 11px; color: #666;">+ £${Number(item.shippingCost).toFixed(2)} shipping</div>` : '<div style="font-size: 11px; color: #059669;">Free shipping</div>'}
+              ${isRealData ? '<div style="font-size: 10px; color: #059669; margin-top: 4px; font-weight: bold;">✓ Real Purchase Data</div>' : ''}
             </div>
           </div>
-        `;
-      }).join('');
-      
-      grid.innerHTML = itemsHtml;
-    }
+        </div>
+      `;
+    }).join('');
 
-    function setupEbayEventListeners() {
-      const modal = document.getElementById('ebay-marketplace-modal');
-      const closeBtn = document.getElementById('ebay-marketplace-close');
-      const searchInput = document.getElementById('ebay-search');
-      const categoryFilter = document.getElementById('ebay-category-filter');
-      const brandFilter = document.getElementById('ebay-brand-filter');
-      const conditionFilter = document.getElementById('ebay-condition-filter');
-      const priceMinInput = document.getElementById('ebay-price-min');
-      const priceMaxInput = document.getElementById('ebay-price-max');
-      const selectAllBtn = document.getElementById('ebay-select-all');
-      const selectNoneBtn = document.getElementById('ebay-select-none');
-      const importBtn = document.getElementById('ebay-import-selected');
-      
-      // Close modal
-      const closeModal = () => {
-        modal.style.display = 'none';
-        currentEbayItems = [];
-        filteredEbayItems = [];
-      };
-      
-      closeBtn.onclick = closeModal;
-      modal.onclick = (e) => {
-        if (e.target === modal) closeModal();
-      };
-      
-      // Filter events
-      const applyFilters = () => {
-        const searchTerm = searchInput.value.toLowerCase();
-        const category = categoryFilter.value;
-        const brand = brandFilter.value;
-        const condition = conditionFilter.value;
-        const minPrice = parseFloat(priceMinInput.value) || 0;
-        const maxPrice = parseFloat(priceMaxInput.value) || Infinity;
-        
-        filteredEbayItems = currentEbayItems.filter(item => {
-          const matchesSearch = item.title.toLowerCase().includes(searchTerm) || 
-                               item.description.toLowerCase().includes(searchTerm);
-          const matchesCategory = !category || item.category === category;
-          const matchesBrand = !brand || item.brand === brand;
-          const matchesCondition = !condition || item.condition === condition;
-          const matchesPrice = item.price >= minPrice && item.price <= maxPrice;
-          
-          return matchesSearch && matchesCategory && matchesBrand && matchesCondition && matchesPrice;
-        });
-        
-        renderEbayItems(filteredEbayItems);
-        updateEbaySelectionCount();
-      };
-      
-      searchInput.addEventListener('input', applyFilters);
-      categoryFilter.addEventListener('change', applyFilters);
-      brandFilter.addEventListener('change', applyFilters);
-      conditionFilter.addEventListener('change', applyFilters);
-      priceMinInput.addEventListener('input', applyFilters);
-      priceMaxInput.addEventListener('input', applyFilters);
-      
-      // Selection events
-      selectAllBtn.onclick = () => {
-        filteredEbayItems.forEach(item => item.isSelected = true);
-        renderEbayItems(filteredEbayItems);
-        updateEbaySelectionCount();
-      };
-      
-      selectNoneBtn.onclick = () => {
-        filteredEbayItems.forEach(item => item.isSelected = false);
-        renderEbayItems(filteredEbayItems);
-        updateEbaySelectionCount();
-      };
-      
-      // Item selection
-      document.addEventListener('click', (e) => {
-        if (e.target.classList.contains('ebay-item-checkbox')) {
-          const itemId = e.target.getAttribute('data-id');
+    grid.innerHTML = itemsHtml;
+  }
+
+  function setupEbayEventListeners() {
+    const modal = document.getElementById('ebay-marketplace-modal');
+    const closeBtn = document.getElementById('ebay-marketplace-close');
+    const searchInput = document.getElementById('ebay-search');
+    const categoryFilter = document.getElementById('ebay-category-filter');
+    const brandFilter = document.getElementById('ebay-brand-filter');
+    const conditionFilter = document.getElementById('ebay-condition-filter');
+    const priceMinInput = document.getElementById('ebay-price-min');
+    const priceMaxInput = document.getElementById('ebay-price-max');
+    const selectAllBtn = document.getElementById('ebay-select-all');
+    const selectNoneBtn = document.getElementById('ebay-select-none');
+    const importBtn = document.getElementById('ebay-import-selected');
+
+    const closeModal = () => {
+      modal.style.display = 'none';
+      currentEbayItems = [];
+      filteredEbayItems = [];
+    };
+
+    closeBtn.onclick = closeModal;
+    modal.onclick = (e) => { if (e.target === modal) closeModal(); };
+
+    const applyFilters = () => {
+      const searchTerm = searchInput.value.toLowerCase();
+      const category = categoryFilter.value;
+      const brand = brandFilter.value;
+      const condition = conditionFilter.value;
+      const minPrice = parseFloat(priceMinInput.value) || 0;
+      const maxPrice = parseFloat(priceMaxInput.value) || Infinity;
+
+      filteredEbayItems = currentEbayItems.filter(item => {
+        const title = (item.title || '').toLowerCase();
+        const desc = (item.description || '').toLowerCase();
+        const matchesSearch = title.includes(searchTerm) || desc.includes(searchTerm);
+        const matchesCategory = !category || item.category === category;
+        const matchesBrand = !brand || item.brand === brand;
+        const matchesCondition = !condition || item.condition === condition;
+        const price = Number(item.price || 0);
+        const matchesPrice = price >= minPrice && price <= maxPrice;
+        return matchesSearch && matchesCategory && matchesBrand && matchesCondition && matchesPrice;
+      });
+
+      renderEbayItems(filteredEbayItems);
+      updateEbaySelectionCount();
+    };
+
+    searchInput.addEventListener('input', applyFilters);
+    categoryFilter.addEventListener('change', applyFilters);
+    brandFilter.addEventListener('change', applyFilters);
+    conditionFilter.addEventListener('change', applyFilters);
+    priceMinInput.addEventListener('input', applyFilters);
+    priceMaxInput.addEventListener('input', applyFilters);
+
+    selectAllBtn.onclick = () => {
+      filteredEbayItems.forEach(item => item.isSelected = true);
+      renderEbayItems(filteredEbayItems);
+      updateEbaySelectionCount();
+    };
+
+    selectNoneBtn.onclick = () => {
+      filteredEbayItems.forEach(item => item.isSelected = false);
+      renderEbayItems(filteredEbayItems);
+      updateEbaySelectionCount();
+    };
+
+    document.addEventListener('click', (e) => {
+      if (e.target.classList.contains('ebay-item-checkbox')) {
+        const itemId = e.target.getAttribute('data-id');
+        const item = filteredEbayItems.find(i => i.id === itemId);
+        if (item) {
+          item.isSelected = e.target.checked;
+          updateEbaySelectionCount();
+        }
+      }
+
+      if (e.target.closest('.ebay-item-card')) {
+        const card = e.target.closest('.ebay-item-card');
+        const checkbox = card.querySelector('.ebay-item-checkbox');
+        if (checkbox && e.target !== checkbox) {
+          checkbox.checked = !checkbox.checked;
+          const itemId = checkbox.getAttribute('data-id');
           const item = filteredEbayItems.find(i => i.id === itemId);
           if (item) {
-            item.isSelected = e.target.checked;
+            item.isSelected = checkbox.checked;
             updateEbaySelectionCount();
           }
         }
-        
-        if (e.target.closest('.ebay-item-card')) {
-          const card = e.target.closest('.ebay-item-card');
-          const checkbox = card.querySelector('.ebay-item-checkbox');
-          if (checkbox && e.target !== checkbox) {
-            checkbox.checked = !checkbox.checked;
-            const itemId = checkbox.getAttribute('data-id');
-            const item = filteredEbayItems.find(i => i.id === itemId);
-            if (item) {
-              item.isSelected = checkbox.checked;
-              updateEbaySelectionCount();
-            }
-          }
-        }
-      });
-      
-      // Import selected items
-      importBtn.onclick = async () => {
-        const selectedItems = filteredEbayItems.filter(item => item.isSelected);
-        
-        if (selectedItems.length === 0) {
-          showStatus('❌ Please select at least one item to import', 'error');
-          return;
-        }
-        
-        try {
-          showStatus(`📦 Importing ${selectedItems.length} selected items...`, 'info');
-          
-          const response = await fetch('/api/ebay-import', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ selectedItems })
-          });
-          
-          const result = await response.json();
-          
-          if (result.success) {
-            showStatus(`✅ Import complete! ${result.data.imported} items imported successfully`, 'success');
-            closeModal();
-            
-            // Reload purchases to show new data
-            setTimeout(() => {
-              loadPurchases();
-            }, 1000);
-          } else {
-            showStatus(`❌ Import failed: ${result.message}`, 'error');
-          }
-        } catch (error) {
-          console.error('Import error:', error);
-          showStatus(`❌ Import failed: ${error.message}`, 'error');
-        }
-      };
-    }
-
-    function updateEbaySelectionCount() {
-      const selectedCount = filteredEbayItems.filter(item => item.isSelected).length;
-      const countElement = document.getElementById('ebay-selection-count');
-      countElement.textContent = `${selectedCount} items selected`;
-    }
-
-    // Initialize OAuth integration
-    document.addEventListener('DOMContentLoaded', function() {
-      console.log('🔐 Initializing OAuth integration for view-purchases...');
-      
-      // Create OAuth handler and API wrapper
-      const EBAY_OAUTH_LOGIN_URL = 'https://stockpilot-ebay-oauth-production.up.railway.app/ebay-oauth/login';
-      
-      // OAuth Handler Class
-      class OAuthHandler {
-        constructor(oauthLoginUrl) {
-          this.oauthLoginUrl = oauthLoginUrl;
-          this.modalId = 'oauthRedirectModal';
-          this.setupModal();
-        }
-
-        setupModal() {
-          if (!document.getElementById(this.modalId)) {
-            const modalHtml = `
-              <div id="${this.modalId}" class="oauth-modal-backdrop" style="display:none;">
-                <div class="oauth-modal-content">
-                  <h2>🔐 Authentication Required</h2>
-                  <p>Your eBay session has expired or requires re-authentication.</p>
-                  <p>Please click the button below to securely log in with eBay.</p>
-                  <button id="oauthRedirectButton" class="btn btn-primary">🔑 Login with eBay</button>
-                </div>
-              </div>
-              <style>
-                .oauth-modal-backdrop {
-                  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                  background-color: rgba(0,0,0,0.7); display: flex;
-                  justify-content: center; align-items: center; z-index: 10000;
-                }
-                .oauth-modal-content {
-                  background: #fff; padding: 30px; border-radius: 8px;
-                  text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-                  max-width: 400px; width: 90%;
-                }
-                .oauth-modal-content h2 { color: #333; margin-bottom: 15px; }
-                .oauth-modal-content p { color: #555; margin-bottom: 20px; line-height: 1.5; }
-                .oauth-modal-content button {
-                  background-color: #0064d2; color: white; padding: 12px 24px;
-                  border: none; border-radius: 6px; cursor: pointer;
-                  font-size: 1rem; font-weight: 600; transition: background-color 0.3s ease;
-                }
-                .oauth-modal-content button:hover { background-color: #0056b3; }
-              </style>
-            `;
-            document.body.insertAdjacentHTML('beforeend', modalHtml);
-            
-            document.getElementById('oauthRedirectButton').addEventListener('click', () => {
-              window.location.href = this.oauthLoginUrl;
-            });
-          }
-        }
-
-        handleOAuthRequired(response) {
-          if (response && response.oauth_required && response.redirect_required) {
-            const modal = document.getElementById(this.modalId);
-            if (modal) {
-              modal.style.display = 'flex';
-            }
-            return true;
-          }
-          return false;
-        }
-
-        hideModal() {
-          const modal = document.getElementById(this.modalId);
-          if (modal) {
-            modal.style.display = 'none';
-          }
-        }
       }
-
-      // OAuth API Wrapper Class
-      class OAuthAPIWrapper {
-        constructor(oauthHandler) {
-          this.oauthHandler = oauthHandler;
-          this.baseUrl = 'https://stockpilot-ebay-oauth-production.up.railway.app';
-        }
-
-        async getPurchases(params = {}) {
-          try {
-            const url = `${this.baseUrl}/api/ebay/default_user/purchases?limit=${params.limit || 100}`;
-            const response = await fetch(url);
-            
-            if (response.status === 401) {
-              const errorData = await response.json();
-              if (errorData.oauth_required) {
-                return { oauth_required: true, ...errorData };
-              }
-            }
-            
-            if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.message || errorData.error || 'API request failed');
-            }
-            
-            const data = await response.json();
-            return data;
-          } catch (error) {
-            console.error('OAuth API Wrapper error:', error);
-            throw error;
-          }
-        }
-      }
-
-      // Initialize OAuth system
-      window.oauthHandler = new OAuthHandler(EBAY_OAUTH_LOGIN_URL);
-      window.oauthApiWrapper = new OAuthAPIWrapper(window.oauthHandler);
-      
-      console.log('✅ OAuth integration initialized');
     });
-  </script>
+
+    importBtn.onclick = async () => {
+      const selectedItems = filteredEbayItems.filter(item => item.isSelected);
+      if (selectedItems.length === 0) {
+        showStatus('❌ Please select at least one item to import', 'error');
+        return;
+      }
+
+      try {
+        showStatus(`📦 Importing ${selectedItems.length} selected items...`, 'info');
+        const response = await fetch('/api/ebay-import', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ selectedItems })
+        });
+        const result = await response.json();
+        if (result.success) {
+          showStatus(`✅ Import complete! ${result.data.imported} items imported`, 'success');
+          closeModal();
+          setTimeout(() => { loadPurchases(); }, 1000);
+        } else {
+          showStatus(`❌ Import failed: ${result.message}`, 'error');
+        }
+      } catch (error) {
+        console.error('Import error:', error);
+        showStatus(`❌ Import failed: ${error.message}`, 'error');
+      }
+    };
+  }
+
+  function updateEbaySelectionCount() {
+    const selectedCount = filteredEbayItems.filter(item => item.isSelected).length;
+    const countElement = document.getElementById('ebay-selection-count');
+    countElement.textContent = `${selectedCount} items selected`;
+  }
+
+  // Initialize OAuth integration
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔐 Initializing OAuth integration for view-purchases...');
+
+    const EBAY_OAUTH_LOGIN_URL = 'https://stockpilot-ebay-oauth-production.up.railway.app/ebay-oauth/login';
+
+    class OAuthHandler {
+      constructor(oauthLoginUrl) {
+        this.oauthLoginUrl = oauthLoginUrl;
+        this.modalId = 'oauthRedirectModal';
+        this.setupModal();
+      }
+      setupModal() {
+        if (!document.getElementById(this.modalId)) {
+          const modalHtml = `
+            <div id="${this.modalId}" class="oauth-modal-backdrop" style="display:none;">
+              <div class="oauth-modal-content">
+                <h2>🔐 Authentication Required</h2>
+                <p>Your eBay session has expired or requires re-authentication.</p>
+                <p>Please click the button below to securely log in with eBay.</p>
+                <button id="oauthRedirectButton" class="btn btn-primary">🔑 Login with eBay</button>
+              </div>
+            </div>
+            <style>
+              .oauth-modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background-color: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 10000; }
+              .oauth-modal-content { background: #fff; padding: 30px; border-radius: 8px; text-align: center;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.2); max-width: 400px; width: 90%; }
+              .oauth-modal-content h2 { color: #333; margin-bottom: 15px; }
+              .oauth-modal-content p { color: #555; margin-bottom: 20px; line-height: 1.5; }
+              .oauth-modal-content button { background-color: #0064d2; color: white; padding: 12px 24px; border: none;
+                border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: 600; transition: background-color 0.3s ease; }
+              .oauth-modal-content button:hover { background-color: #0056b3; }
+            </style>
+          `;
+          document.body.insertAdjacentHTML('beforeend', modalHtml);
+          document.getElementById('oauthRedirectButton').addEventListener('click', () => {
+            window.location.href = this.oauthLoginUrl;
+          });
+        }
+      }
+      handleOAuthRequired(response) {
+        if (response && response.oauth_required && response.redirect_required) {
+          const modal = document.getElementById(this.modalId);
+          if (modal) modal.style.display = 'flex';
+          return true;
+        }
+        return false;
+      }
+      hideModal() {
+        const modal = document.getElementById(this.modalId);
+        if (modal) modal.style.display = 'none';
+      }
+    }
+
+    class OAuthAPIWrapper {
+      constructor(oauthHandler) {
+        this.oauthHandler = oauthHandler;
+        this.baseUrl = 'https://stockpilot-ebay-oauth-production.up.railway.app';
+      }
+      async getPurchases(params = {}) {
+        try {
+          const url = `${this.baseUrl}/api/ebay/default_user/purchases?limit=${params.limit || 100}`;
+          const response = await fetch(url);
+          if (response.status === 401) {
+            const errorData = await response.json();
+            if (errorData.oauth_required) return { oauth_required: true, ...errorData };
+          }
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || errorData.error || 'API request failed');
+          }
+          const data = await response.json();
+          return data;
+        } catch (error) {
+          console.error('OAuth API Wrapper error:', error);
+          throw error;
+        }
+      }
+    }
+
+    window.oauthHandler = new OAuthHandler(EBAY_OAUTH_LOGIN_URL);
+    window.oauthApiWrapper = new OAuthAPIWrapper(window.oauthHandler);
+    console.log('✅ OAuth integration initialized');
+  });
+</script>
 </body>
 </html>
