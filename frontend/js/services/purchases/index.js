@@ -5,7 +5,7 @@
 
 import { getPurchases, syncPurchases, handlePurchaseApiError } from './api.js';
 import { mapEbayDataToPurchases } from './mapper.js';
-import { renderPurchaseHistory, renderStatusBar, renderErrorState, renderLoadingState } from './ui.js';
+import { renderPurchaseHistory, renderStatusBar, renderErrorState, renderLoadingState, renderEmptyState } from './ui.js';
 import { FORCE_LIVE, USE_SAMPLE, debugLog } from '../../core/config.js';
 import { updateStatusBar } from '../../core/utils.js';
 
@@ -42,23 +42,40 @@ class PurchasesService {
       if (FORCE_LIVE || !USE_SAMPLE) {
         const response = await getPurchases({ limit });
         
-        if (response.success && response.data && 
-            (response.data.orders?.length > 0 || response.data.recentPurchases?.length > 0)) {
+        if (response.success && response.data) {
+          // Check if we have actual purchase data
+          const hasPurchases = response.data.orders?.length > 0 || 
+                              response.data.recentPurchases?.length > 0 ||
+                              response.data.summary?.totalPurchases > 0;
           
-          const purchases = mapEbayDataToPurchases(response.data);
-          this.currentPurchases = purchases;
-          this.lastSync = new Date();
-          
-          debugLog(`Loaded ${purchases.length} live purchases`);
-          updateStatusBar({ 
-            message: `✅ Live data loaded (${purchases.length} purchases)`, 
-            type: 'success' 
-          });
-          
-          return purchases;
+          if (hasPurchases) {
+            const purchases = mapEbayDataToPurchases(response.data);
+            this.currentPurchases = purchases;
+            this.lastSync = new Date();
+            
+            debugLog(`Loaded ${purchases.length} live purchases`);
+            updateStatusBar({ 
+              message: `✅ Live data loaded (${purchases.length} purchases)`, 
+              type: 'success' 
+            });
+            
+            return purchases;
+          } else {
+            // No purchases due to auth failure or empty account
+            this.currentPurchases = [];
+            this.lastSync = new Date();
+            
+            debugLog('Live service returned no purchases (likely auth issue)');
+            updateStatusBar({ 
+              message: '⚠️ No purchases found. OAuth may need refresh.', 
+              type: 'warning' 
+            });
+            
+            return [];
+          }
         }
 
-        throw new Error('Live service returned no purchases.');
+        throw new Error('Live service returned invalid response.');
       }
 
       // Explicit sample mode
@@ -202,7 +219,35 @@ class PurchasesService {
 
     // Purchase history
     if (showHistory) {
-      html += renderPurchaseHistory(this.currentPurchases, renderOptions);
+      if (this.currentPurchases.length === 0) {
+        // Check if this is likely an auth issue
+        const isAuthIssue = stats.purchaseCount === 0 && !USE_SAMPLE;
+        const emptyMessage = isAuthIssue ? 
+          'No purchases found. OAuth authentication may be required.' : 
+          'No purchases found';
+        const emptyType = isAuthIssue ? 'auth' : 'empty';
+        
+        html += `
+          <div class="recent-activity">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+              <h3 style="margin:0; color:#1a365d; font-size:18px; display:flex; align-items:center; gap:8px;">
+                📊 Purchase History & Staging
+                <span class="spa-status-badge">0 items</span>
+              </h3>
+              <div style="display:flex; gap:8px;">
+                <button id="btn-add-purchase" class="btn btn-primary" style="padding:6px 12px; font-size:.8rem;">➕ Add Purchase</button>
+                <button id="btn-ebay-sync" class="btn btn-info" style="padding:6px 12px; font-size:.8rem;">🛒 Sync eBay</button>
+                <button id="btn-refresh" class="btn btn-secondary" style="padding:6px 12px; font-size:.8rem;">🔄 Refresh</button>
+              </div>
+            </div>
+            <div id="purchaseHistoryContent">
+              ${renderEmptyState(emptyMessage, emptyType)}
+            </div>
+          </div>
+        `;
+      } else {
+        html += renderPurchaseHistory(this.currentPurchases, renderOptions);
+      }
     }
 
     container.innerHTML = html;

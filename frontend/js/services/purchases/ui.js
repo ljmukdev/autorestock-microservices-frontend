@@ -108,14 +108,28 @@ function renderPurchaseDetails(purchase, compact = false) {
 /**
  * Render empty state
  * @param {string} message - Empty state message
+ * @param {string} type - Empty state type (auth, empty, error)
  * @returns {string} HTML string
  */
-export function renderEmptyState(message) {
+export function renderEmptyState(message, type = 'empty') {
+  const icons = {
+    auth: '🔐',
+    empty: '📭',
+    error: '❌'
+  };
+  
+  const suggestions = {
+    auth: 'Try refreshing the page or check OAuth authentication.',
+    empty: 'Try refreshing or adding a new purchase.',
+    error: 'Check your connection and try again.'
+  };
+  
   return `
     <div style="text-align:center; padding:40px 20px; color:#1a365d;">
-      <div style="font-size: 3rem; margin-bottom: 1rem;">📭</div>
+      <div style="font-size: 3rem; margin-bottom: 1rem;">${icons[type] || icons.empty}</div>
       <h4>${message}</h4>
-      <p>Try refreshing or adding a new purchase.</p>
+      <p>${suggestions[type] || suggestions.empty}</p>
+      ${type === 'auth' ? '<button class="btn btn-primary" onclick="location.reload()">🔄 Refresh Page</button>' : ''}
     </div>
   `;
 }
