@@ -66,6 +66,12 @@ class PurchasesView {
     if (!this.container) return;
 
     // Refresh button
+    // OAuth login button
+    const oauthBtn = this.container.querySelector("#oauth-login-btn");
+    if (oauthBtn) {
+      oauthBtn.addEventListener("click", () => this.handleOAuthLogin());
+    }
+
     const refreshBtn = this.container.querySelector('#btn-refresh');
     if (refreshBtn) {
       refreshBtn.addEventListener('click', () => this.handleRefresh());
@@ -251,6 +257,16 @@ class PurchasesView {
   /**
    * Refresh view
    */
+  async handleOAuthLogin() {
+    console.log("Manual OAuth login triggered");
+    try {
+      const { oauthService } = await import("../services/auth/oauth.js");
+      await oauthService.authenticate();
+    } catch (error) {
+      console.error("OAuth login error", error);
+    }
+  }
+
   async refresh() {
     if (!this.isInitialized) return;
     
