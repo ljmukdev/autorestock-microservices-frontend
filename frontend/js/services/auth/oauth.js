@@ -15,7 +15,7 @@ class OAuthService {
     setOAuthRedirectHandler((failedUrl) => this.handleAuthFailure(failedUrl));
   }
 
-    /**
+  /**
    * Check if user is authenticated by testing actual data response
    */
   async checkAuthStatus() {
@@ -62,10 +62,6 @@ class OAuthService {
       
       return isAuthenticated;
     } catch (error) {
-      debugLog('Auth status check failed', error);
-      return false;
-    }
-  } catch (error) {
       debugLog('Auth status check failed', error);
       return false;
     }
@@ -222,15 +218,6 @@ class OAuthService {
   }
 
   /**
-   * Get authentication status
-   */
-  isAuthenticated() {
-    return this.checkAuthStatus();
-  }
-}
-
-
-  /**
    * Test what the eBay service actually returns (for debugging)
    */
   async testEbayResponse() {
@@ -249,6 +236,14 @@ class OAuthService {
       console.error('eBay test failed:', error);
     }
   }
+
+  /**
+   * Get authentication status
+   */
+  isAuthenticated() {
+    return this.checkAuthStatus();
+  }
+}
 
 // Create and export service instance
 export const oauthService = new OAuthService();
