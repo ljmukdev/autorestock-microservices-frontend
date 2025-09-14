@@ -129,7 +129,7 @@ export function renderEmptyState(message, type = 'empty') {
       <div style="font-size: 3rem; margin-bottom: 1rem;">${icons[type] || icons.empty}</div>
       <h4>${message}</h4>
       <p>${suggestions[type] || suggestions.empty}</p>
-      ${type === 'auth' ? '<button class="btn btn-primary" onclick="location.reload()">🔄 Refresh Page</button>' : ''}
+      ${type === 'auth' ? '<button class="btn btn-primary" id="refresh-page-btn">🔄 Refresh Page</button>' : ''}
     </div>
   `;
 }

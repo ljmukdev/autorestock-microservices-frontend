@@ -146,7 +146,7 @@ class OAuthService {
    */
   async checkAuthStatus() {
     try {
-      const response = await fetch(`${this.baseUrl}/status`, {
+      const response = // await fetch(`${this.baseUrl}/status`, {
         headers: this.getAuthHeaders()
       });
       
