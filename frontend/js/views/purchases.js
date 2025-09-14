@@ -66,21 +66,21 @@ class PurchasesView {
     if (!this.container) return;
 
     // Refresh button
-    // OAuth login button
-    const oauthBtn = this.container.querySelector("#oauth-login-btn");
-    if (oauthBtn) {
-      oauthBtn.addEventListener("click", () => this.handleOAuthLogin());
-    }
-
     const refreshBtn = this.container.querySelector('#btn-refresh');
     if (refreshBtn) {
-      // eBay login button
+      refreshBtn.addEventListener('click', () => this.handleRefresh());
+    }
+
+    // eBay login button
     const ebayLoginBtn = this.container.querySelector("#btn-ebay-login");
     if (ebayLoginBtn) {
       ebayLoginBtn.addEventListener("click", () => this.handleEbayLogin());
     }
 
-    refreshBtn.addEventListener('click', () => this.handleRefresh());
+    // OAuth login button (legacy)
+    const oauthBtn = this.container.querySelector("#oauth-login-btn");
+    if (oauthBtn) {
+      oauthBtn.addEventListener("click", () => this.handleOAuthLogin());
     }
 
     // Add purchase button
@@ -117,15 +117,19 @@ class PurchasesView {
   }
 
   /**
-   * Handle refresh action
+   * Handle eBay login action
    */
   async handleEbayLogin() {
-    console.log("eBay login clicked");
+    debugLog('Handling eBay login');
+    
     try {
+      showInfo('Starting eBay authentication...');
       const { oauthService } = await import("../services/auth/oauth.js");
       await oauthService.authenticate();
+      showSuccess('eBay authentication completed successfully');
     } catch (error) {
-      console.error("eBay login error", error);
+      debugLog('eBay login error', error);
+      showError(`eBay authentication failed: ${error.message}`);
     }
   }
 
