@@ -24,6 +24,15 @@ export async function getPurchases(params = {}) {
   debugLog('Fetching purchases', queryParams);
   
   try {
+    // Log the actual URL being requested for debugging
+    const testUrl = new URL(API_ENDPOINTS.PURCHASES);
+    Object.entries(queryParams).forEach(([key, value]) => {
+      if (value !== null && value !== undefined) {
+        testUrl.searchParams.set(key, value);
+      }
+    });
+    debugLog('Request URL:', testUrl.toString());
+    
     const response = await withRetry(
       () => withTimeout(
         getJSON(API_ENDPOINTS.PURCHASES, queryParams),
