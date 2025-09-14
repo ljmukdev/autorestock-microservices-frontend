@@ -1007,10 +1007,26 @@ body {
     margin-bottom: 0;
 }
 
+.purchase-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
 .purchase-item-name {
     font-weight: 600;
     color: #1a365d;
-    margin-bottom: 4px;
+    flex: 1;
+}
+
+.purchase-item-index {
+    background: #667eea;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
 }
 
 .purchase-item-details {
@@ -1019,6 +1035,16 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr;
     gap: 8px;
+    margin-bottom: 8px;
+}
+
+.purchase-item-description {
+    font-size: 0.85rem;
+    color: #9ca3af;
+    font-style: italic;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #f3f4f6;
 }
 
 .purchase-notes {

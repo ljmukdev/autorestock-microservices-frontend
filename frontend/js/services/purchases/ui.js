@@ -403,18 +403,23 @@ export function renderPurchaseDetailsModal(purchase) {
   const formatCurrency = (amount) => money(amount);
   const formatDate = (date) => !date ? 'N/A' : new Date(date).toLocaleString();
   const formatShortDate = (date) => !date ? 'N/A' : new Date(date).toLocaleDateString('en-GB');
+  const formatDateTime = (date) => !date ? 'N/A' : new Date(date).toLocaleString('en-GB');
   
   const formatItems = (items) => {
     if (!items || !Array.isArray(items)) return '<p>No items</p>';
-    return items.map(item => `
+    return items.map((item, index) => `
       <div class="purchase-item">
-        <div class="purchase-item-name">${item.productName || item.name || 'Unknown Item'}</div>
+        <div class="purchase-item-header">
+          <div class="purchase-item-name">${item.productName || item.name || 'Unknown Item'}</div>
+          <div class="purchase-item-index">Item ${index + 1}</div>
+        </div>
         <div class="purchase-item-details">
           <div><strong>SKU:</strong> ${item.sku || 'N/A'}</div>
           <div><strong>Qty:</strong> ${item.quantity || 1}</div>
           <div><strong>Unit Price:</strong> ${formatCurrency(item.unitPrice)}</div>
           <div><strong>Total:</strong> ${formatCurrency(item.totalPrice)}</div>
         </div>
+        ${item.description ? `<div class="purchase-item-description">${item.description}</div>` : ''}
       </div>
     `).join('');
   };
@@ -422,6 +427,14 @@ export function renderPurchaseDetailsModal(purchase) {
   const total = calculateTotal(purchase);
   const productName = purchase.product_name || purchase.items?.[0]?.productName || 'Unknown Item';
   const brand = purchase.brand || purchase.supplier || 'Unknown';
+  
+  // Calculate additional financial metrics
+  const pricePaid = purchase.price_paid || 0;
+  const shippingCost = purchase.shipping_cost || 0;
+  const fees = purchase.fees || 0;
+  const tax = purchase.tax || 0;
+  const discount = purchase.discount || 0;
+  const subtotal = pricePaid + shippingCost + fees + tax - discount;
 
   return `
     <div class="purchase-details-grid">
@@ -434,36 +447,70 @@ export function renderPurchaseDetailsModal(purchase) {
           <tr><td>Category:</td><td>${purchase.category || 'N/A'}</td></tr>
           <tr><td>Platform:</td><td>${purchase.platform || 'N/A'}</td></tr>
           <tr><td>Source:</td><td>${purchase.source || 'N/A'}</td></tr>
+          <tr><td>Product ID:</td><td>${purchase.product_id || purchase.itemId || 'N/A'}</td></tr>
+          <tr><td>Condition:</td><td>${purchase.condition || 'N/A'}</td></tr>
         </table>
       </div>
 
       <div class="purchase-details-section">
-        <h3>💰 Financial Details</h3>
+        <h3>💰 Financial Breakdown</h3>
         <table class="purchase-details-table">
-          <tr><td>Price Paid:</td><td>${formatCurrency(purchase.price_paid || 0)}</td></tr>
-          <tr><td>Shipping Cost:</td><td>${formatCurrency(purchase.shipping_cost || 0)}</td></tr>
-          <tr><td>Fees:</td><td>${formatCurrency(purchase.fees || 0)}</td></tr>
+          <tr><td>Item Price:</td><td>${formatCurrency(pricePaid)}</td></tr>
+          <tr><td>Shipping Cost:</td><td>${formatCurrency(shippingCost)}</td></tr>
+          <tr><td>Fees:</td><td>${formatCurrency(fees)}</td></tr>
+          <tr><td>Tax:</td><td>${formatCurrency(tax)}</td></tr>
+          <tr><td>Discount:</td><td style="color: #059669;">-${formatCurrency(discount)}</td></tr>
+          <tr><td><strong>Subtotal:</strong></td><td><strong>${formatCurrency(subtotal)}</strong></td></tr>
           <tr><td><strong>Total Amount:</strong></td><td><strong style="color: #059669; font-size: 1.1rem;">${formatCurrency(total)}</strong></td></tr>
         </table>
       </div>
 
       <div class="purchase-details-section">
-        <h3>📋 Order Information</h3>
+        <h3>📋 Order Details</h3>
         <table class="purchase-details-table">
           <tr><td>Order ID:</td><td>${purchase.order_id || 'N/A'}</td></tr>
           <tr><td>Purchase ID:</td><td>${purchase.identifier || purchase._id || purchase.id || 'N/A'}</td></tr>
+          <tr><td>Transaction ID:</td><td>${purchase.transaction_id || purchase.transactionId || 'N/A'}</td></tr>
           <tr><td>Status:</td><td><span class="status-badge status-${(purchase.status || purchase.delivery_status || 'unknown').toLowerCase().replace(/\s+/g, '-')}">${purchase.status || purchase.delivery_status || 'Unknown'}</span></td></tr>
-          <tr><td>Purchase Date:</td><td>${formatShortDate(purchase.purchase_date || purchase.orderDate)}</td></tr>
-          <tr><td>Created:</td><td>${formatShortDate(purchase.createdAt)}</td></tr>
+          <tr><td>Payment Status:</td><td>${purchase.payment_status || 'N/A'}</td></tr>
+          <tr><td>Payment Method:</td><td>${purchase.payment_method || 'N/A'}</td></tr>
         </table>
       </div>
 
       <div class="purchase-details-section">
-        <h3>👤 Seller Information</h3>
+        <h3>📅 Timeline</h3>
         <table class="purchase-details-table">
-          <tr><td>Seller:</td><td>${purchase.seller_username || 'N/A'}</td></tr>
-          <tr><td>Tracking Ref:</td><td>${purchase.tracking_ref || 'N/A'}</td></tr>
+          <tr><td>Order Date:</td><td>${formatShortDate(purchase.orderDate || purchase.purchase_date)}</td></tr>
+          <tr><td>Purchase Date:</td><td>${formatShortDate(purchase.purchase_date)}</td></tr>
+          <tr><td>Payment Date:</td><td>${formatShortDate(purchase.payment_date || purchase.paidDate)}</td></tr>
+          <tr><td>Shipped Date:</td><td>${formatShortDate(purchase.shipped_date || purchase.shipDate)}</td></tr>
+          <tr><td>Delivered Date:</td><td>${formatShortDate(purchase.delivered_date || purchase.deliveryDate)}</td></tr>
+          <tr><td>Created in System:</td><td>${formatShortDate(purchase.createdAt)}</td></tr>
+          <tr><td>Last Updated:</td><td>${formatShortDate(purchase.updatedAt || purchase.lastModified)}</td></tr>
+        </table>
+      </div>
+
+      <div class="purchase-details-section">
+        <h3>👤 Seller & Shipping</h3>
+        <table class="purchase-details-table">
+          <tr><td>Seller Username:</td><td>${purchase.seller_username || 'N/A'}</td></tr>
+          <tr><td>Seller ID:</td><td>${purchase.seller_id || purchase.sellerId || 'N/A'}</td></tr>
+          <tr><td>Seller Rating:</td><td>${purchase.seller_rating || 'N/A'}</td></tr>
+          <tr><td>Tracking Number:</td><td>${purchase.tracking_ref || purchase.trackingNumber || 'N/A'}</td></tr>
+          <tr><td>Carrier:</td><td>${purchase.carrier || purchase.shipping_carrier || 'N/A'}</td></tr>
+          <tr><td>Shipping Method:</td><td>${purchase.shipping_method || 'N/A'}</td></tr>
           <tr><td>Delivery Status:</td><td>${purchase.delivery_status || 'N/A'}</td></tr>
+        </table>
+      </div>
+
+      <div class="purchase-details-section">
+        <h3>📍 Location & Address</h3>
+        <table class="purchase-details-table">
+          <tr><td>Shipping Address:</td><td>${purchase.shipping_address || 'N/A'}</td></tr>
+          <tr><td>Billing Address:</td><td>${purchase.billing_address || 'N/A'}</td></tr>
+          <tr><td>Country:</td><td>${purchase.country || 'N/A'}</td></tr>
+          <tr><td>Currency:</td><td>${purchase.currency || 'GBP'}</td></tr>
+          <tr><td>Language:</td><td>${purchase.language || 'en'}</td></tr>
         </table>
       </div>
     </div>
@@ -475,11 +522,22 @@ export function renderPurchaseDetailsModal(purchase) {
       </div>
     </div>
 
-    ${purchase.notes ? `
+    ${purchase.notes || purchase.description ? `
     <div class="purchase-notes">
-      <h4>📝 Notes</h4>
-      <p>${purchase.notes}</p>
+      <h4>📝 Additional Information</h4>
+      <p>${purchase.notes || purchase.description || 'No additional notes available.'}</p>
     </div>
     ` : ''}
+
+    <div class="purchase-details-section">
+      <h3>🔧 Technical Details</h3>
+      <table class="purchase-details-table">
+        <tr><td>Data Source:</td><td>${purchase.source || 'eBay OAuth'}</td></tr>
+        <tr><td>API Version:</td><td>${purchase.api_version || 'N/A'}</td></tr>
+        <tr><td>Raw Data Available:</td><td>${purchase.raw_data ? 'Yes' : 'No'}</td></tr>
+        <tr><td>Last Synced:</td><td>${formatDateTime(purchase.last_synced || purchase.syncedAt)}</td></tr>
+        <tr><td>Data Quality Score:</td><td>${purchase.data_quality_score || 'N/A'}</td></tr>
+      </table>
+    </div>
   `;
 }
