@@ -221,6 +221,7 @@ class PurchasesService {
     if (showHistory) {
       if (this.currentPurchases.length === 0) {
         // Check if this is likely an auth issue
+        const stats = this.getPurchaseStats();
         const isAuthIssue = stats.purchaseCount === 0 && !USE_SAMPLE;
         const emptyMessage = isAuthIssue ? 
           'No purchases found. OAuth authentication may be required.' : 
