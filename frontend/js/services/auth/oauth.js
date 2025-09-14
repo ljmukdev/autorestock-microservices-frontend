@@ -144,9 +144,23 @@ class OAuthService {
    * Check authentication status from server
    * @returns {Promise<boolean>} Authentication status
    */
+    /**
+   * Check authentication status from server
+   * @returns {Promise<boolean>} Authentication status
+   */
   async checkAuthStatus() {
     try {
-      const response = // await fetch(`${this.baseUrl}/status`, {
+      // Skip status check for now - endpoint doesn't exist
+      this.isAuthenticated = false;
+      this.authToken = null;
+      return false;
+    } catch (error) {
+      debugLog('Error checking auth status', error);
+      this.isAuthenticated = false;
+      this.authToken = null;
+      return false;
+    }
+  }/status`, {
         headers: this.getAuthHeaders()
       });
       
@@ -229,3 +243,4 @@ export const oauthService = new OAuthService();
 
 // Export class for testing
 export { OAuthService };
+
