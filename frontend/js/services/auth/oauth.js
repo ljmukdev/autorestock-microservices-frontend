@@ -99,10 +99,10 @@ class OAuthService {
       try {
         debugLog('Starting OAuth flow');
         
-        // Build OAuth URL
+        // Build OAuth URL - force fresh authentication
         const oauthUrl = API_ENDPOINTS.AUTH;
         const returnUrl = window.location.href;
-        const fullOAuthUrl = `${oauthUrl}?return_url=${encodeURIComponent(returnUrl)}`;
+        const fullOAuthUrl = `${oauthUrl}?return_url=${encodeURIComponent(returnUrl)}&force_reauth=1`;
         
         debugLog('Opening OAuth window', { url: fullOAuthUrl });
         
@@ -163,10 +163,14 @@ class OAuthService {
   }
 
   /**
-   * Manually trigger OAuth flow
+   * Manually trigger OAuth flow - forces new token
    */
   async authenticate() {
-    debugLog('Manual authentication triggered');
+    debugLog('Manual authentication triggered - forcing new token');
+    
+    // Show message about getting new token
+    this.showAuthMessage('Getting fresh eBay authentication token...');
+    
     return this.startOAuthFlow();
   }
 
