@@ -1,27 +1,7 @@
 /**
- * Format date string with safe options
+ * StockPilot Core Utilities
+ * Common helper functions and DOM utilities
  */
-export function formatDate(date, options = {}) {
-  try {
-    // Use only safe, standard options
-    const safeOptions = {
-      year: 'numeric',
-      month: 'short', 
-      day: 'numeric'
-    };
-    
-    // Add time if not explicitly excluded
-    if (options.timeStyle !== 'none') {
-      safeOptions.hour = '2-digit';
-      safeOptions.minute = '2-digit';
-    }
-    
-    return new Date(date).toLocaleString('en-GB', safeOptions);
-  } catch (error) {
-    // Fallback to simple string if toLocaleString fails
-    return new Date(date).toString();
-  }
-}
 
 /**
  * Format date string with safe options
@@ -49,65 +29,48 @@ export function formatDate(date, options = {}) {
 }
 
 /**
- * Show loading state
- * @param {Element} element - Element to show loading in
- * @param {string} message - Loading message
+ * DOM query selector shorthand
  */
-export function showLoading(element, message = 'Loading...') {
-  if (!element) return;
-  
-  element.innerHTML = `
-    <div class="spa-loading">
-      <div class="spa-spinner"></div>
-      <p>${message}</p>
-    </div>
-  `;
+export function $(selector, parent = document) {
+  return parent.querySelector(selector);
 }
 
 /**
- * Show error state
- * @param {Element} element - Element to show error in
- * @param {string} message - Error message
- * @param {Function} onRetry - Retry callback
+ * DOM query selector all shorthand
  */
-export function showError(element, message, onRetry = null) {
-  if (!element) return;
-  
-  element.innerHTML = `
-    <div class="spa-error">
-      <h4>❌ Error</h4>
-      <p>${message}</p>
-      ${onRetry ? `<button class="btn btn-primary" data-action="util-retry">🔄 Try Again</button>` : ''}
-    </div>`;
-  if (onRetry) {
-    const btn = element.querySelector('[data-action="util-retry"]');
-    btn?.addEventListener('click', () => onRetry());
-  }
+export function $all(selector, parent = document) {
+  return parent.querySelectorAll(selector);
 }
 
 /**
- * Show empty state
- * @param {Element} element - Element to show empty state in
- * @param {string} message - Empty state message
- * @param {string} icon - Icon to display
+ * Format currency amount
  */
-export function showEmpty(element, message, icon = '📭') {
-  if (!element) return;
+export function money(amount, currency = '£') {
+  const num = Number(amount);
+  if (isNaN(num)) return `${currency}0.00`;
+  return `${currency}${num.toFixed(2)}`;
+}
+
+/**
+ * Format time ago string
+ */
+export function timeAgo(date) {
+  const now = new Date();
+  const targetDate = new Date(date);
+  const seconds = Math.floor((now - targetDate) / 1000);
   
-  element.innerHTML = `
-    <div class="spa-loading">
-      <div style="font-size: 3rem; margin-bottom: 1rem;">${icon}</div>
-      <p>${message}</p>
-    </div>
-  `;
+  if (seconds < 60) return 'just now';
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+  return `${Math.floor(seconds / 604800)}w ago`;
 }
 
 /**
  * Update status bar
- * @param {Object} status - Status information
  */
 export function updateStatusBar(status) {
-  const statusBar = $('#spa-status-bar');
+  const statusBar = document.getElementById('spa-status-bar');
   if (!statusBar) return;
   
   const { message, type = 'info', timestamp = new Date() } = status;
@@ -116,7 +79,9 @@ export function updateStatusBar(status) {
     <div class="spa-status-item">
       <span>${type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️'}</span>
       <span>${message}</span>
-      <span class="spa-status-badge">${formatDate(timestamp, { timeStyle: 'short' })}</span>
+      <span class="spa-status-badge">${formatDate(timestamp, { timeStyle: 'none' })}</span>
     </div>
   `;
 }
+
+// Add other essential utility functions here as needed
