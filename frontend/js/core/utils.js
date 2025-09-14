@@ -67,7 +67,13 @@ export function formatDate(date, options = {}) {
     minute: '2-digit'
   };
   
-  return new Date(date).toLocaleString('en-GB', { ...defaultOptions, ...options });
+  // Filter out invalid options for toLocaleString
+  const validKeys = ['year', 'month', 'day', 'hour', 'minute', 'second', 'weekday', 'timeZone', 'dateStyle', 'timeStyle'];
+  const filteredOptions = {};
+  Object.entries({ ...defaultOptions, ...options }).forEach(([key, value]) => {
+    if (validKeys.includes(key)) filteredOptions[key] = value;
+  });
+  return new Date(date).toLocaleString('en-GB', filteredOptions);
 }
 
 /**
