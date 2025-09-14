@@ -7,7 +7,7 @@ import { purchasesService } from '../services/purchases/index.js';
 import { router } from '../core/router.js';
 import { $, $all } from '../core/utils.js';
 import { debugLog } from '../core/config.js';
-import { showSuccess, showError } from '../components/toasts.js';
+import { showSuccess, showError, showInfo } from '../components/toasts.js';
 
 class PurchasesView {
   constructor() {
@@ -25,7 +25,7 @@ class PurchasesView {
 
     try {
       // Load purchases data
-      await purchasesService.loadPurchases();
+      await purchasesService.loadPurchases({ limit: 100 });
       
       // Render UI
       this.render();
@@ -112,7 +112,7 @@ class PurchasesView {
     
     try {
       showInfo('Refreshing purchases...');
-      await purchasesService.loadPurchases();
+      await purchasesService.loadPurchases({ limit: 100 });
       this.render();
       showSuccess('Purchases refreshed successfully');
     } catch (error) {
