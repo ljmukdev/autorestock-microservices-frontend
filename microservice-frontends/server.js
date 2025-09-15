@@ -34,6 +34,11 @@ app.get('/purchases-test', (req, res) => {
     res.sendFile(path.join(__dirname, 'purchases-test.html'));
 });
 
+// Serve purchases page directly
+app.get('/purchases', (req, res) => {
+    res.sendFile(path.join(__dirname, 'purchases.html'));
+});
+
 // Serve diagnostic overlay
 app.get('/diagnostic-overlay.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'diagnostic-overlay.html'));
