@@ -1,0 +1,344 @@
+<!--
+File: test-settings.html
+Location: /microservice-frontends/test-settings.html
+Route: /test/settings
+Service: Settings Service
+URL: https://stockpilot-settings-service-production.up.railway.app
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings Service - Testing Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .service-url {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 1rem;
+        }
+
+        .back-link {
+            color: white;
+            text-decoration: none;
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            opacity: 1;
+        }
+
+        .test-sections {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .test-section {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #2d3748;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #68d391;
+        }
+
+        .status-dot.unknown {
+            background: #cbd5e0;
+        }
+
+        .status-dot.error {
+            background: #fc8181;
+        }
+
+        .test-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            margin: 0.25rem;
+            transition: all 0.3s ease;
+        }
+
+        .test-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+        }
+
+        .response-area {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+            min-height: 200px;
+            white-space: pre-wrap;
+            overflow-y: auto;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .endpoint-list {
+            list-style: none;
+        }
+
+        .endpoint-list li {
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            background: #f7fafc;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="/" class="back-link">← Back to Dashboard</a>
+            <h1>Settings Service Testing</h1>
+            <div class="service-url">https://stockpilot-settings-service-production.up.railway.app</div>
+            <div class="status-indicator">
+                <span class="status-dot unknown" id="serviceStatus"></span>
+                <span id="statusText">Checking service status...</span>
+            </div>
+        </div>
+
+        <div class="test-sections">
+            <div class="test-section">
+                <h2 class="section-title">Health Check</h2>
+                <p>Test basic connectivity and service availability</p>
+                <button class="test-button" onclick="testHealth()">Check Health Status</button>
+                <button class="test-button" onclick="testDatabaseConnection()">Test Database Connection</button>
+            </div>
+
+            <div class="test-section">
+                <h2 class="section-title">API Endpoints</h2>
+                <p>Available settings service endpoints:</p>
+                <ul class="endpoint-list">
+                    <li>GET /health</li>
+                    <li>GET /api/settings</li>
+                    <li>POST /api/settings</li>
+                    <li>PUT /api/settings/:key</li>
+                    <li>DELETE /api/settings/:key</li>
+                </ul>
+                <button class="test-button" onclick="testGetSettings()">Get All Settings</button>
+            </div>
+
+            <div class="test-section">
+                <h2 class="section-title">Create/Update Setting</h2>
+                <div class="input-group">
+                    <label>Setting Key:</label>
+                    <input type="text" id="settingKey" placeholder="test_setting">
+                </div>
+                <div class="input-group">
+                    <label>Setting Value:</label>
+                    <input type="text" id="settingValue" placeholder="test_value">
+                </div>
+                <div class="input-group">
+                    <label>Category:</label>
+                    <select id="settingCategory">
+                        <option value="general">General</option>
+                        <option value="email">Email</option>
+                        <option value="api">API</option>
+                        <option value="ui">UI</option>
+                    </select>
+                </div>
+                <button class="test-button" onclick="createSetting()">Create Setting</button>
+            </div>
+
+            <div class="test-section">
+                <h2 class="section-title">Settings Operations</h2>
+                <p>Test settings management operations</p>
+                <button class="test-button" onclick="testUserPreferences()">Get User Preferences</button>
+                <button class="test-button" onclick="testSystemConfig()">Get System Config</button>
+                <button class="test-button" onclick="testApiKeys()">Test API Keys</button>
+            </div>
+
+            <div class="test-section full-width">
+                <h2 class="section-title">Response Output</h2>
+                <div class="response-area" id="responseOutput">Ready to test settings service...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SERVICE_URL = 'https://stockpilot-settings-service-production.up.railway.app';
+        const responseOutput = document.getElementById('responseOutput');
+
+        function updateOutput(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            responseOutput.textContent += `[${timestamp}] ${message}\n`;
+            responseOutput.scrollTop = responseOutput.scrollHeight;
+        }
+
+        function updateServiceStatus(status, message) {
+            const statusDot = document.getElementById('serviceStatus');
+            const statusText = document.getElementById('statusText');
+            
+            statusDot.className = `status-dot ${status}`;
+            statusText.textContent = message;
+        }
+
+        async function makeRequest(endpoint, method = 'GET', data = null) {
+            try {
+                updateOutput(`Making ${method} request to ${endpoint}...`);
+                
+                const options = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                };
+
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+
+                const response = await fetch(`${SERVICE_URL}${endpoint}`, options);
+                const responseData = await response.text();
+                
+                let parsedData;
+                try {
+                    parsedData = JSON.parse(responseData);
+                } catch {
+                    parsedData = responseData;
+                }
+
+                updateOutput(`Response (${response.status}): ${JSON.stringify(parsedData, null, 2)}`);
+                
+                if (response.ok) {
+                    updateServiceStatus('', 'Service is operational');
+                }
+                
+                return { success: response.ok, data: parsedData, status: response.status };
+            } catch (error) {
+                updateOutput(`Error: ${error.message}`);
+                updateServiceStatus('error', 'Service unavailable');
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function testHealth() {
+            await makeRequest('/health');
+        }
+
+        async function testDatabaseConnection() {
+            await makeRequest('/api/health/database');
+        }
+
+        async function testGetSettings() {
+            await makeRequest('/api/settings');
+        }
+
+        async function testUserPreferences() {
+            await makeRequest('/api/settings/user/preferences');
+        }
+
+        async function testSystemConfig() {
+            await makeRequest('/api/settings/system/config');
+        }
+
+        async function testApiKeys() {
+            await makeRequest('/api/settings/api/keys');
+        }
+
+        async function createSetting() {
+            const settingData = {
+                key: document.getElementById('settingKey').value || 'test_setting',
+                value: document.getElementById('settingValue').value || 'test_value',
+                category: document.getElementById('settingCategory').value
+            };
+
+            await makeRequest('/api/settings', 'POST', settingData);
+        }
+
+        window.addEventListener('load', async () => {
+            updateOutput('Settings Service Test Page Loaded');
+            updateOutput('Performing initial health check...');
+            await testHealth();
+        });
+    </script>
+</body>
+</html>

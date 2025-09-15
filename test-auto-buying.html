@@ -1,0 +1,452 @@
+<!--
+File: test-auto-buying.html
+Location: /microservice-frontends/test-auto-buying.html
+Route: /test/auto-buying
+Service: Auto Buying Service
+URL: https://stockpilot-auto-buying-service-service-production.up.railway.app
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto Buying Service - Testing Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .service-url {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 1rem;
+        }
+
+        .back-link {
+            color: white;
+            text-decoration: none;
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            opacity: 1;
+        }
+
+        .test-sections {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .test-section {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #2d3748;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+        }
+
+        .automation-section {
+            background: linear-gradient(135deg, #fef5e7 0%, #fed7aa 100%);
+            border: 2px solid #f6ad55;
+        }
+
+        .critical-section {
+            background: linear-gradient(135deg, #fee 0%, #fbb 100%);
+            border: 2px solid #f56565;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #68d391;
+        }
+
+        .status-dot.unknown {
+            background: #cbd5e0;
+        }
+
+        .status-dot.error {
+            background: #fc8181;
+        }
+
+        .test-button {
+            background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            margin: 0.25rem;
+            transition: all 0.3s ease;
+        }
+
+        .test-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(246, 173, 85, 0.3);
+        }
+
+        .automation-button {
+            background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
+            color: white;
+        }
+
+        .automation-button:hover {
+            box-shadow: 0 4px 16px rgba(246, 173, 85, 0.3);
+        }
+
+        .critical-button {
+            background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+            color: white;
+        }
+
+        .critical-button:hover {
+            box-shadow: 0 4px 16px rgba(245, 101, 101, 0.3);
+        }
+
+        .response-area {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+            min-height: 200px;
+            white-space: pre-wrap;
+            overflow-y: auto;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .endpoint-list {
+            list-style: none;
+        }
+
+        .endpoint-list li {
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            background: #f7fafc;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="/" class="back-link">← Back to Dashboard</a>
+            <h1>Auto Buying Service Testing</h1>
+            <div class="service-url">https://stockpilot-auto-buying-service-service-production.up.railway.app</div>
+            <div class="status-indicator">
+                <span class="status-dot unknown" id="serviceStatus"></span>
+                <span id="statusText">Checking service status...</span>
+            </div>
+        </div>
+
+        <div class="test-sections">
+            <div class="test-section">
+                <h2 class="section-title">Health Check</h2>
+                <p>Test basic connectivity and service availability</p>
+                <button class="test-button" onclick="testHealth()">Check Health Status</button>
+                <button class="test-button" onclick="testDatabaseConnection()">Test Database Connection</button>
+            </div>
+
+            <div class="test-section automation-section">
+                <h2 class="section-title">Automation Status</h2>
+                <p>Monitor automated buying processes</p>
+                <button class="test-button automation-button" onclick="testAutomationStatus()">Check Automation Status</button>
+                <button class="test-button automation-button" onclick="testActiveBots()">Get Active Bots</button>
+                <button class="test-button automation-button" onclick="testAutomationLogs()">Get Automation Logs</button>
+            </div>
+
+            <div class="test-section critical-section">
+                <h2 class="section-title">⚠️ Financial Controls</h2>
+                <p><strong>⚠️ Use with extreme caution - Real money transactions</strong></p>
+                <button class="test-button critical-button" onclick="testSpendingLimits()">Check Spending Limits</button>
+                <button class="test-button critical-button" onclick="testBudgetControls()">Check Budget Controls</button>
+                <button class="test-button critical-button" onclick="testTransactionHistory()">Get Transaction History</button>
+            </div>
+
+            <div class="test-section">
+                <h2 class="section-title">API Endpoints</h2>
+                <p>Available auto buying service endpoints:</p>
+                <ul class="endpoint-list">
+                    <li>GET /health</li>
+                    <li>GET /api/auto-buying/bots</li>
+                    <li>POST /api/auto-buying/bots</li>
+                    <li>GET /api/auto-buying/transactions</li>
+                    <li>GET /api/auto-buying/alerts</li>
+                </ul>
+                <button class="test-button" onclick="testGetBots()">Get Buying Bots</button>
+            </div>
+
+            <div class="test-section">
+                <h2 class="section-title">Create Test Bot</h2>
+                <div class="input-group">
+                    <label>Bot Name:</label>
+                    <input type="text" id="botName" placeholder="Test Buying Bot">
+                </div>
+                <div class="input-group">
+                    <label>Platform:</label>
+                    <select id="platform">
+                        <option value="ebay">eBay</option>
+                        <option value="vinted">Vinted</option>
+                        <option value="facebook">Facebook Marketplace</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Max Price:</label>
+                    <input type="number" id="maxPrice" placeholder="50.00" step="0.01">
+                </div>
+                <div class="input-group">
+                    <label>Search Keywords:</label>
+                    <input type="text" id="keywords" placeholder="vintage jacket">
+                </div>
+                <button class="test-button" onclick="createTestBot()">Create Test Bot</button>
+            </div>
+
+            <div class="test-section">
+                <h2 class="section-title">Bot Management</h2>
+                <p>Test bot management operations</p>
+                <button class="test-button" onclick="testBotActivation()">Activate Bot</button>
+                <button class="test-button" onclick="testBotDeactivation()">Deactivate Bot</button>
+                <button class="test-button" onclick="testBotPerformance()">Check Performance</button>
+                <button class="test-button" onclick="testBotSettings()">Get Bot Settings</button>
+            </div>
+
+            <div class="test-section">
+                <h2 class="section-title">Monitoring & Alerts</h2>
+                <p>Test monitoring and alerting systems</p>
+                <button class="test-button" onclick="testAlerts()">Get Alerts</button>
+                <button class="test-button" onclick="testNotifications()">Get Notifications</button>
+                <button class="test-button" onclick="testMonitoring()">Check Monitoring</button>
+                <button class="test-button" onclick="testErrorLogs()">Get Error Logs</button>
+            </div>
+
+            <div class="test-section full-width">
+                <h2 class="section-title">Response Output</h2>
+                <div class="response-area" id="responseOutput">Ready to test auto buying service...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SERVICE_URL = 'https://stockpilot-auto-buying-service-service-production.up.railway.app';
+        const responseOutput = document.getElementById('responseOutput');
+
+        function updateOutput(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            responseOutput.textContent += `[${timestamp}] ${message}\n`;
+            responseOutput.scrollTop = responseOutput.scrollHeight;
+        }
+
+        function updateServiceStatus(status, message) {
+            const statusDot = document.getElementById('serviceStatus');
+            const statusText = document.getElementById('statusText');
+            
+            statusDot.className = `status-dot ${status}`;
+            statusText.textContent = message;
+        }
+
+        async function makeRequest(endpoint, method = 'GET', data = null) {
+            try {
+                updateOutput(`Making ${method} request to ${endpoint}...`);
+                
+                const options = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                };
+
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+
+                const response = await fetch(`${SERVICE_URL}${endpoint}`, options);
+                const responseData = await response.text();
+                
+                let parsedData;
+                try {
+                    parsedData = JSON.parse(responseData);
+                } catch {
+                    parsedData = responseData;
+                }
+
+                updateOutput(`Response (${response.status}): ${JSON.stringify(parsedData, null, 2)}`);
+                
+                if (response.ok) {
+                    updateServiceStatus('', 'Service is operational');
+                }
+                
+                return { success: response.ok, data: parsedData, status: response.status };
+            } catch (error) {
+                updateOutput(`Error: ${error.message}`);
+                updateServiceStatus('error', 'Service unavailable');
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function testHealth() {
+            await makeRequest('/health');
+        }
+
+        async function testDatabaseConnection() {
+            await makeRequest('/api/health/database');
+        }
+
+        async function testAutomationStatus() {
+            await makeRequest('/api/auto-buying/status');
+        }
+
+        async function testActiveBots() {
+            await makeRequest('/api/auto-buying/bots/active');
+        }
+
+        async function testAutomationLogs() {
+            await makeRequest('/api/auto-buying/logs');
+        }
+
+        async function testSpendingLimits() {
+            await makeRequest('/api/auto-buying/limits');
+        }
+
+        async function testBudgetControls() {
+            await makeRequest('/api/auto-buying/budget');
+        }
+
+        async function testTransactionHistory() {
+            await makeRequest('/api/auto-buying/transactions');
+        }
+
+        async function testGetBots() {
+            await makeRequest('/api/auto-buying/bots');
+        }
+
+        async function testBotActivation() {
+            await makeRequest('/api/auto-buying/bots/activate');
+        }
+
+        async function testBotDeactivation() {
+            await makeRequest('/api/auto-buying/bots/deactivate');
+        }
+
+        async function testBotPerformance() {
+            await makeRequest('/api/auto-buying/bots/performance');
+        }
+
+        async function testBotSettings() {
+            await makeRequest('/api/auto-buying/bots/settings');
+        }
+
+        async function testAlerts() {
+            await makeRequest('/api/auto-buying/alerts');
+        }
+
+        async function testNotifications() {
+            await makeRequest('/api/auto-buying/notifications');
+        }
+
+        async function testMonitoring() {
+            await makeRequest('/api/auto-buying/monitoring');
+        }
+
+        async function testErrorLogs() {
+            await makeRequest('/api/auto-buying/errors');
+        }
+
+        async function createTestBot() {
+            const botData = {
+                name: document.getElementById('botName').value || 'Test Buying Bot',
+                platform: document.getElementById('platform').value,
+                max_price: parseFloat(document.getElementById('maxPrice').value) || 50.00,
+                keywords: document.getElementById('keywords').value || 'vintage jacket',
+                active: false, // Always start inactive for safety
+                budget_limit: 100.00
+            };
+
+            if (confirm('This will create a test buying bot. Continue?')) {
+                await makeRequest('/api/auto-buying/bots', 'POST', botData);
+            }
+        }
+
+        window.addEventListener('load', async () => {
+            updateOutput('Auto Buying Service Test Page Loaded');
+            updateOutput('⚠️ WARNING: This service handles real money transactions');
+            updateOutput('⚠️ Always test with small amounts and inactive bots');
+            updateOutput('Performing initial health check...');
+            await testHealth();
+        });
+    </script>
+</body>
+</html>

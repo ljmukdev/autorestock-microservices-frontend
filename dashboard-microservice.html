@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microservice Testing Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            color: white;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .service-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .service-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+        }
+
+        .service-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+
+        .service-description {
+            color: #718096;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .service-url {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.8rem;
+            color: #4a5568;
+            background: #f7fafc;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            word-break: break-all;
+        }
+
+        .test-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-align: center;
+            width: 100%;
+        }
+
+        .test-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+        }
+
+        .category-header {
+            grid-column: 1 / -1;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin: 2rem 0 1rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #68d391;
+            margin-right: 0.5rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Microservice Testing Dashboard</h1>
+            <p>Test functionality, API connections, and database operations for all StockPilot microservices</p>
+        </div>
+
+        <div class="services-grid">
+            <div class="category-header">Core Business Services</div>
+            
+            <div class="service-card">
+                <div class="service-name">
+                    <span class="status-indicator"></span>Settings Service
+                </div>
+                <div class="service-description">Manage application settings, user preferences, and system configuration</div>
+                <div class="service-url">https://stockpilot-settings-service-production.up.railway.app</div>
+                <a href="/test/settings" class="test-button">Test Settings Service</a>
+            </div>
+
+            <div class="service-card">
+                <div class="service-name">
+                    <span class="status-indicator"></span>Inventory Service
+                </div>
+                <div class="service-description">Product inventory management, stock levels, and item tracking</div>
+                <div class="service-url">https://stockpilot-inventory-service-production-production.up.railway.app</div>
+                <a href="/test/inventory" class="test-button">Test Inventory Service</a>
+            </div>
+
+            <div class="service-card">
+                <div class="service-name">
+                    <span class="status-indicator"></span>Sales Service
+                </div>
+                <div class="service-description">Sales order processing, transaction management, and revenue tracking</div>
+                <div class="service-url">https://beautiful-motivation-production.up.railway.app</div>
+                <a href="/test/sales" class="test-button">Test Sales Service</a>
+            </div>
+
+            <div class="service-card">
+                <div class="service-name">
+                    <span class="status-indicator"></span>Purchases Service
+                </div>
+                <div class="service-description">Purchase order management, supplier transactions, and procurement</div>
+                <div class="service-url">https://stockpilot-purchases-service-production.up.railway.app</div>
+                <a href="/test/purchases" class="test-button">Test Purchases Service</a>
+            </div>
+
+            <div class="category-header">Platform Integration Services</div>
+
+            <div class="service-card">
+                <div class="service-name">
+                    <span class="status-indicator"></span>eBay Service
+                </div>
+                <div class="service-description">eBay API integration, listing management, and OAuth authentication</div>
+                <div class="service-url">https://delightful-liberation-production.up.railway.app</div>
+                <a href="/test/ebay" class="test-button">Test eBay Service</a>
+            </div>
+
+            <div class="service-card">
+                <div class="service-name">
+                    <span class="status-indicator"></span>Vinted Service
+                </div>
+                <div class="service-description">Vinted platform integration and listing synchronization</div>
+                <div class="service-url">https://stockpilot-vinted-service-production-production.up.railway.app</div>
+                <a href="/test/vinted" class="test-button">Test Vinted Service</a>
+            </div>
+
+            <div class="category-header">Business Intelligence Services</div>
+
+            <div class="service-card">
+                <div class="service-name">
+                    <span class="status-indicator"></span>Reporting Service
+                </div>
+                <div class="service-description">Analytics, reports generation, and business intelligence</div>
+                <div class="service-url">https://stockpilot-reporting-service-production.up.railway.app</div>
+                <a href="/test/reporting" class="test-button">Test Reporting Service</a>
+            </div>
+
+            <div class="service-card">
+                <div class="service-name">
+                    <span class="status-indicator"></span>Accounting Integration Service
+                </div>
+                <div class="service-description">Financial data integration and accounting system connectivity</div>
+                <div class="service-url">https://stockpilot-accounting-integration-service-production.up.railway.app</div>
+                <a href="/test/accounting" class="test-button">Test Accounting Service</a>
+            </div>
+
+            <div class="category-header">Automation & AI Services</div>
+
+            <div class="service-card">
+                <div class="service-name">
+                    <span class="status-indicator"></span>Ad Generator Service
+                </div>
+                <div class="service-description">Automated advertisement creation and content generation</div>
+                <div class="service-url">https://ad-generator-service-production-production.up.railway.app</div>
+                <a href="/test/ad-generator" class="test-button">Test Ad Generator Service</a>
+            </div>
+
+            <div class="service-card">
+                <div class="service-name">
+                    <span class="status-indicator"></span>Rules Engine Service
+                </div>
+                <div class="service-description">Business rules processing and automated decision making</div>
+                <div class="service-url">https://stockpilot-rules-engine-service-production-production.up.railway.app</div>
+                <a href="/test/rules-engine" class="test-button">Test Rules Engine Service</a>
+            </div>
+
+            <div class="service-card">
+                <div class="service-name">
+                    <span class="status-indicator"></span>Auto Buying Service
+                </div>
+                <div class="service-description">Automated purchasing decisions and supplier management</div>
+                <div class="service-url">https://stockpilot-auto-buying-service-service-production.up.railway.app</div>
+                <a href="/test/auto-buying" class="test-button">Test Auto Buying Service</a>
+            </div>
+
+            <div class="category-header">Communication & Media Services</div>
+
+            <div class="service-card">
+                <div class="service-name">
+                    <span class="status-indicator"></span>Media Service
+                </div>
+                <div class="service-description">Image processing, file storage, and media asset management</div>
+                <div class="service-url">https://stockpilot-media-service-production-production.up.railway.app</div>
+                <a href="/test/media" class="test-button">Test Media Service</a>
+            </div>
+
+            <div class="service-card">
+                <div class="service-name">
+                    <span class="status-indicator"></span>Email Ingest Service
+                </div>
+                <div class="service-description">Email processing, parsing, and automated data extraction</div>
+                <div class="service-url">https://stockpilot-email-ingest-service-production-production.up.railway.app</div>
+                <a href="/test/email-ingest" class="test-button">Test Email Ingest Service</a>
+            </div>
+
+            <div class="service-card">
+                <div class="service-name">
+                    <span class="status-indicator"></span>Status Service
+                </div>
+                <div class="service-description">System monitoring, health checks, and service status tracking</div>
+                <div class="service-url">https://stockpilot-status-service-production-production.up.railway.app</div>
+                <a href="/test/status" class="test-button">Test Status Service</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -505,7 +505,7 @@ export function renderPurchaseDetailsModal(purchase) {
           <tr><td>Item Number:</td><td>${purchase.item_number || purchase.itemId || 'N/A'}</td></tr>
           <tr><td>Returns Accepted:</td><td>${purchase.returns_accepted ? 'Yes' : 'No'}</td></tr>
         </table>
-      </div>
+    </div>
 
       <div class="purchase-details-section">
         <h3>📦 Tracking & Delivery</h3>
@@ -524,7 +524,7 @@ export function renderPurchaseDetailsModal(purchase) {
           </button>
         </div>
         ` : ''}
-      </div>
+    </div>
 
       <div class="purchase-details-section">
         <h3>📍 Delivery Address</h3>
@@ -545,8 +545,8 @@ export function renderPurchaseDetailsModal(purchase) {
           <tr><td>Country:</td><td>${purchase.country || 'N/A'}</td></tr>
           <tr><td>Currency:</td><td>${purchase.currency || 'GBP'}</td></tr>
           <tr><td>Language:</td><td>${purchase.language || 'en'}</td></tr>
-        </table>
-      </div>
+      </table>
+    </div>
 
       <div class="purchase-details-section">
         <h3>💳 Payment Details</h3>
@@ -586,3 +586,711 @@ export function renderPurchaseDetailsModal(purchase) {
     </div>
   `;
 }
+
+    totalInvestment = 0,
+
+    purchaseCount = 0,
+
+    averagePurchase = 0,
+
+    lastSync = new Date(),
+
+    sourceBreakdown = { manual: 0, auto: 0 },
+
+    monthlyChange = '+12%'
+
+  } = stats;
+
+
+
+  return `
+
+    <div class="spa-status-bar">
+
+      <div class="spa-status-item">
+
+        <span>💰</span>
+
+        <span>Total Investment: <strong>${money(totalInvestment)}</strong></span>
+
+        <span class="spa-status-badge">${monthlyChange}</span>
+
+      </div>
+
+      <div class="spa-status-item">
+
+        <span>🛒</span>
+
+        <span><strong>${purchaseCount}</strong> purchases</span>
+
+        <span class="spa-status-badge">${sourceBreakdown.manual} manual, ${sourceBreakdown.auto} auto</span>
+
+      </div>
+
+      <div class="spa-status-item">
+
+        <span>📊</span>
+
+        <span>Average: <strong>${money(averagePurchase)}</strong></span>
+
+      </div>
+
+      <div class="spa-status-item">
+
+        <span>🔄</span>
+
+        <span>Last sync: <span>${formatDate(lastSync, { timeStyle: 'short' })}</span></span>
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+
+/**
+
+ * Render purchase history section
+
+ * @param {Array} purchases - Array of purchases
+
+ * @param {Object} options - Render options
+
+ * @returns {string} HTML string
+
+ */
+
+export function renderPurchaseHistory(purchases, options = {}) {
+
+  const {
+
+    showHeader = true,
+
+    showActions = true,
+
+    title = '📊 Purchase History & Staging'
+
+  } = options;
+
+
+
+  const headerHtml = showHeader ? `
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+
+      <h3 style="margin:0; color:#1a365d; font-size:18px; display:flex; align-items:center; gap:8px;">
+
+        ${title}
+
+        <span class="spa-status-badge">${purchases.length} items</span>
+
+      </h3>
+
+      ${showActions ? renderHistoryActions() : ''}
+
+    </div>
+
+  ` : '';
+
+
+
+  const cardsHtml = renderPurchaseCards(purchases, options);
+
+
+
+  return `
+
+    <div class="recent-activity">
+
+      ${headerHtml}
+
+      <div id="purchaseHistoryContent">
+
+        ${cardsHtml}
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+
+/**
+
+ * Render history actions
+
+ * @returns {string} HTML string
+
+ */
+
+function renderHistoryActions() {
+
+  return `
+
+    <div style="display:flex; gap:8px;">
+
+      <button id="btn-add-purchase" class="btn btn-primary btn-small">➕ Add Purchase</button>
+
+      <button id="btn-ebay-sync" class="btn btn-info btn-small">🛒 Sync eBay</button>
+
+      <button id="btn-ebay-login" class="btn btn-warning btn-small">🔐 eBay Login</button>
+
+      <button id="btn-refresh" class="btn btn-secondary btn-small">Refresh</button>
+
+    </div>
+
+  `;
+
+}
+
+
+
+/**
+
+ * Calculate total for purchase
+
+ * @param {Object} purchase - Purchase object
+
+ * @returns {number} Total amount
+
+ */
+
+function calculateTotal(purchase) {
+
+  // Try totalAmount first
+
+  if (purchase.totalAmount != null) {
+
+    return Number(purchase.totalAmount || 0);
+
+  }
+
+  
+
+  // Try total_paid
+
+  if (purchase.total_paid != null) {
+
+    return Number(purchase.total_paid || 0);
+
+  }
+
+  
+
+  // Calculate from components
+
+  const pricePaid = Number(purchase.price_paid || 0);
+
+  const shippingCost = Number(purchase.shipping_cost || 0);
+
+  const fees = Number(purchase.fees || 0);
+
+  
+
+  return pricePaid + shippingCost + fees;
+
+}
+
+
+
+/**
+
+ * Render purchase details modal content
+
+ * @param {Object} purchase - Purchase object
+
+ * @returns {string} HTML string
+
+ */
+
+export function renderPurchaseDetailsModal(purchase) {
+
+  const formatCurrency = (amount) => money(amount);
+
+  const formatDate = (date) => !date ? 'N/A' : new Date(date).toLocaleString();
+
+  
+
+  const formatItems = (items) => {
+
+    if (!items || !Array.isArray(items)) return '<p>No items</p>';
+
+    return items.map(item => `
+
+      <div style="padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px; margin: 4px 0;">
+
+        <strong>${item.productName || item.name || 'Unknown Item'}</strong><br>
+
+        <small>SKU: ${item.sku || 'N/A'} | Qty: ${item.quantity || 1} | Price: ${formatCurrency(item.unitPrice)} | Total: ${formatCurrency(item.totalPrice)}</small>
+
+      </div>
+
+    `).join('');
+
+  };
+
+
+
+  return `
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+
+      <div>
+
+        <h3 style="margin-top: 0; color: #1a365d;">Basic Information</h3>
+
+        <table style="width: 100%; border-collapse: collapse;">
+
+          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">ID:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.identifier || purchase._id || purchase.id || 'N/A'}</td></tr>
+
+          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Category:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.category || 'N/A'}</td></tr>
+
+          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Brand:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.brand || purchase.supplier || 'N/A'}</td></tr>
+
+          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Model:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.model || 'N/A'}</td></tr>
+
+          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Source:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.source || 'N/A'}</td></tr>
+
+          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Status:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.status || 'N/A'}</td></tr>
+
+        </table>
+
+      </div>
+
+
+
+      <div>
+
+        <h3 style="margin-top: 0; color: #1a365d;">Financial Information</h3>
+
+        <table style="width: 100%; border-collapse: collapse;">
+
+          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Price Paid:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatCurrency(purchase.price_paid)}</td></tr>
+
+          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Shipping Cost:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatCurrency(purchase.shipping_cost)}</td></tr>
+
+          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Fees:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatCurrency(purchase.fees)}</td></tr>
+
+          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Total Amount:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #059669;">${formatCurrency(purchase.totalAmount)}</td></tr>
+
+        </table>
+
+      </div>
+
+    </div>
+
+
+
+    <div style="margin-top: 20px;">
+
+      <h3 style="color: #1a365d;">Items</h3>
+
+      ${formatItems(purchase.items)}
+
+    </div>
+
+
+
+    <div style="margin-top: 20px;">
+
+      <h3 style="color: #1a365d;">Additional Information</h3>
+
+      <table style="width: 100%; border-collapse: collapse;">
+
+        <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Order ID:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.order_id || 'N/A'}</td></tr>
+
+        <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Seller:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.seller_username || 'N/A'}</td></tr>
+
+        <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Date of Purchase:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatDate(purchase.dateOfPurchase || purchase.orderDate)}</td></tr>
+
+        <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Created:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatDate(purchase.createdAt)}</td></tr>
+
+        <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Tracking Ref:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.tracking_ref || 'N/A'}</td></tr>
+
+      </table>
+
+    </div>
+
+
+
+    ${purchase.notes ? `
+
+    <div style="margin-top: 20px;">
+
+      <h3 style="color: #1a365d;">Notes</h3>
+
+      <div style="padding: 12px; background: #f9fafb; border-radius: 6px; border-left: 4px solid #3b82f6;">
+
+        ${purchase.notes}
+
+      </div>
+
+    </div>
+
+    ` : ''}
+
+  `;
+
+}
+
+
+
+    totalInvestment = 0,
+
+    purchaseCount = 0,
+
+    averagePurchase = 0,
+
+    lastSync = new Date(),
+
+    sourceBreakdown = { manual: 0, auto: 0 },
+
+    monthlyChange = '+12%'
+
+  } = stats;
+
+
+
+  return `
+
+    <div class="spa-status-bar">
+
+      <div class="spa-status-item">
+
+        <span>💰</span>
+
+        <span>Total Investment: <strong>${money(totalInvestment)}</strong></span>
+
+        <span class="spa-status-badge">${monthlyChange}</span>
+
+      </div>
+
+      <div class="spa-status-item">
+
+        <span>🛒</span>
+
+        <span><strong>${purchaseCount}</strong> purchases</span>
+
+        <span class="spa-status-badge">${sourceBreakdown.manual} manual, ${sourceBreakdown.auto} auto</span>
+
+      </div>
+
+      <div class="spa-status-item">
+
+        <span>📊</span>
+
+        <span>Average: <strong>${money(averagePurchase)}</strong></span>
+
+      </div>
+
+      <div class="spa-status-item">
+
+        <span>🔄</span>
+
+        <span>Last sync: <span>${formatDate(lastSync, { timeStyle: 'short' })}</span></span>
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+
+/**
+
+ * Render purchase history section
+
+ * @param {Array} purchases - Array of purchases
+
+ * @param {Object} options - Render options
+
+ * @returns {string} HTML string
+
+ */
+
+export function renderPurchaseHistory(purchases, options = {}) {
+
+  const {
+
+    showHeader = true,
+
+    showActions = true,
+
+    title = '📊 Purchase History & Staging'
+
+  } = options;
+
+
+
+  const headerHtml = showHeader ? `
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+
+      <h3 style="margin:0; color:#1a365d; font-size:18px; display:flex; align-items:center; gap:8px;">
+
+        ${title}
+
+        <span class="spa-status-badge">${purchases.length} items</span>
+
+      </h3>
+
+      ${showActions ? renderHistoryActions() : ''}
+
+    </div>
+
+  ` : '';
+
+
+
+  const cardsHtml = renderPurchaseCards(purchases, options);
+
+
+
+  return `
+
+    <div class="recent-activity">
+
+      ${headerHtml}
+
+      <div id="purchaseHistoryContent">
+
+        ${cardsHtml}
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+
+/**
+
+ * Render history actions
+
+ * @returns {string} HTML string
+
+ */
+
+function renderHistoryActions() {
+
+  return `
+
+    <div style="display:flex; gap:8px;">
+
+      <button id="btn-add-purchase" class="btn btn-primary btn-small">➕ Add Purchase</button>
+
+      <button id="btn-ebay-sync" class="btn btn-info btn-small">🛒 Sync eBay</button>
+
+      <button id="btn-ebay-login" class="btn btn-warning btn-small">🔐 eBay Login</button>
+
+      <button id="btn-refresh" class="btn btn-secondary btn-small">Refresh</button>
+
+    </div>
+
+  `;
+
+}
+
+
+
+/**
+
+ * Calculate total for purchase
+
+ * @param {Object} purchase - Purchase object
+
+ * @returns {number} Total amount
+
+ */
+
+function calculateTotal(purchase) {
+
+  // Try totalAmount first
+
+  if (purchase.totalAmount != null) {
+
+    return Number(purchase.totalAmount || 0);
+
+  }
+
+  
+
+  // Try total_paid
+
+  if (purchase.total_paid != null) {
+
+    return Number(purchase.total_paid || 0);
+
+  }
+
+  
+
+  // Calculate from components
+
+  const pricePaid = Number(purchase.price_paid || 0);
+
+  const shippingCost = Number(purchase.shipping_cost || 0);
+
+  const fees = Number(purchase.fees || 0);
+
+  
+
+  return pricePaid + shippingCost + fees;
+
+}
+
+
+
+/**
+
+ * Render purchase details modal content
+
+ * @param {Object} purchase - Purchase object
+
+ * @returns {string} HTML string
+
+ */
+
+export function renderPurchaseDetailsModal(purchase) {
+
+  const formatCurrency = (amount) => money(amount);
+
+  const formatDate = (date) => !date ? 'N/A' : new Date(date).toLocaleString();
+
+  
+
+  const formatItems = (items) => {
+
+    if (!items || !Array.isArray(items)) return '<p>No items</p>';
+
+    return items.map(item => `
+
+      <div style="padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px; margin: 4px 0;">
+
+        <strong>${item.productName || item.name || 'Unknown Item'}</strong><br>
+
+        <small>SKU: ${item.sku || 'N/A'} | Qty: ${item.quantity || 1} | Price: ${formatCurrency(item.unitPrice)} | Total: ${formatCurrency(item.totalPrice)}</small>
+
+      </div>
+
+    `).join('');
+
+  };
+
+
+
+  return `
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+
+      <div>
+
+        <h3 style="margin-top: 0; color: #1a365d;">Basic Information</h3>
+
+        <table style="width: 100%; border-collapse: collapse;">
+
+          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">ID:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.identifier || purchase._id || purchase.id || 'N/A'}</td></tr>
+
+          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Category:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.category || 'N/A'}</td></tr>
+
+          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Brand:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.brand || purchase.supplier || 'N/A'}</td></tr>
+
+          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Model:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.model || 'N/A'}</td></tr>
+
+          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Source:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.source || 'N/A'}</td></tr>
+
+          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Status:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.status || 'N/A'}</td></tr>
+
+        </table>
+
+      </div>
+
+
+
+      <div>
+
+        <h3 style="margin-top: 0; color: #1a365d;">Financial Information</h3>
+
+        <table style="width: 100%; border-collapse: collapse;">
+
+          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Price Paid:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatCurrency(purchase.price_paid)}</td></tr>
+
+          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Shipping Cost:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatCurrency(purchase.shipping_cost)}</td></tr>
+
+          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Fees:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatCurrency(purchase.fees)}</td></tr>
+
+          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Total Amount:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #059669;">${formatCurrency(purchase.totalAmount)}</td></tr>
+
+        </table>
+
+      </div>
+
+    </div>
+
+
+
+    <div style="margin-top: 20px;">
+
+      <h3 style="color: #1a365d;">Items</h3>
+
+      ${formatItems(purchase.items)}
+
+    </div>
+
+
+
+    <div style="margin-top: 20px;">
+
+      <h3 style="color: #1a365d;">Additional Information</h3>
+
+      <table style="width: 100%; border-collapse: collapse;">
+
+        <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Order ID:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.order_id || 'N/A'}</td></tr>
+
+        <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Seller:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.seller_username || 'N/A'}</td></tr>
+
+        <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Date of Purchase:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatDate(purchase.dateOfPurchase || purchase.orderDate)}</td></tr>
+
+        <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Created:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatDate(purchase.createdAt)}</td></tr>
+
+        <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Tracking Ref:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.tracking_ref || 'N/A'}</td></tr>
+
+      </table>
+
+    </div>
+
+
+
+    ${purchase.notes ? `
+
+    <div style="margin-top: 20px;">
+
+      <h3 style="color: #1a365d;">Notes</h3>
+
+      <div style="padding: 12px; background: #f9fafb; border-radius: 6px; border-left: 4px solid #3b82f6;">
+
+        ${purchase.notes}
+
+      </div>
+
+    </div>
+
+    ` : ''}
+
+  `;
+
+}
+
+

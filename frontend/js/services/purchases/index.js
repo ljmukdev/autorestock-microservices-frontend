@@ -481,3 +481,721 @@ export const purchasesService = new PurchasesService();
 
 // Export class for testing
 export { PurchasesService };
+
+
+    const manual = purchases.filter(p => (p.source === 'manual') || !p.source).length;
+
+    const auto = purchases.length - manual;
+
+    
+
+    return {
+
+      totalInvestment,
+
+      purchaseCount: purchases.length,
+
+      averagePurchase,
+
+      lastSync: this.lastSync,
+
+      sourceBreakdown: { manual, auto },
+
+      monthlyChange: '+12%' // Placeholder
+
+    };
+
+  }
+
+
+
+  /**
+
+   * Render purchases UI
+
+   * @param {Element} container - Container element
+
+   * @param {Object} options - Render options
+
+   */
+
+  renderPurchases(container, options = {}) {
+
+    if (!container) {
+
+      debugLog('No container provided for rendering');
+
+      return;
+
+    }
+
+
+
+    const {
+
+      showStatusBar = true,
+
+      showHistory = true,
+
+      ...renderOptions
+
+    } = options;
+
+
+
+    let html = '';
+
+
+
+    // Status bar
+
+    if (showStatusBar) {
+
+      const stats = this.getPurchaseStats();
+
+      html += renderStatusBar(stats);
+
+    }
+
+
+
+    // Purchase history
+
+    if (showHistory) {
+
+      if (this.currentPurchases.length === 0) {
+
+        // Check if this is likely an auth issue
+
+        const stats = this.getPurchaseStats();
+
+        const isAuthIssue = stats.purchaseCount === 0 && !USE_SAMPLE;
+
+        const emptyMessage = isAuthIssue ? 
+
+          'No purchases found. OAuth authentication may be required.' : 
+
+          'No purchases found';
+
+        const emptyType = isAuthIssue ? 'auth' : 'empty';
+
+        
+
+        html += `
+
+          <div class="recent-activity">
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+
+              <h3 style="margin:0; color:#1a365d; font-size:18px; display:flex; align-items:center; gap:8px;">
+
+                📊 Purchase History & Staging
+
+                <span class="spa-status-badge">0 items</span>
+
+              </h3>
+
+              <div style="display:flex; gap:8px;">
+
+                <button id="btn-add-purchase" class="btn btn-primary btn-small">➕ Add Purchase</button>
+
+                <button id="btn-ebay-sync" class="btn btn-info btn-small">🛒 Sync eBay</button>
+
+                <button id="btn-ebay-login" class="btn btn-warning btn-small">🔐 eBay Login</button>
+
+                <button id="btn-refresh" class="btn btn-secondary btn-small">🔄 Refresh</button>
+
+              </div>
+
+            </div>
+
+            <div id="purchaseHistoryContent">
+
+              ${renderEmptyState(emptyMessage, emptyType)}
+
+            </div>
+
+          </div>
+
+        `;
+
+      } else {
+
+        html += renderPurchaseHistory(this.currentPurchases, renderOptions);
+
+      }
+
+    }
+
+
+
+    container.innerHTML = html;
+
+    debugLog('Rendered purchases UI', { 
+
+      purchaseCount: this.currentPurchases.length,
+
+      showStatusBar,
+
+      showHistory
+
+    });
+
+  }
+
+
+
+  /**
+
+   * Show loading state
+
+   * @param {Element} container - Container element
+
+   * @param {string} message - Loading message
+
+   */
+
+  showLoading(container, message = 'Loading purchases...') {
+
+    if (!container) return;
+
+    
+
+    container.innerHTML = renderLoadingState(message);
+
+    debugLog('Showing loading state', message);
+
+  }
+
+
+
+  /**
+
+   * Show error state
+
+   * @param {Element} container - Container element
+
+   * @param {string} message - Error message
+
+   * @param {Function} onRetry - Retry callback
+
+   */
+
+  showError(container, message, onRetry = null) {
+
+    if (!container) return;
+
+    
+
+    container.innerHTML = '';
+
+    container.appendChild(renderErrorState(message, onRetry));
+
+    debugLog('Showing error state', message);
+
+  }
+
+
+
+  /**
+
+   * Get sample purchases data
+
+   * @returns {Array} Sample purchases
+
+   */
+
+  getSamplePurchases() {
+
+    return [
+
+      {
+
+        _id: 'sample_1',
+
+        identifier: 'SAMPLE-APPLE-AIRPODS-20250101-001',
+
+        platform: 'eBay',
+
+        brand: 'Apple',
+
+        model: 'AirPods Pro',
+
+        product_name: 'Apple AirPods Pro 2nd Generation',
+
+        purchase_price: 89.99,
+
+        total_paid: 94.98,
+
+        totalAmount: 94.98,
+
+        delivery_status: 'Delivered',
+
+        seller_username: 'tech_deals_uk',
+
+        order_id: 'SAMPLE_ORDER_001',
+
+        orderDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+
+        purchase_date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+
+        source: 'ebay-oauth',
+
+        created_at: new Date().toISOString(),
+
+        status: 'Delivered',
+
+        category: 'Electronics',
+
+        items: [{
+
+          productName: 'Apple AirPods Pro 2nd Generation',
+
+          sku: 'AIRPODS_PRO_2',
+
+          quantity: 1,
+
+          unitPrice: 89.99,
+
+          totalPrice: 89.99
+
+        }],
+
+        notes: 'Sample purchase data for testing'
+
+      },
+
+      {
+
+        _id: 'sample_2',
+
+        identifier: 'SAMPLE-SAMSUNG-PHONE-20250101-002',
+
+        platform: 'eBay',
+
+        brand: 'Samsung',
+
+        model: 'Galaxy S21',
+
+        product_name: 'Samsung Galaxy S21 128GB',
+
+        purchase_price: 299.99,
+
+        total_paid: 309.99,
+
+        totalAmount: 309.99,
+
+        delivery_status: 'Delivered',
+
+        seller_username: 'mobile_mania',
+
+        order_id: 'SAMPLE_ORDER_002',
+
+        orderDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+
+        purchase_date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+
+        source: 'ebay-oauth',
+
+        created_at: new Date().toISOString(),
+
+        status: 'Delivered',
+
+        category: 'Electronics',
+
+        items: [{
+
+          productName: 'Samsung Galaxy S21 128GB',
+
+          sku: 'GALAXY_S21_128',
+
+          quantity: 1,
+
+          unitPrice: 299.99,
+
+          totalPrice: 299.99
+
+        }],
+
+        notes: 'Sample purchase data for testing'
+
+      }
+
+    ];
+
+  }
+
+}
+
+
+
+// Create and export service instance
+
+export const purchasesService = new PurchasesService();
+
+
+
+// Export class for testing
+
+export { PurchasesService };
+
+
+
+
+    const manual = purchases.filter(p => (p.source === 'manual') || !p.source).length;
+
+    const auto = purchases.length - manual;
+
+    
+
+    return {
+
+      totalInvestment,
+
+      purchaseCount: purchases.length,
+
+      averagePurchase,
+
+      lastSync: this.lastSync,
+
+      sourceBreakdown: { manual, auto },
+
+      monthlyChange: '+12%' // Placeholder
+
+    };
+
+  }
+
+
+
+  /**
+
+   * Render purchases UI
+
+   * @param {Element} container - Container element
+
+   * @param {Object} options - Render options
+
+   */
+
+  renderPurchases(container, options = {}) {
+
+    if (!container) {
+
+      debugLog('No container provided for rendering');
+
+      return;
+
+    }
+
+
+
+    const {
+
+      showStatusBar = true,
+
+      showHistory = true,
+
+      ...renderOptions
+
+    } = options;
+
+
+
+    let html = '';
+
+
+
+    // Status bar
+
+    if (showStatusBar) {
+
+      const stats = this.getPurchaseStats();
+
+      html += renderStatusBar(stats);
+
+    }
+
+
+
+    // Purchase history
+
+    if (showHistory) {
+
+      if (this.currentPurchases.length === 0) {
+
+        // Check if this is likely an auth issue
+
+        const stats = this.getPurchaseStats();
+
+        const isAuthIssue = stats.purchaseCount === 0 && !USE_SAMPLE;
+
+        const emptyMessage = isAuthIssue ? 
+
+          'No purchases found. OAuth authentication may be required.' : 
+
+          'No purchases found';
+
+        const emptyType = isAuthIssue ? 'auth' : 'empty';
+
+        
+
+        html += `
+
+          <div class="recent-activity">
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+
+              <h3 style="margin:0; color:#1a365d; font-size:18px; display:flex; align-items:center; gap:8px;">
+
+                📊 Purchase History & Staging
+
+                <span class="spa-status-badge">0 items</span>
+
+              </h3>
+
+              <div style="display:flex; gap:8px;">
+
+                <button id="btn-add-purchase" class="btn btn-primary btn-small">➕ Add Purchase</button>
+
+                <button id="btn-ebay-sync" class="btn btn-info btn-small">🛒 Sync eBay</button>
+
+                <button id="btn-ebay-login" class="btn btn-warning btn-small">🔐 eBay Login</button>
+
+                <button id="btn-refresh" class="btn btn-secondary btn-small">🔄 Refresh</button>
+
+              </div>
+
+            </div>
+
+            <div id="purchaseHistoryContent">
+
+              ${renderEmptyState(emptyMessage, emptyType)}
+
+            </div>
+
+          </div>
+
+        `;
+
+      } else {
+
+        html += renderPurchaseHistory(this.currentPurchases, renderOptions);
+
+      }
+
+    }
+
+
+
+    container.innerHTML = html;
+
+    debugLog('Rendered purchases UI', { 
+
+      purchaseCount: this.currentPurchases.length,
+
+      showStatusBar,
+
+      showHistory
+
+    });
+
+  }
+
+
+
+  /**
+
+   * Show loading state
+
+   * @param {Element} container - Container element
+
+   * @param {string} message - Loading message
+
+   */
+
+  showLoading(container, message = 'Loading purchases...') {
+
+    if (!container) return;
+
+    
+
+    container.innerHTML = renderLoadingState(message);
+
+    debugLog('Showing loading state', message);
+
+  }
+
+
+
+  /**
+
+   * Show error state
+
+   * @param {Element} container - Container element
+
+   * @param {string} message - Error message
+
+   * @param {Function} onRetry - Retry callback
+
+   */
+
+  showError(container, message, onRetry = null) {
+
+    if (!container) return;
+
+    
+
+    container.innerHTML = '';
+
+    container.appendChild(renderErrorState(message, onRetry));
+
+    debugLog('Showing error state', message);
+
+  }
+
+
+
+  /**
+
+   * Get sample purchases data
+
+   * @returns {Array} Sample purchases
+
+   */
+
+  getSamplePurchases() {
+
+    return [
+
+      {
+
+        _id: 'sample_1',
+
+        identifier: 'SAMPLE-APPLE-AIRPODS-20250101-001',
+
+        platform: 'eBay',
+
+        brand: 'Apple',
+
+        model: 'AirPods Pro',
+
+        product_name: 'Apple AirPods Pro 2nd Generation',
+
+        purchase_price: 89.99,
+
+        total_paid: 94.98,
+
+        totalAmount: 94.98,
+
+        delivery_status: 'Delivered',
+
+        seller_username: 'tech_deals_uk',
+
+        order_id: 'SAMPLE_ORDER_001',
+
+        orderDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+
+        purchase_date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+
+        source: 'ebay-oauth',
+
+        created_at: new Date().toISOString(),
+
+        status: 'Delivered',
+
+        category: 'Electronics',
+
+        items: [{
+
+          productName: 'Apple AirPods Pro 2nd Generation',
+
+          sku: 'AIRPODS_PRO_2',
+
+          quantity: 1,
+
+          unitPrice: 89.99,
+
+          totalPrice: 89.99
+
+        }],
+
+        notes: 'Sample purchase data for testing'
+
+      },
+
+      {
+
+        _id: 'sample_2',
+
+        identifier: 'SAMPLE-SAMSUNG-PHONE-20250101-002',
+
+        platform: 'eBay',
+
+        brand: 'Samsung',
+
+        model: 'Galaxy S21',
+
+        product_name: 'Samsung Galaxy S21 128GB',
+
+        purchase_price: 299.99,
+
+        total_paid: 309.99,
+
+        totalAmount: 309.99,
+
+        delivery_status: 'Delivered',
+
+        seller_username: 'mobile_mania',
+
+        order_id: 'SAMPLE_ORDER_002',
+
+        orderDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+
+        purchase_date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+
+        source: 'ebay-oauth',
+
+        created_at: new Date().toISOString(),
+
+        status: 'Delivered',
+
+        category: 'Electronics',
+
+        items: [{
+
+          productName: 'Samsung Galaxy S21 128GB',
+
+          sku: 'GALAXY_S21_128',
+
+          quantity: 1,
+
+          unitPrice: 299.99,
+
+          totalPrice: 299.99
+
+        }],
+
+        notes: 'Sample purchase data for testing'
+
+      }
+
+    ];
+
+  }
+
+}
+
+
+
+// Create and export service instance
+
+export const purchasesService = new PurchasesService();
+
+
+
+// Export class for testing
+
+export { PurchasesService };
+
+

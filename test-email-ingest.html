@@ -1,0 +1,453 @@
+<!--
+File: test-email-ingest.html
+Location: /microservice-frontends/test-email-ingest.html
+Route: /test/email-ingest
+Service: Email Ingest Service
+URL: https://stockpilot-email-ingest-service-production-production.up.railway.app
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Ingest Service - Testing Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #38b2ac 0%, #319795 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .service-url {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 1rem;
+        }
+
+        .back-link {
+            color: white;
+            text-decoration: none;
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            opacity: 1;
+        }
+
+        .test-sections {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .test-section {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #2d3748;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+        }
+
+        .email-section {
+            background: linear-gradient(135deg, #e6fffa 0%, #b2f5ea 100%);
+            border: 2px solid #38b2ac;
+        }
+
+        .processing-section {
+            background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
+            border: 2px solid #48bb78;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #68d391;
+        }
+
+        .status-dot.unknown {
+            background: #cbd5e0;
+        }
+
+        .status-dot.error {
+            background: #fc8181;
+        }
+
+        .test-button {
+            background: linear-gradient(135deg, #38b2ac 0%, #319795 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            margin: 0.25rem;
+            transition: all 0.3s ease;
+        }
+
+        .test-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(56, 178, 172, 0.3);
+        }
+
+        .email-button {
+            background: linear-gradient(135deg, #38b2ac 0%, #319795 100%);
+            color: white;
+        }
+
+        .email-button:hover {
+            box-shadow: 0 4px 16px rgba(56, 178, 172, 0.3);
+        }
+
+        .processing-button {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+        }
+
+        .processing-button:hover {
+            box-shadow: 0 4px 16px rgba(72, 187, 120, 0.3);
+        }
+
+        .response-area {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+            min-height: 200px;
+            white-space: pre-wrap;
+            overflow-y: auto;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .input-group input, .input-group select, .input-group textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .input-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .endpoint-list {
+            list-style: none;
+        }
+
+        .endpoint-list li {
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            background: #f7fafc;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="/" class="back-link">← Back to Dashboard</a>
+            <h1>Email Ingest Service Testing</h1>
+            <div class="service-url">https://stockpilot-email-ingest-service-production-production.up.railway.app</div>
+            <div class="status-indicator">
+                <span class="status-dot unknown" id="serviceStatus"></span>
+                <span id="statusText">Checking service status...</span>
+            </div>
+        </div>
+
+        <div class="test-sections">
+            <div class="test-section">
+                <h2 class="section-title">Health Check</h2>
+                <p>Test basic connectivity and service availability</p>
+                <button class="test-button" onclick="testHealth()">Check Health Status</button>
+                <button class="test-button" onclick="testDatabaseConnection()">Test Database Connection</button>
+            </div>
+
+            <div class="test-section email-section">
+                <h2 class="section-title">Email Processing</h2>
+                <p>Test email ingestion and processing</p>
+                <button class="test-button email-button" onclick="testEmailConnection()">Test Email Connection</button>
+                <button class="test-button email-button" onclick="testEmailParsing()">Test Email Parsing</button>
+                <button class="test-button email-button" onclick="testEmailQueue()">Check Email Queue</button>
+            </div>
+
+            <div class="test-section processing-section">
+                <h2 class="section-title">Data Extraction</h2>
+                <p>Test data extraction from emails</p>
+                <button class="test-button processing-button" onclick="testDataExtraction()">Test Data Extraction</button>
+                <button class="test-button processing-button" onclick="testContentAnalysis()">Test Content Analysis</button>
+                <button class="test-button processing-button" onclick="testEntityRecognition()">Test Entity Recognition</button>
+            </div>
+
+            <div class="test-section">
+                <h2 class="section-title">API Endpoints</h2>
+                <p>Available email ingest service endpoints:</p>
+                <ul class="endpoint-list">
+                    <li>GET /health</li>
+                    <li>POST /api/email/ingest</li>
+                    <li>GET /api/email/processed</li>
+                    <li>GET /api/email/extract</li>
+                    <li>GET /api/email/queue</li>
+                </ul>
+                <button class="test-button" onclick="testGetProcessedEmails()">Get Processed Emails</button>
+            </div>
+
+            <div class="test-section">
+                <h2 class="section-title">Simulate Email Processing</h2>
+                <div class="input-group">
+                    <label>Email Subject:</label>
+                    <input type="text" id="emailSubject" placeholder="Order Confirmation #12345">
+                </div>
+                <div class="input-group">
+                    <label>Sender:</label>
+                    <input type="email" id="emailSender" placeholder="orders@example.com">
+                </div>
+                <div class="input-group">
+                    <label>Email Content:</label>
+                    <textarea id="emailContent" placeholder="Thank you for your order. Order total: $99.99. Tracking: ABC123"></textarea>
+                </div>
+                <div class="input-group">
+                    <label>Email Type:</label>
+                    <select id="emailType">
+                        <option value="order">Order Confirmation</option>
+                        <option value="shipping">Shipping Update</option>
+                        <option value="payment">Payment Receipt</option>
+                        <option value="support">Support Ticket</option>
+                    </select>
+                </div>
+                <button class="test-button" onclick="simulateEmailProcessing()">Simulate Email Processing</button>
+            </div>
+
+            <div class="test-section">
+                <h2 class="section-title">Email Operations</h2>
+                <p>Test email management operations</p>
+                <button class="test-button" onclick="testEmailSearch()">Search Emails</button>
+                <button class="test-button" onclick="testEmailFiltering()">Test Filtering</button>
+                <button class="test-button" onclick="testEmailCategorization()">Test Categorization</button>
+                <button class="test-button" onclick="testEmailArchiving()">Test Archiving</button>
+            </div>
+
+            <div class="test-section">
+                <h2 class="section-title">Processing Queue</h2>
+                <p>Test email processing queue management</p>
+                <button class="test-button" onclick="testQueueStatus()">Check Queue Status</button>
+                <button class="test-button" onclick="testQueueProcessing()">Process Queue</button>
+                <button class="test-button" onclick="testQueueMetrics()">Get Queue Metrics</button>
+                <button class="test-button" onclick="testQueueErrors()">Check Queue Errors</button>
+            </div>
+
+            <div class="test-section full-width">
+                <h2 class="section-title">Response Output</h2>
+                <div class="response-area" id="responseOutput">Ready to test email ingest service...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SERVICE_URL = 'https://stockpilot-email-ingest-service-production-production.up.railway.app';
+        const responseOutput = document.getElementById('responseOutput');
+
+        function updateOutput(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            responseOutput.textContent += `[${timestamp}] ${message}\n`;
+            responseOutput.scrollTop = responseOutput.scrollHeight;
+        }
+
+        function updateServiceStatus(status, message) {
+            const statusDot = document.getElementById('serviceStatus');
+            const statusText = document.getElementById('statusText');
+            
+            statusDot.className = `status-dot ${status}`;
+            statusText.textContent = message;
+        }
+
+        async function makeRequest(endpoint, method = 'GET', data = null) {
+            try {
+                updateOutput(`Making ${method} request to ${endpoint}...`);
+                
+                const options = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                };
+
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+
+                const response = await fetch(`${SERVICE_URL}${endpoint}`, options);
+                const responseData = await response.text();
+                
+                let parsedData;
+                try {
+                    parsedData = JSON.parse(responseData);
+                } catch {
+                    parsedData = responseData;
+                }
+
+                updateOutput(`Response (${response.status}): ${JSON.stringify(parsedData, null, 2)}`);
+                
+                if (response.ok) {
+                    updateServiceStatus('', 'Service is operational');
+                }
+                
+                return { success: response.ok, data: parsedData, status: response.status };
+            } catch (error) {
+                updateOutput(`Error: ${error.message}`);
+                updateServiceStatus('error', 'Service unavailable');
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function testHealth() {
+            await makeRequest('/health');
+        }
+
+        async function testDatabaseConnection() {
+            await makeRequest('/api/health/database');
+        }
+
+        async function testEmailConnection() {
+            await makeRequest('/api/email/connection');
+        }
+
+        async function testEmailParsing() {
+            await makeRequest('/api/email/parse');
+        }
+
+        async function testEmailQueue() {
+            await makeRequest('/api/email/queue');
+        }
+
+        async function testDataExtraction() {
+            await makeRequest('/api/email/extract');
+        }
+
+        async function testContentAnalysis() {
+            await makeRequest('/api/email/analyze');
+        }
+
+        async function testEntityRecognition() {
+            await makeRequest('/api/email/entities');
+        }
+
+        async function testGetProcessedEmails() {
+            await makeRequest('/api/email/processed');
+        }
+
+        async function testEmailSearch() {
+            await makeRequest('/api/email/search');
+        }
+
+        async function testEmailFiltering() {
+            await makeRequest('/api/email/filter');
+        }
+
+        async function testEmailCategorization() {
+            await makeRequest('/api/email/categorize');
+        }
+
+        async function testEmailArchiving() {
+            await makeRequest('/api/email/archive');
+        }
+
+        async function testQueueStatus() {
+            await makeRequest('/api/email/queue/status');
+        }
+
+        async function testQueueProcessing() {
+            await makeRequest('/api/email/queue/process');
+        }
+
+        async function testQueueMetrics() {
+            await makeRequest('/api/email/queue/metrics');
+        }
+
+        async function testQueueErrors() {
+            await makeRequest('/api/email/queue/errors');
+        }
+
+        async function simulateEmailProcessing() {
+            const emailData = {
+                subject: document.getElementById('emailSubject').value || 'Order Confirmation #12345',
+                sender: document.getElementById('emailSender').value || 'orders@example.com',
+                content: document.getElementById('emailContent').value || 'Thank you for your order. Order total: $99.99. Tracking: ABC123',
+                type: document.getElementById('emailType').value,
+                received_date: new Date().toISOString()
+            };
+
+            await makeRequest('/api/email/ingest', 'POST', emailData);
+        }
+
+        window.addEventListener('load', async () => {
+            updateOutput('Email Ingest Service Test Page Loaded');
+            updateOutput('Performing initial health check...');
+            await testHealth();
+        });
+    </script>
+</body>
+</html>

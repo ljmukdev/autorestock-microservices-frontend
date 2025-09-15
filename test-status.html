@@ -1,0 +1,477 @@
+<!--
+File: test-status.html
+Location: /microservice-frontends/test-status.html
+Route: /test/status
+Service: Status Service
+URL: https://stockpilot-status-service-production-production.up.railway.app
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Status Service - Testing Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .service-url {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 1rem;
+        }
+
+        .back-link {
+            color: white;
+            text-decoration: none;
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            opacity: 1;
+        }
+
+        .test-sections {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .test-section {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #2d3748;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+        }
+
+        .monitoring-section {
+            background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
+            border: 2px solid #48bb78;
+        }
+
+        .system-section {
+            background: linear-gradient(135deg, #e6fffa 0%, #b2f5ea 100%);
+            border: 2px solid #38b2ac;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #68d391;
+        }
+
+        .status-dot.unknown {
+            background: #cbd5e0;
+        }
+
+        .status-dot.error {
+            background: #fc8181;
+        }
+
+        .test-button {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            margin: 0.25rem;
+            transition: all 0.3s ease;
+        }
+
+        .test-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(72, 187, 120, 0.3);
+        }
+
+        .monitoring-button {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+        }
+
+        .monitoring-button:hover {
+            box-shadow: 0 4px 16px rgba(72, 187, 120, 0.3);
+        }
+
+        .system-button {
+            background: linear-gradient(135deg, #38b2ac 0%, #319795 100%);
+            color: white;
+        }
+
+        .system-button:hover {
+            box-shadow: 0 4px 16px rgba(56, 178, 172, 0.3);
+        }
+
+        .response-area {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+            min-height: 200px;
+            white-space: pre-wrap;
+            overflow-y: auto;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .endpoint-list {
+            list-style: none;
+        }
+
+        .endpoint-list li {
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            background: #f7fafc;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .status-item {
+            background: #f7fafc;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+
+        .status-item h4 {
+            margin-bottom: 0.5rem;
+            color: #2d3748;
+        }
+
+        .status-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #48bb78;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="/" class="back-link">← Back to Dashboard</a>
+            <h1>Status Service Testing</h1>
+            <div class="service-url">https://stockpilot-status-service-production-production.up.railway.app</div>
+            <div class="status-indicator">
+                <span class="status-dot unknown" id="serviceStatus"></span>
+                <span id="statusText">Checking service status...</span>
+            </div>
+        </div>
+
+        <div class="test-sections">
+            <div class="test-section">
+                <h2 class="section-title">Health Check</h2>
+                <p>Test basic connectivity and service availability</p>
+                <button class="test-button" onclick="testHealth()">Check Health Status</button>
+                <button class="test-button" onclick="testDatabaseConnection()">Test Database Connection</button>
+            </div>
+
+            <div class="test-section monitoring-section">
+                <h2 class="section-title">System Monitoring</h2>
+                <p>Monitor overall system health and performance</p>
+                <button class="test-button monitoring-button" onclick="testSystemHealth()">Check System Health</button>
+                <button class="test-button monitoring-button" onclick="testServiceStatus()">Check All Services</button>
+                <button class="test-button monitoring-button" onclick="testPerformanceMetrics()">Get Performance Metrics</button>
+            </div>
+
+            <div class="test-section system-section">
+                <h2 class="section-title">System Resources</h2>
+                <p>Monitor system resource usage and capacity</p>
+                <button class="test-button system-button" onclick="testResourceUsage()">Check Resource Usage</button>
+                <button class="test-button system-button" onclick="testDiskSpace()">Check Disk Space</button>
+                <button class="test-button system-button" onclick="testMemoryUsage()">Check Memory Usage</button>
+            </div>
+
+            <div class="test-section">
+                <h2 class="section-title">API Endpoints</h2>
+                <p>Available status service endpoints:</p>
+                <ul class="endpoint-list">
+                    <li>GET /health</li>
+                    <li>GET /api/status/system</li>
+                    <li>GET /api/status/services</li>
+                    <li>GET /api/status/metrics</li>
+                    <li>GET /api/status/alerts</li>
+                </ul>
+                <button class="test-button" onclick="testGetAlerts()">Get System Alerts</button>
+            </div>
+
+            <div class="test-section">
+                <h2 class="section-title">Service Status Overview</h2>
+                <div class="status-grid" id="statusGrid">
+                    <div class="status-item">
+                        <h4>Total Services</h4>
+                        <div class="status-value" id="totalServices">-</div>
+                    </div>
+                    <div class="status-item">
+                        <h4>Active Services</h4>
+                        <div class="status-value" id="activeServices">-</div>
+                    </div>
+                    <div class="status-item">
+                        <h4>Error Count</h4>
+                        <div class="status-value" id="errorCount">-</div>
+                    </div>
+                    <div class="status-item">
+                        <h4>Uptime</h4>
+                        <div class="status-value" id="uptime">-</div>
+                    </div>
+                </div>
+                <button class="test-button" onclick="refreshStatusOverview()">Refresh Overview</button>
+            </div>
+
+            <div class="test-section">
+                <h2 class="section-title">Alert Management</h2>
+                <p>Test alert and notification systems</p>
+                <button class="test-button" onclick="testActiveAlerts()">Get Active Alerts</button>
+                <button class="test-button" onclick="testAlertHistory()">Get Alert History</button>
+                <button class="test-button" onclick="testNotificationStatus()">Check Notifications</button>
+                <button class="test-button" onclick="testAlertConfiguration()">Check Alert Config</button>
+            </div>
+
+            <div class="test-section">
+                <h2 class="section-title">Logging & Diagnostics</h2>
+                <p>Test logging and diagnostic capabilities</p>
+                <button class="test-button" onclick="testSystemLogs()">Get System Logs</button>
+                <button class="test-button" onclick="testErrorLogs()">Get Error Logs</button>
+                <button class="test-button" onclick="testDiagnostics()">Run Diagnostics</button>
+                <button class="test-button" onclick="testLogRotation()">Check Log Rotation</button>
+            </div>
+
+            <div class="test-section full-width">
+                <h2 class="section-title">Response Output</h2>
+                <div class="response-area" id="responseOutput">Ready to test status service...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SERVICE_URL = 'https://stockpilot-status-service-production-production.up.railway.app';
+        const responseOutput = document.getElementById('responseOutput');
+
+        function updateOutput(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            responseOutput.textContent += `[${timestamp}] ${message}\n`;
+            responseOutput.scrollTop = responseOutput.scrollHeight;
+        }
+
+        function updateServiceStatus(status, message) {
+            const statusDot = document.getElementById('serviceStatus');
+            const statusText = document.getElementById('statusText');
+            
+            statusDot.className = `status-dot ${status}`;
+            statusText.textContent = message;
+        }
+
+        function updateStatusOverview(data) {
+            if (data) {
+                document.getElementById('totalServices').textContent = data.total_services || '-';
+                document.getElementById('activeServices').textContent = data.active_services || '-';
+                document.getElementById('errorCount').textContent = data.error_count || '-';
+                document.getElementById('uptime').textContent = data.uptime || '-';
+            }
+        }
+
+        async function makeRequest(endpoint, method = 'GET', data = null) {
+            try {
+                updateOutput(`Making ${method} request to ${endpoint}...`);
+                
+                const options = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                };
+
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+
+                const response = await fetch(`${SERVICE_URL}${endpoint}`, options);
+                const responseData = await response.text();
+                
+                let parsedData;
+                try {
+                    parsedData = JSON.parse(responseData);
+                } catch {
+                    parsedData = responseData;
+                }
+
+                updateOutput(`Response (${response.status}): ${JSON.stringify(parsedData, null, 2)}`);
+                
+                if (response.ok) {
+                    updateServiceStatus('', 'Service is operational');
+                }
+                
+                return { success: response.ok, data: parsedData, status: response.status };
+            } catch (error) {
+                updateOutput(`Error: ${error.message}`);
+                updateServiceStatus('error', 'Service unavailable');
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function testHealth() {
+            await makeRequest('/health');
+        }
+
+        async function testDatabaseConnection() {
+            await makeRequest('/api/health/database');
+        }
+
+        async function testSystemHealth() {
+            const result = await makeRequest('/api/status/system');
+            if (result.success && result.data) {
+                updateStatusOverview(result.data);
+            }
+        }
+
+        async function testServiceStatus() {
+            await makeRequest('/api/status/services');
+        }
+
+        async function testPerformanceMetrics() {
+            await makeRequest('/api/status/metrics');
+        }
+
+        async function testResourceUsage() {
+            await makeRequest('/api/status/resources');
+        }
+
+        async function testDiskSpace() {
+            await makeRequest('/api/status/disk');
+        }
+
+        async function testMemoryUsage() {
+            await makeRequest('/api/status/memory');
+        }
+
+        async function testGetAlerts() {
+            await makeRequest('/api/status/alerts');
+        }
+
+        async function refreshStatusOverview() {
+            await testSystemHealth();
+        }
+
+        async function testActiveAlerts() {
+            await makeRequest('/api/status/alerts/active');
+        }
+
+        async function testAlertHistory() {
+            await makeRequest('/api/status/alerts/history');
+        }
+
+        async function testNotificationStatus() {
+            await makeRequest('/api/status/notifications');
+        }
+
+        async function testAlertConfiguration() {
+            await makeRequest('/api/status/alerts/config');
+        }
+
+        async function testSystemLogs() {
+            await makeRequest('/api/status/logs/system');
+        }
+
+        async function testErrorLogs() {
+            await makeRequest('/api/status/logs/errors');
+        }
+
+        async function testDiagnostics() {
+            await makeRequest('/api/status/diagnostics');
+        }
+
+        async function testLogRotation() {
+            await makeRequest('/api/status/logs/rotation');
+        }
+
+        window.addEventListener('load', async () => {
+            updateOutput('Status Service Test Page Loaded');
+            updateOutput('Performing initial health check...');
+            await testHealth();
+            updateOutput('Loading system status overview...');
+            await testSystemHealth();
+        });
+    </script>
+</body>
+</html>
