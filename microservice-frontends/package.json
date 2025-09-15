@@ -1,6 +1,6 @@
 {
   "name": "stockpilot-microservice-frontends",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Frontend interfaces for testing StockPilot microservices",
   "main": "server.js",
   "scripts": {
