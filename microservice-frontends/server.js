@@ -24,9 +24,9 @@ app.get('/health', (req, res) => {
     });
 });
 
-// Serve the main launcher
+// Serve the main dashboard
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'dashboard.html'));
 });
 
 // Serve test page at root
