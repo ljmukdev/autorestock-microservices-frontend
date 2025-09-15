@@ -101,6 +101,11 @@
                 <span>Main API</span>
                 <button class="test-btn" onclick="testEndpoint('/api', 'api')">Test</button>
             </div>
+            <div class="endpoint-test" id="oauth-section" style="display: none;">
+                <span class="status unknown" id="oauth-status"></span>
+                <span>OAuth Renewal</span>
+                <button class="test-btn" onclick="renewOAuth()">Renew</button>
+            </div>
         </div>
 
         <div id="test-results" class="result" style="display: none;"></div>
@@ -158,12 +163,14 @@
             // Try to detect service name from URL
             if (hostname.includes('purchases')) {
                 document.getElementById('service-name').textContent = 'Purchases Service';
+                document.getElementById('oauth-section').style.display = 'block';
             } else if (hostname.includes('sales')) {
                 document.getElementById('service-name').textContent = 'Sales Service';
             } else if (hostname.includes('inventory')) {
                 document.getElementById('service-name').textContent = 'Inventory Service';
             } else if (hostname.includes('ebay')) {
                 document.getElementById('service-name').textContent = 'eBay Service';
+                document.getElementById('oauth-section').style.display = 'block';
             } else if (hostname.includes('vinted')) {
                 document.getElementById('service-name').textContent = 'Vinted Service';
             } else if (hostname.includes('media')) {
@@ -174,6 +181,77 @@
                 document.getElementById('service-name').textContent = 'Reporting Service';
             } else {
                 document.getElementById('service-name').textContent = 'Unknown Service';
+            }
+        }
+
+        // OAuth renewal function
+        async function renewOAuth() {
+            const resultEl = document.getElementById('test-results');
+            resultEl.textContent = 'Renewing OAuth...';
+            resultEl.style.display = 'block';
+            
+            try {
+                // Try to find OAuth endpoints
+                const oauthEndpoints = [
+                    '/ebay-oauth/refresh',
+                    '/oauth/refresh', 
+                    '/api/oauth/refresh',
+                    '/auth/refresh'
+                ];
+                
+                let success = false;
+                for (const endpoint of oauthEndpoints) {
+                    try {
+                        const response = await fetch(endpoint, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ refresh: true })
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.text();
+                            showResult(`✅ OAuth Renewed via ${endpoint}\n\nResponse:\n${data}`);
+                            updateStatus('oauth', 'online');
+                            success = true;
+                            break;
+                        }
+                    } catch (e) {
+                        // Continue to next endpoint
+                    }
+                }
+                
+                if (!success) {
+                    // If no refresh endpoint found, try to redirect to OAuth login
+                    const loginEndpoints = [
+                        '/ebay-oauth/login',
+                        '/oauth/login',
+                        '/api/oauth/login',
+                        '/auth/login'
+                    ];
+                    
+                    for (const endpoint of loginEndpoints) {
+                        try {
+                            const response = await fetch(endpoint);
+                            if (response.ok) {
+                                showResult(`🔄 OAuth Login available at ${endpoint}\n\nClick the link below to renew:\n${window.location.origin}${endpoint}`);
+                                updateStatus('oauth', 'unknown');
+                                success = true;
+                                break;
+                            }
+                        } catch (e) {
+                            // Continue to next endpoint
+                        }
+                    }
+                }
+                
+                if (!success) {
+                    showResult(`❌ No OAuth endpoints found\n\nAvailable endpoints:\n- /ebay-oauth/refresh\n- /ebay-oauth/login\n- /oauth/refresh\n- /oauth/login`);
+                    updateStatus('oauth', 'offline');
+                }
+                
+            } catch (error) {
+                showResult(`❌ OAuth Renewal Error\n\n${error.message}`);
+                updateStatus('oauth', 'offline');
             }
         }
 
