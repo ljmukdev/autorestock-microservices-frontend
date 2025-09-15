@@ -3,85 +3,91 @@
  * This file contains the Railway URLs for each deployed microservice
  */
 
-// Railway service URLs - Update these with your actual Railway deployment URLs
+// Railway service URLs - Updated with actual Railway deployment URLs
 const RAILWAY_SERVICES = {
     'purchases-service': {
         name: 'Purchases Service',
-        url: 'https://purchases-service-production.up.railway.app', // Replace with your actual Railway URL
+        url: 'https://stockpilot-purchases-service-production.up.railway.app',
         port: 3001,
         description: 'Manages purchase data, supplier information, and purchase workflows'
     },
     'sales-service': {
         name: 'Sales Service', 
-        url: 'https://sales-service-production.up.railway.app', // Replace with your actual Railway URL
+        url: 'https://beautiful-motivation-production.up.railway.app',
         port: 3002,
         description: 'Manages sales data, revenue tracking, and sales analytics'
     },
     'ebay-service': {
         name: 'eBay Service',
-        url: 'https://ebay-service-production.up.railway.app', // Replace with your actual Railway URL
+        url: 'https://delightful-liberation-production.up.railway.app',
         port: 3003,
         description: 'OAuth authentication and data retrieval from eBay API'
     },
     'inventory-service': {
         name: 'Inventory Service',
-        url: 'https://inventory-service-production.up.railway.app', // Replace with your actual Railway URL
+        url: 'https://stockpilot-inventory-service-production-production.up.railway.app',
         port: 3004,
         description: 'Manages inventory items, stock levels, and product information'
     },
     'vinted-service': {
         name: 'Vinted Service',
-        url: 'https://vinted-service-production.up.railway.app', // Replace with your actual Railway URL
+        url: 'https://stockpilot-vinted-service-production-production.up.railway.app',
         port: 3005,
         description: 'Web scraping and email parsing for Vinted transactions'
     },
     'media-service': {
         name: 'Media Service',
-        url: 'https://media-service-production.up.railway.app', // Replace with your actual Railway URL
+        url: 'https://stockpilot-media-service-production-production.up.railway.app',
         port: 3006,
         description: 'Handles media uploads, storage, and management'
     },
     'email-ingestion-service': {
         name: 'Email Service',
-        url: 'https://email-ingestion-service-production.up.railway.app', // Replace with your actual Railway URL
+        url: 'https://stockpilot-email-ingest-service-production-production.up.railway.app',
         port: 3007,
         description: 'Email ingestion, parsing, and categorization'
     },
     'reporting-service': {
         name: 'Reporting Service',
-        url: 'https://reporting-service-production.up.railway.app', // Replace with your actual Railway URL
+        url: 'https://stockpilot-reporting-service-production.up.railway.app',
         port: 3008,
         description: 'Generates reports, analytics, and trend analysis'
     },
     'ad-generator-service': {
         name: 'Ad Generator Service',
-        url: 'https://ad-generator-service-production.up.railway.app', // Replace with your actual Railway URL
+        url: 'https://ad-generator-service-production-production.up.railway.app',
         port: 3009,
         description: 'Generates advertisements and marketing content'
     },
     'auto-buying-service': {
         name: 'Auto Buying Service',
-        url: 'https://auto-buying-service-production.up.railway.app', // Replace with your actual Railway URL
+        url: 'https://stockpilot-auto-buying-service-service-production.up.railway.app',
         port: 3010,
         description: 'Automated purchasing and inventory management'
     },
     'rules-engine-service': {
         name: 'Rules Engine Service',
-        url: 'https://rules-engine-service-production.up.railway.app', // Replace with your actual Railway URL
+        url: 'https://stockpilot-rules-engine-service-production-production.up.railway.app',
         port: 3011,
         description: 'Business rules engine and decision making'
     },
     'settings-service': {
         name: 'Settings Service',
-        url: 'https://settings-service-production.up.railway.app', // Replace with your actual Railway URL
+        url: 'https://stockpilot-settings-service-production.up.railway.app',
         port: 3012,
         description: 'Application settings and configuration management'
     },
     'status-service': {
         name: 'Status Service',
-        url: 'https://status-service-production.up.railway.app', // Replace with your actual Railway URL
+        url: 'https://stockpilot-status-service-production-production.up.railway.app',
         port: 3013,
         description: 'System status monitoring and health checks'
+    },
+    'accounting-integration-service': {
+        name: 'Accounting Integration Service',
+        url: 'https://stockpilot-accounting-integration-service-production.up.railway.app',
+        port: 3014,
+        description: 'Accounting system integration and financial data management'
     }
 };
 
