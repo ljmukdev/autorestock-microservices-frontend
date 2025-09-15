@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockPilot Microservice Tester</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a365d, #2c5282);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 30px;
+        }
+
+        .service-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .service-card:hover {
+            border-color: #667eea;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.15);
+        }
+
+        .service-card h3 {
+            color: #1a365d;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .service-card p {
+            color: #4a5568;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .service-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #e2e8f0;
+        }
+
+        .status-indicator.online {
+            background: #48bb78;
+        }
+
+        .status-indicator.offline {
+            background: #f56565;
+        }
+
+        .status-text {
+            font-size: 0.9em;
+            color: #4a5568;
+        }
+
+        .test-button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .footer {
+            background: #f8fafc;
+            padding: 20px;
+            text-align: center;
+            color: #4a5568;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        @media (max-width: 768px) {
+            .services-grid {
+                grid-template-columns: 1fr;
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 StockPilot Microservice Tester</h1>
+            <p>Test and validate your microservices independently</p>
+        </div>
+
+        <div class="services-grid" id="services-grid">
+            <!-- Services will be loaded dynamically -->
+        </div>
+
+        <div class="footer">
+            <p>Click any service to test its API endpoints and functionality</p>
+        </div>
+    </div>
+
+    <script>
+        // Service configurations
+        const services = {
+            'purchases-service': {
+                name: 'Purchases Service',
+                url: 'https://stockpilot-purchases-service-production.up.railway.app',
+                description: 'Test purchase creation, retrieval, and management',
+                endpoints: ['GET /api/purchases', 'POST /api/purchases', 'PUT /api/purchases/:id']
+            },
+            'sales-service': {
+                name: 'Sales Service',
+                url: 'https://beautiful-motivation-production.up.railway.app',
+                description: 'Test sales logging, tracking, and analytics',
+                endpoints: ['GET /api/sales', 'POST /api/sales', 'PUT /api/sales/:id']
+            },
+            'inventory-service': {
+                name: 'Inventory Service',
+                url: 'https://stockpilot-inventory-service-production-production.up.railway.app',
+                description: 'Test inventory management and stock tracking',
+                endpoints: ['GET /api/inventory', 'POST /api/inventory', 'PUT /api/inventory/:id']
+            },
+            'ebay-service': {
+                name: 'eBay Service',
+                url: 'https://delightful-liberation-production.up.railway.app',
+                description: 'Test eBay OAuth and data retrieval',
+                endpoints: ['GET /ebay-oauth/login', 'GET /api/ebay/:userId/sales']
+            },
+            'vinted-service': {
+                name: 'Vinted Service',
+                url: 'https://stockpilot-vinted-service-production-production.up.railway.app',
+                description: 'Test Vinted web scraping and email parsing',
+                endpoints: ['GET /api/vinted/scrape', 'POST /api/vinted/parse-email']
+            },
+            'media-service': {
+                name: 'Media Service',
+                url: 'https://stockpilot-media-service-production-production.up.railway.app',
+                description: 'Test media upload, storage, and management',
+                endpoints: ['GET /api/media', 'POST /api/media/upload', 'GET /api/media/:id']
+            },
+            'email-ingestion-service': {
+                name: 'Email Service',
+                url: 'https://stockpilot-email-ingest-service-production-production.up.railway.app',
+                description: 'Test email ingestion and categorization',
+                endpoints: ['GET /api/emails', 'POST /api/emails', 'GET /api/emails/stats']
+            },
+            'reporting-service': {
+                name: 'Reporting Service',
+                url: 'https://stockpilot-reporting-service-production.up.railway.app',
+                description: 'Test report generation and analytics',
+                endpoints: ['GET /api/reports', 'GET /api/reports/analytics/summary']
+            },
+            'ad-generator-service': {
+                name: 'Ad Generator Service',
+                url: 'https://ad-generator-service-production-production.up.railway.app',
+                description: 'Test advertisement generation',
+                endpoints: ['GET /api/ads/generate', 'POST /api/ads']
+            },
+            'auto-buying-service': {
+                name: 'Auto Buying Service',
+                url: 'https://stockpilot-auto-buying-service-service-production.up.railway.app',
+                description: 'Test automated purchasing workflows',
+                endpoints: ['GET /api/auto-buying/rules', 'POST /api/auto-buying/execute']
+            },
+            'rules-engine-service': {
+                name: 'Rules Engine Service',
+                url: 'https://stockpilot-rules-engine-service-production-production.up.railway.app',
+                description: 'Test business rules and decision making',
+                endpoints: ['GET /api/rules', 'POST /api/rules/evaluate']
+            },
+            'settings-service': {
+                name: 'Settings Service',
+                url: 'https://stockpilot-settings-service-production.up.railway.app',
+                description: 'Test application settings and configuration',
+                endpoints: ['GET /api/settings', 'PUT /api/settings']
+            },
+            'status-service': {
+                name: 'Status Service',
+                url: 'https://stockpilot-status-service-production-production.up.railway.app',
+                description: 'Test system status monitoring',
+                endpoints: ['GET /api/status', 'GET /api/status/health']
+            },
+            'accounting-integration-service': {
+                name: 'Accounting Integration Service',
+                url: 'https://stockpilot-accounting-integration-service-production.up.railway.app',
+                description: 'Test accounting system integration',
+                endpoints: ['GET /api/accounting/sync', 'POST /api/accounting/export']
+            }
+        };
+
+        // Check service status
+        async function checkServiceStatus(serviceName, serviceConfig) {
+            try {
+                const response = await fetch(`${serviceConfig.url}/health`, {
+                    method: 'GET',
+                    timeout: 5000
+                });
+                return response.ok ? 'online' : 'offline';
+            } catch (error) {
+                return 'offline';
+            }
+        }
+
+        // Render service cards
+        function renderServiceCard(serviceName, serviceConfig, status) {
+            return `
+                <div class="service-card" onclick="openServiceTester('${serviceName}', '${serviceConfig.url}')">
+                    <div class="service-status">
+                        <div class="status-indicator ${status}"></div>
+                        <span class="status-text">${status === 'online' ? 'Online' : 'Offline'}</span>
+                    </div>
+                    <h3>${serviceConfig.name}</h3>
+                    <p>${serviceConfig.description}</p>
+                    <button class="test-button">Test Service</button>
+                </div>
+            `;
+        }
+
+        // Open service tester
+        function openServiceTester(serviceName, serviceUrl) {
+            const testerUrl = `tester.html?service=${serviceName}&url=${encodeURIComponent(serviceUrl)}`;
+            window.open(testerUrl, '_blank');
+        }
+
+        // Load and render all services
+        async function loadServices() {
+            const servicesGrid = document.getElementById('services-grid');
+            
+            for (const [serviceName, serviceConfig] of Object.entries(services)) {
+                const status = await checkServiceStatus(serviceName, serviceConfig);
+                const cardHtml = renderServiceCard(serviceName, serviceConfig, status);
+                servicesGrid.innerHTML += cardHtml;
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', loadServices);
+    </script>
+</body>
+</html>
