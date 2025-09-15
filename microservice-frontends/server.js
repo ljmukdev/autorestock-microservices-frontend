@@ -29,6 +29,11 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Serve test page at root
+app.get('/test', (req, res) => {
+    res.sendFile(path.join(__dirname, 'test.html'));
+});
+
 // Serve purchases test page
 app.get('/purchases-test', (req, res) => {
     res.sendFile(path.join(__dirname, 'purchases-test.html'));
