@@ -1,0 +1,442 @@
+<!--
+File: test-accounting.html
+Location: /microservice-frontends/test-accounting.html
+Route: /test/accounting
+Service: Accounting Integration Service
+URL: https://stockpilot-accounting-integration-service-production.up.railway.app
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accounting Integration Service - Testing Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .service-url {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 1rem;
+        }
+
+        .back-link {
+            color: white;
+            text-decoration: none;
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            opacity: 1;
+        }
+
+        .test-sections {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .test-section {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #2d3748;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+        }
+
+        .financial-section {
+            background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
+            border: 2px solid #48bb78;
+        }
+
+        .integration-section {
+            background: linear-gradient(135deg, #fef5e7 0%, #fed7aa 100%);
+            border: 2px solid #f6ad55;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #68d391;
+        }
+
+        .status-dot.unknown {
+            background: #cbd5e0;
+        }
+
+        .status-dot.error {
+            background: #fc8181;
+        }
+
+        .test-button {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            margin: 0.25rem;
+            transition: all 0.3s ease;
+        }
+
+        .test-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(72, 187, 120, 0.3);
+        }
+
+        .financial-button {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+        }
+
+        .financial-button:hover {
+            box-shadow: 0 4px 16px rgba(72, 187, 120, 0.3);
+        }
+
+        .integration-button {
+            background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
+            color: white;
+        }
+
+        .integration-button:hover {
+            box-shadow: 0 4px 16px rgba(246, 173, 85, 0.3);
+        }
+
+        .response-area {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+            min-height: 200px;
+            white-space: pre-wrap;
+            overflow-y: auto;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .endpoint-list {
+            list-style: none;
+        }
+
+        .endpoint-list li {
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            background: #f7fafc;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="/" class="back-link">← Back to Dashboard</a>
+            <h1>Accounting Integration Service Testing</h1>
+            <div class="service-url">https://stockpilot-accounting-integration-service-production.up.railway.app</div>
+            <div class="status-indicator">
+                <span class="status-dot unknown" id="serviceStatus"></span>
+                <span id="statusText">Checking service status...</span>
+            </div>
+        </div>
+
+        <div class="test-sections">
+            <div class="test-section">
+                <h2 class="section-title">Health Check</h2>
+                <p>Test basic connectivity and service availability</p>
+                <button class="test-button" onclick="testHealth()">Check Health Status</button>
+                <button class="test-button" onclick="testDatabaseConnection()">Test Database Connection</button>
+            </div>
+
+            <div class="test-section financial-section">
+                <h2 class="section-title">Financial Data</h2>
+                <p>Test financial data processing and integration</p>
+                <button class="test-button financial-button" onclick="testTransactions()">Get Transactions</button>
+                <button class="test-button financial-button" onclick="testAccounts()">Get Accounts</button>
+                <button class="test-button financial-button" onclick="testBalances()">Get Balances</button>
+            </div>
+
+            <div class="test-section integration-section">
+                <h2 class="section-title">External Integrations</h2>
+                <p>Test third-party accounting system connections</p>
+                <button class="test-button integration-button" onclick="testQuickBooks()">Test QuickBooks</button>
+                <button class="test-button integration-button" onclick="testXero()">Test Xero</button>
+                <button class="test-button integration-button" onclick="testWave()">Test Wave</button>
+            </div>
+
+            <div class="test-section">
+                <h2 class="section-title">API Endpoints</h2>
+                <p>Available accounting service endpoints:</p>
+                <ul class="endpoint-list">
+                    <li>GET /health</li>
+                    <li>GET /api/accounting/transactions</li>
+                    <li>POST /api/accounting/sync</li>
+                    <li>GET /api/accounting/reports</li>
+                    <li>GET /api/accounting/integrations</li>
+                </ul>
+                <button class="test-button" onclick="testGetIntegrations()">Get Integrations</button>
+            </div>
+
+            <div class="test-section">
+                <h2 class="section-title">Create Test Transaction</h2>
+                <div class="input-group">
+                    <label>Transaction Type:</label>
+                    <select id="transactionType">
+                        <option value="income">Income</option>
+                        <option value="expense">Expense</option>
+                        <option value="transfer">Transfer</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Amount:</label>
+                    <input type="number" id="amount" placeholder="100.00" step="0.01">
+                </div>
+                <div class="input-group">
+                    <label>Description:</label>
+                    <input type="text" id="description" placeholder="Test transaction">
+                </div>
+                <div class="input-group">
+                    <label>Account:</label>
+                    <input type="text" id="account" placeholder="Test Account">
+                </div>
+                <button class="test-button" onclick="createTestTransaction()">Create Test Transaction</button>
+            </div>
+
+            <div class="test-section">
+                <h2 class="section-title">Accounting Operations</h2>
+                <p>Test accounting management operations</p>
+                <button class="test-button" onclick="testSyncData()">Sync Data</button>
+                <button class="test-button" onclick="testGenerateReports()">Generate Reports</button>
+                <button class="test-button" onclick="testReconcile()">Reconcile Accounts</button>
+                <button class="test-button" onclick="testTaxReports()">Generate Tax Reports</button>
+            </div>
+
+            <div class="test-section">
+                <h2 class="section-title">Data Validation</h2>
+                <p>Test data validation and integrity</p>
+                <button class="test-button" onclick="testDataValidation()">Validate Data</button>
+                <button class="test-button" onclick="testDuplicateCheck()">Check Duplicates</button>
+                <button class="test-button" onclick="testDataIntegrity()">Check Data Integrity</button>
+            </div>
+
+            <div class="test-section full-width">
+                <h2 class="section-title">Response Output</h2>
+                <div class="response-area" id="responseOutput">Ready to test accounting integration service...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SERVICE_URL = 'https://stockpilot-accounting-integration-service-production.up.railway.app';
+        const responseOutput = document.getElementById('responseOutput');
+
+        function updateOutput(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            responseOutput.textContent += `[${timestamp}] ${message}\n`;
+            responseOutput.scrollTop = responseOutput.scrollHeight;
+        }
+
+        function updateServiceStatus(status, message) {
+            const statusDot = document.getElementById('serviceStatus');
+            const statusText = document.getElementById('statusText');
+            
+            statusDot.className = `status-dot ${status}`;
+            statusText.textContent = message;
+        }
+
+        async function makeRequest(endpoint, method = 'GET', data = null) {
+            try {
+                updateOutput(`Making ${method} request to ${endpoint}...`);
+                
+                const options = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                };
+
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+
+                const response = await fetch(`${SERVICE_URL}${endpoint}`, options);
+                const responseData = await response.text();
+                
+                let parsedData;
+                try {
+                    parsedData = JSON.parse(responseData);
+                } catch {
+                    parsedData = responseData;
+                }
+
+                updateOutput(`Response (${response.status}): ${JSON.stringify(parsedData, null, 2)}`);
+                
+                if (response.ok) {
+                    updateServiceStatus('', 'Service is operational');
+                }
+                
+                return { success: response.ok, data: parsedData, status: response.status };
+            } catch (error) {
+                updateOutput(`Error: ${error.message}`);
+                updateServiceStatus('error', 'Service unavailable');
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function testHealth() {
+            await makeRequest('/health');
+        }
+
+        async function testDatabaseConnection() {
+            await makeRequest('/api/health/database');
+        }
+
+        async function testTransactions() {
+            await makeRequest('/api/accounting/transactions');
+        }
+
+        async function testAccounts() {
+            await makeRequest('/api/accounting/accounts');
+        }
+
+        async function testBalances() {
+            await makeRequest('/api/accounting/balances');
+        }
+
+        async function testQuickBooks() {
+            await makeRequest('/api/accounting/integrations/quickbooks');
+        }
+
+        async function testXero() {
+            await makeRequest('/api/accounting/integrations/xero');
+        }
+
+        async function testWave() {
+            await makeRequest('/api/accounting/integrations/wave');
+        }
+
+        async function testGetIntegrations() {
+            await makeRequest('/api/accounting/integrations');
+        }
+
+        async function testSyncData() {
+            await makeRequest('/api/accounting/sync');
+        }
+
+        async function testGenerateReports() {
+            await makeRequest('/api/accounting/reports');
+        }
+
+        async function testReconcile() {
+            await makeRequest('/api/accounting/reconcile');
+        }
+
+        async function testTaxReports() {
+            await makeRequest('/api/accounting/tax-reports');
+        }
+
+        async function testDataValidation() {
+            await makeRequest('/api/accounting/validate');
+        }
+
+        async function testDuplicateCheck() {
+            await makeRequest('/api/accounting/duplicates');
+        }
+
+        async function testDataIntegrity() {
+            await makeRequest('/api/accounting/integrity');
+        }
+
+        async function createTestTransaction() {
+            const transactionData = {
+                type: document.getElementById('transactionType').value,
+                amount: parseFloat(document.getElementById('amount').value) || 100.00,
+                description: document.getElementById('description').value || 'Test transaction',
+                account: document.getElementById('account').value || 'Test Account',
+                date: new Date().toISOString()
+            };
+
+            await makeRequest('/api/accounting/transactions', 'POST', transactionData);
+        }
+
+        window.addEventListener('load', async () => {
+            updateOutput('Accounting Integration Service Test Page Loaded');
+            updateOutput('Performing initial health check...');
+            await testHealth();
+        });
+    </script>
+</body>
+</html>

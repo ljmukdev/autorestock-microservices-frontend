@@ -1,0 +1,457 @@
+<!--
+File: test-ad-generator.html
+Location: /microservice-frontends/test-ad-generator.html
+Route: /test/ad-generator
+Service: Ad Generator Service
+URL: https://ad-generator-service-production-production.up.railway.app
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ad Generator Service - Testing Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .service-url {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 1rem;
+        }
+
+        .back-link {
+            color: white;
+            text-decoration: none;
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            opacity: 1;
+        }
+
+        .test-sections {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .test-section {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #2d3748;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+        }
+
+        .ai-section {
+            background: linear-gradient(135deg, #fef5e7 0%, #fed7aa 100%);
+            border: 2px solid #f6ad55;
+        }
+
+        .template-section {
+            background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
+            border: 2px solid #48bb78;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #68d391;
+        }
+
+        .status-dot.unknown {
+            background: #cbd5e0;
+        }
+
+        .status-dot.error {
+            background: #fc8181;
+        }
+
+        .test-button {
+            background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            margin: 0.25rem;
+            transition: all 0.3s ease;
+        }
+
+        .test-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(246, 173, 85, 0.3);
+        }
+
+        .ai-button {
+            background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
+            color: white;
+        }
+
+        .ai-button:hover {
+            box-shadow: 0 4px 16px rgba(246, 173, 85, 0.3);
+        }
+
+        .template-button {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+        }
+
+        .template-button:hover {
+            box-shadow: 0 4px 16px rgba(72, 187, 120, 0.3);
+        }
+
+        .response-area {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+            min-height: 200px;
+            white-space: pre-wrap;
+            overflow-y: auto;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .input-group input, .input-group select, .input-group textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .input-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .endpoint-list {
+            list-style: none;
+        }
+
+        .endpoint-list li {
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            background: #f7fafc;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="/" class="back-link">← Back to Dashboard</a>
+            <h1>Ad Generator Service Testing</h1>
+            <div class="service-url">https://ad-generator-service-production-production.up.railway.app</div>
+            <div class="status-indicator">
+                <span class="status-dot unknown" id="serviceStatus"></span>
+                <span id="statusText">Checking service status...</span>
+            </div>
+        </div>
+
+        <div class="test-sections">
+            <div class="test-section">
+                <h2 class="section-title">Health Check</h2>
+                <p>Test basic connectivity and service availability</p>
+                <button class="test-button" onclick="testHealth()">Check Health Status</button>
+                <button class="test-button" onclick="testDatabaseConnection()">Test Database Connection</button>
+            </div>
+
+            <div class="test-section ai-section">
+                <h2 class="section-title">AI Content Generation</h2>
+                <p>Test AI-powered advertisement content creation</p>
+                <button class="test-button ai-button" onclick="testAIGeneration()">Test AI Generation</button>
+                <button class="test-button ai-button" onclick="testContentQuality()">Check Content Quality</button>
+                <button class="test-button ai-button" onclick="testAIStatus()">Check AI Status</button>
+            </div>
+
+            <div class="test-section template-section">
+                <h2 class="section-title">Template Management</h2>
+                <p>Test advertisement template operations</p>
+                <button class="test-button template-button" onclick="testTemplates()">Get Templates</button>
+                <button class="test-button template-button" onclick="testCreateTemplate()">Create Template</button>
+                <button class="test-button template-button" onclick="testTemplateCategories()">Get Categories</button>
+            </div>
+
+            <div class="test-section">
+                <h2 class="section-title">API Endpoints</h2>
+                <p>Available ad generator service endpoints:</p>
+                <ul class="endpoint-list">
+                    <li>GET /health</li>
+                    <li>POST /api/ads/generate</li>
+                    <li>GET /api/ads/templates</li>
+                    <li>POST /api/ads/templates</li>
+                    <li>GET /api/ads/categories</li>
+                </ul>
+                <button class="test-button" onclick="testGetAds()">Get Generated Ads</button>
+            </div>
+
+            <div class="test-section">
+                <h2 class="section-title">Generate Test Ad</h2>
+                <div class="input-group">
+                    <label>Product Name:</label>
+                    <input type="text" id="productName" placeholder="Vintage Leather Jacket">
+                </div>
+                <div class="input-group">
+                    <label>Product Description:</label>
+                    <textarea id="productDescription" placeholder="High-quality vintage leather jacket in excellent condition"></textarea>
+                </div>
+                <div class="input-group">
+                    <label>Target Audience:</label>
+                    <select id="targetAudience">
+                        <option value="general">General</option>
+                        <option value="fashion">Fashion Enthusiasts</option>
+                        <option value="vintage">Vintage Collectors</option>
+                        <option value="luxury">Luxury Buyers</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Platform:</label>
+                    <select id="platform">
+                        <option value="ebay">eBay</option>
+                        <option value="vinted">Vinted</option>
+                        <option value="facebook">Facebook</option>
+                        <option value="instagram">Instagram</option>
+                    </select>
+                </div>
+                <button class="test-button" onclick="generateTestAd()">Generate Test Ad</button>
+            </div>
+
+            <div class="test-section">
+                <h2 class="section-title">Ad Operations</h2>
+                <p>Test advertisement management operations</p>
+                <button class="test-button" onclick="testAdOptimization()">Optimize Ad</button>
+                <button class="test-button" onclick="testAdVariations()">Generate Variations</button>
+                <button class="test-button" onclick="testAdPerformance()">Check Performance</button>
+                <button class="test-button" onclick="testAdScheduling()">Schedule Ad</button>
+            </div>
+
+            <div class="test-section">
+                <h2 class="section-title">Content Analysis</h2>
+                <p>Test content analysis and optimization</p>
+                <button class="test-button" onclick="testContentAnalysis()">Analyze Content</button>
+                <button class="test-button" onclick="testKeywordExtraction()">Extract Keywords</button>
+                <button class="test-button" onclick="testSentimentAnalysis()">Sentiment Analysis</button>
+            </div>
+
+            <div class="test-section full-width">
+                <h2 class="section-title">Response Output</h2>
+                <div class="response-area" id="responseOutput">Ready to test ad generator service...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SERVICE_URL = 'https://ad-generator-service-production-production.up.railway.app';
+        const responseOutput = document.getElementById('responseOutput');
+
+        function updateOutput(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            responseOutput.textContent += `[${timestamp}] ${message}\n`;
+            responseOutput.scrollTop = responseOutput.scrollHeight;
+        }
+
+        function updateServiceStatus(status, message) {
+            const statusDot = document.getElementById('serviceStatus');
+            const statusText = document.getElementById('statusText');
+            
+            statusDot.className = `status-dot ${status}`;
+            statusText.textContent = message;
+        }
+
+        async function makeRequest(endpoint, method = 'GET', data = null) {
+            try {
+                updateOutput(`Making ${method} request to ${endpoint}...`);
+                
+                const options = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                };
+
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+
+                const response = await fetch(`${SERVICE_URL}${endpoint}`, options);
+                const responseData = await response.text();
+                
+                let parsedData;
+                try {
+                    parsedData = JSON.parse(responseData);
+                } catch {
+                    parsedData = responseData;
+                }
+
+                updateOutput(`Response (${response.status}): ${JSON.stringify(parsedData, null, 2)}`);
+                
+                if (response.ok) {
+                    updateServiceStatus('', 'Service is operational');
+                }
+                
+                return { success: response.ok, data: parsedData, status: response.status };
+            } catch (error) {
+                updateOutput(`Error: ${error.message}`);
+                updateServiceStatus('error', 'Service unavailable');
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function testHealth() {
+            await makeRequest('/health');
+        }
+
+        async function testDatabaseConnection() {
+            await makeRequest('/api/health/database');
+        }
+
+        async function testAIGeneration() {
+            await makeRequest('/api/ads/ai/generate');
+        }
+
+        async function testContentQuality() {
+            await makeRequest('/api/ads/quality/check');
+        }
+
+        async function testAIStatus() {
+            await makeRequest('/api/ads/ai/status');
+        }
+
+        async function testTemplates() {
+            await makeRequest('/api/ads/templates');
+        }
+
+        async function testCreateTemplate() {
+            await makeRequest('/api/ads/templates', 'POST', {
+                name: 'Test Template',
+                category: 'fashion',
+                content: 'Test template content'
+            });
+        }
+
+        async function testTemplateCategories() {
+            await makeRequest('/api/ads/categories');
+        }
+
+        async function testGetAds() {
+            await makeRequest('/api/ads');
+        }
+
+        async function testAdOptimization() {
+            await makeRequest('/api/ads/optimize');
+        }
+
+        async function testAdVariations() {
+            await makeRequest('/api/ads/variations');
+        }
+
+        async function testAdPerformance() {
+            await makeRequest('/api/ads/performance');
+        }
+
+        async function testAdScheduling() {
+            await makeRequest('/api/ads/schedule');
+        }
+
+        async function testContentAnalysis() {
+            await makeRequest('/api/ads/analyze');
+        }
+
+        async function testKeywordExtraction() {
+            await makeRequest('/api/ads/keywords');
+        }
+
+        async function testSentimentAnalysis() {
+            await makeRequest('/api/ads/sentiment');
+        }
+
+        async function generateTestAd() {
+            const adData = {
+                product_name: document.getElementById('productName').value || 'Vintage Leather Jacket',
+                product_description: document.getElementById('productDescription').value || 'High-quality vintage leather jacket in excellent condition',
+                target_audience: document.getElementById('targetAudience').value,
+                platform: document.getElementById('platform').value,
+                style: 'professional'
+            };
+
+            await makeRequest('/api/ads/generate', 'POST', adData);
+        }
+
+        window.addEventListener('load', async () => {
+            updateOutput('Ad Generator Service Test Page Loaded');
+            updateOutput('Performing initial health check...');
+            await testHealth();
+        });
+    </script>
+</body>
+</html>

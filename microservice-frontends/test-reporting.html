@@ -1,0 +1,412 @@
+<!--
+File: test-reporting.html
+Location: /microservice-frontends/test-reporting.html
+Route: /test/reporting
+Service: Reporting Service
+URL: https://stockpilot-reporting-service-production.up.railway.app
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporting Service - Testing Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #805ad5 0%, #553c9a 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .service-url {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 1rem;
+        }
+
+        .back-link {
+            color: white;
+            text-decoration: none;
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            opacity: 1;
+        }
+
+        .test-sections {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .test-section {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #2d3748;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+        }
+
+        .analytics-section {
+            background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+            border: 2px solid #805ad5;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #68d391;
+        }
+
+        .status-dot.unknown {
+            background: #cbd5e0;
+        }
+
+        .status-dot.error {
+            background: #fc8181;
+        }
+
+        .test-button {
+            background: linear-gradient(135deg, #805ad5 0%, #553c9a 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            margin: 0.25rem;
+            transition: all 0.3s ease;
+        }
+
+        .test-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(128, 90, 213, 0.3);
+        }
+
+        .analytics-button {
+            background: linear-gradient(135deg, #805ad5 0%, #553c9a 100%);
+            color: white;
+        }
+
+        .analytics-button:hover {
+            box-shadow: 0 4px 16px rgba(128, 90, 213, 0.3);
+        }
+
+        .response-area {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+            min-height: 200px;
+            white-space: pre-wrap;
+            overflow-y: auto;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .endpoint-list {
+            list-style: none;
+        }
+
+        .endpoint-list li {
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            background: #f7fafc;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="/" class="back-link">← Back to Dashboard</a>
+            <h1>Reporting Service Testing</h1>
+            <div class="service-url">https://stockpilot-reporting-service-production.up.railway.app</div>
+            <div class="status-indicator">
+                <span class="status-dot unknown" id="serviceStatus"></span>
+                <span id="statusText">Checking service status...</span>
+            </div>
+        </div>
+
+        <div class="test-sections">
+            <div class="test-section">
+                <h2 class="section-title">Health Check</h2>
+                <p>Test basic connectivity and service availability</p>
+                <button class="test-button" onclick="testHealth()">Check Health Status</button>
+                <button class="test-button" onclick="testDatabaseConnection()">Test Database Connection</button>
+            </div>
+
+            <div class="test-section analytics-section">
+                <h2 class="section-title">Analytics Dashboard</h2>
+                <p>Generate reports and analytics data</p>
+                <button class="test-button analytics-button" onclick="generateSalesReport()">Generate Sales Report</button>
+                <button class="test-button analytics-button" onclick="generateRevenueReport()">Generate Revenue Report</button>
+                <button class="test-button analytics-button" onclick="generateInventoryReport()">Generate Inventory Report</button>
+            </div>
+
+            <div class="test-section">
+                <h2 class="section-title">API Endpoints</h2>
+                <p>Available reporting service endpoints:</p>
+                <ul class="endpoint-list">
+                    <li>GET /health</li>
+                    <li>GET /api/reports/sales</li>
+                    <li>GET /api/reports/revenue</li>
+                    <li>GET /api/reports/inventory</li>
+                    <li>POST /api/reports/generate</li>
+                </ul>
+                <button class="test-button" onclick="testGetReports()">Get Available Reports</button>
+            </div>
+
+            <div class="test-section">
+                <h2 class="section-title">Custom Report Generation</h2>
+                <div class="input-group">
+                    <label>Report Type:</label>
+                    <select id="reportType">
+                        <option value="sales">Sales Report</option>
+                        <option value="revenue">Revenue Report</option>
+                        <option value="inventory">Inventory Report</option>
+                        <option value="custom">Custom Report</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Date Range:</label>
+                    <select id="dateRange">
+                        <option value="7d">Last 7 Days</option>
+                        <option value="30d">Last 30 Days</option>
+                        <option value="90d">Last 90 Days</option>
+                        <option value="1y">Last Year</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Format:</label>
+                    <select id="reportFormat">
+                        <option value="json">JSON</option>
+                        <option value="csv">CSV</option>
+                        <option value="pdf">PDF</option>
+                    </select>
+                </div>
+                <button class="test-button" onclick="generateCustomReport()">Generate Custom Report</button>
+            </div>
+
+            <div class="test-section">
+                <h2 class="section-title">Dashboard Data</h2>
+                <p>Test dashboard data retrieval</p>
+                <button class="test-button" onclick="testDashboardData()">Get Dashboard Data</button>
+                <button class="test-button" onclick="testKPIs()">Get KPIs</button>
+                <button class="test-button" onclick="testMetrics()">Get Metrics</button>
+                <button class="test-button" onclick="testCharts()">Get Chart Data</button>
+            </div>
+
+            <div class="test-section">
+                <h2 class="section-title">Report Management</h2>
+                <p>Manage and schedule reports</p>
+                <button class="test-button" onclick="testScheduledReports()">Get Scheduled Reports</button>
+                <button class="test-button" onclick="testReportHistory()">Get Report History</button>
+                <button class="test-button" onclick="testExportReports()">Export Reports</button>
+            </div>
+
+            <div class="test-section full-width">
+                <h2 class="section-title">Response Output</h2>
+                <div class="response-area" id="responseOutput">Ready to test reporting service...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SERVICE_URL = 'https://stockpilot-reporting-service-production.up.railway.app';
+        const responseOutput = document.getElementById('responseOutput');
+
+        function updateOutput(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            responseOutput.textContent += `[${timestamp}] ${message}\n`;
+            responseOutput.scrollTop = responseOutput.scrollHeight;
+        }
+
+        function updateServiceStatus(status, message) {
+            const statusDot = document.getElementById('serviceStatus');
+            const statusText = document.getElementById('statusText');
+            
+            statusDot.className = `status-dot ${status}`;
+            statusText.textContent = message;
+        }
+
+        async function makeRequest(endpoint, method = 'GET', data = null) {
+            try {
+                updateOutput(`Making ${method} request to ${endpoint}...`);
+                
+                const options = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                };
+
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+
+                const response = await fetch(`${SERVICE_URL}${endpoint}`, options);
+                const responseData = await response.text();
+                
+                let parsedData;
+                try {
+                    parsedData = JSON.parse(responseData);
+                } catch {
+                    parsedData = responseData;
+                }
+
+                updateOutput(`Response (${response.status}): ${JSON.stringify(parsedData, null, 2)}`);
+                
+                if (response.ok) {
+                    updateServiceStatus('', 'Service is operational');
+                }
+                
+                return { success: response.ok, data: parsedData, status: response.status };
+            } catch (error) {
+                updateOutput(`Error: ${error.message}`);
+                updateServiceStatus('error', 'Service unavailable');
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function testHealth() {
+            await makeRequest('/health');
+        }
+
+        async function testDatabaseConnection() {
+            await makeRequest('/api/health/database');
+        }
+
+        async function generateSalesReport() {
+            await makeRequest('/api/reports/sales');
+        }
+
+        async function generateRevenueReport() {
+            await makeRequest('/api/reports/revenue');
+        }
+
+        async function generateInventoryReport() {
+            await makeRequest('/api/reports/inventory');
+        }
+
+        async function testGetReports() {
+            await makeRequest('/api/reports');
+        }
+
+        async function testDashboardData() {
+            await makeRequest('/api/dashboard/data');
+        }
+
+        async function testKPIs() {
+            await makeRequest('/api/dashboard/kpis');
+        }
+
+        async function testMetrics() {
+            await makeRequest('/api/dashboard/metrics');
+        }
+
+        async function testCharts() {
+            await makeRequest('/api/dashboard/charts');
+        }
+
+        async function testScheduledReports() {
+            await makeRequest('/api/reports/scheduled');
+        }
+
+        async function testReportHistory() {
+            await makeRequest('/api/reports/history');
+        }
+
+        async function testExportReports() {
+            await makeRequest('/api/reports/export');
+        }
+
+        async function generateCustomReport() {
+            const reportData = {
+                type: document.getElementById('reportType').value,
+                date_range: document.getElementById('dateRange').value,
+                format: document.getElementById('reportFormat').value
+            };
+
+            await makeRequest('/api/reports/generate', 'POST', reportData);
+        }
+
+        window.addEventListener('load', async () => {
+            updateOutput('Reporting Service Test Page Loaded');
+            updateOutput('Performing initial health check...');
+            await testHealth();
+        });
+    </script>
+</body>
+</html>

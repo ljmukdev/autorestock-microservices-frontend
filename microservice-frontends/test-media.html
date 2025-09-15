@@ -1,0 +1,461 @@
+<!--
+File: test-media.html
+Location: /microservice-frontends/test-media.html
+Route: /test/media
+Service: Media Service
+URL: https://stockpilot-media-service-production-production.up.railway.app
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Service - Testing Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #38b2ac 0%, #319795 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .service-url {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 1rem;
+        }
+
+        .back-link {
+            color: white;
+            text-decoration: none;
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            opacity: 1;
+        }
+
+        .test-sections {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .test-section {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #2d3748;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+        }
+
+        .upload-section {
+            background: linear-gradient(135deg, #e6fffa 0%, #b2f5ea 100%);
+            border: 2px solid #38b2ac;
+        }
+
+        .processing-section {
+            background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
+            border: 2px solid #48bb78;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #68d391;
+        }
+
+        .status-dot.unknown {
+            background: #cbd5e0;
+        }
+
+        .status-dot.error {
+            background: #fc8181;
+        }
+
+        .test-button {
+            background: linear-gradient(135deg, #38b2ac 0%, #319795 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            margin: 0.25rem;
+            transition: all 0.3s ease;
+        }
+
+        .test-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(56, 178, 172, 0.3);
+        }
+
+        .upload-button {
+            background: linear-gradient(135deg, #38b2ac 0%, #319795 100%);
+            color: white;
+        }
+
+        .upload-button:hover {
+            box-shadow: 0 4px 16px rgba(56, 178, 172, 0.3);
+        }
+
+        .processing-button {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+        }
+
+        .processing-button:hover {
+            box-shadow: 0 4px 16px rgba(72, 187, 120, 0.3);
+        }
+
+        .response-area {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+            min-height: 200px;
+            white-space: pre-wrap;
+            overflow-y: auto;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .file-input {
+            padding: 0.5rem;
+            border: 2px dashed #38b2ac;
+            border-radius: 6px;
+            background: #f0fff4;
+            cursor: pointer;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .endpoint-list {
+            list-style: none;
+        }
+
+        .endpoint-list li {
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            background: #f7fafc;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="/" class="back-link">← Back to Dashboard</a>
+            <h1>Media Service Testing</h1>
+            <div class="service-url">https://stockpilot-media-service-production-production.up.railway.app</div>
+            <div class="status-indicator">
+                <span class="status-dot unknown" id="serviceStatus"></span>
+                <span id="statusText">Checking service status...</span>
+            </div>
+        </div>
+
+        <div class="test-sections">
+            <div class="test-section">
+                <h2 class="section-title">Health Check</h2>
+                <p>Test basic connectivity and service availability</p>
+                <button class="test-button" onclick="testHealth()">Check Health Status</button>
+                <button class="test-button" onclick="testDatabaseConnection()">Test Database Connection</button>
+            </div>
+
+            <div class="test-section upload-section">
+                <h2 class="section-title">File Upload</h2>
+                <p>Test file upload and storage functionality</p>
+                <button class="test-button upload-button" onclick="testUploadStatus()">Check Upload Status</button>
+                <button class="test-button upload-button" onclick="testStorageStatus()">Check Storage Status</button>
+                <button class="test-button upload-button" onclick="testFileValidation()">Test File Validation</button>
+            </div>
+
+            <div class="test-section processing-section">
+                <h2 class="section-title">Image Processing</h2>
+                <p>Test image processing and optimization</p>
+                <button class="test-button processing-button" onclick="testImageProcessing()">Test Image Processing</button>
+                <button class="test-button processing-button" onclick="testImageOptimization()">Test Optimization</button>
+                <button class="test-button processing-button" onclick="testThumbnailGeneration()">Generate Thumbnails</button>
+            </div>
+
+            <div class="test-section">
+                <h2 class="section-title">API Endpoints</h2>
+                <p>Available media service endpoints:</p>
+                <ul class="endpoint-list">
+                    <li>GET /health</li>
+                    <li>POST /api/media/upload</li>
+                    <li>GET /api/media/files</li>
+                    <li>GET /api/media/process</li>
+                    <li>DELETE /api/media/:id</li>
+                </ul>
+                <button class="test-button" onclick="testGetFiles()">Get Media Files</button>
+            </div>
+
+            <div class="test-section">
+                <h2 class="section-title">Upload Test File</h2>
+                <div class="input-group">
+                    <label>File Type:</label>
+                    <select id="fileType">
+                        <option value="image">Image</option>
+                        <option value="document">Document</option>
+                        <option value="video">Video</option>
+                        <option value="audio">Audio</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>File Name:</label>
+                    <input type="text" id="fileName" placeholder="test-image.jpg">
+                </div>
+                <div class="input-group">
+                    <label>File Size (MB):</label>
+                    <input type="number" id="fileSize" placeholder="2.5" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>Processing Options:</label>
+                    <select id="processingOptions">
+                        <option value="none">No Processing</option>
+                        <option value="optimize">Optimize</option>
+                        <option value="resize">Resize</option>
+                        <option value="thumbnail">Generate Thumbnail</option>
+                    </select>
+                </div>
+                <button class="test-button" onclick="simulateFileUpload()">Simulate File Upload</button>
+            </div>
+
+            <div class="test-section">
+                <h2 class="section-title">Media Operations</h2>
+                <p>Test media management operations</p>
+                <button class="test-button" onclick="testFileMetadata()">Get File Metadata</button>
+                <button class="test-button" onclick="testFileSearch()">Search Files</button>
+                <button class="test-button" onclick="testFileCompression()">Test Compression</button>
+                <button class="test-button" onclick="testFileConversion()">Test Conversion</button>
+            </div>
+
+            <div class="test-section">
+                <h2 class="section-title">Storage Management</h2>
+                <p>Test storage and cleanup operations</p>
+                <button class="test-button" onclick="testStorageUsage()">Check Storage Usage</button>
+                <button class="test-button" onclick="testCleanup()">Run Cleanup</button>
+                <button class="test-button" onclick="testBackup()">Test Backup</button>
+                <button class="test-button" onclick="testRestore()">Test Restore</button>
+            </div>
+
+            <div class="test-section full-width">
+                <h2 class="section-title">Response Output</h2>
+                <div class="response-area" id="responseOutput">Ready to test media service...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SERVICE_URL = 'https://stockpilot-media-service-production-production.up.railway.app';
+        const responseOutput = document.getElementById('responseOutput');
+
+        function updateOutput(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            responseOutput.textContent += `[${timestamp}] ${message}\n`;
+            responseOutput.scrollTop = responseOutput.scrollHeight;
+        }
+
+        function updateServiceStatus(status, message) {
+            const statusDot = document.getElementById('serviceStatus');
+            const statusText = document.getElementById('statusText');
+            
+            statusDot.className = `status-dot ${status}`;
+            statusText.textContent = message;
+        }
+
+        async function makeRequest(endpoint, method = 'GET', data = null) {
+            try {
+                updateOutput(`Making ${method} request to ${endpoint}...`);
+                
+                const options = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                };
+
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+
+                const response = await fetch(`${SERVICE_URL}${endpoint}`, options);
+                const responseData = await response.text();
+                
+                let parsedData;
+                try {
+                    parsedData = JSON.parse(responseData);
+                } catch {
+                    parsedData = responseData;
+                }
+
+                updateOutput(`Response (${response.status}): ${JSON.stringify(parsedData, null, 2)}`);
+                
+                if (response.ok) {
+                    updateServiceStatus('', 'Service is operational');
+                }
+                
+                return { success: response.ok, data: parsedData, status: response.status };
+            } catch (error) {
+                updateOutput(`Error: ${error.message}`);
+                updateServiceStatus('error', 'Service unavailable');
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function testHealth() {
+            await makeRequest('/health');
+        }
+
+        async function testDatabaseConnection() {
+            await makeRequest('/api/health/database');
+        }
+
+        async function testUploadStatus() {
+            await makeRequest('/api/media/upload/status');
+        }
+
+        async function testStorageStatus() {
+            await makeRequest('/api/media/storage/status');
+        }
+
+        async function testFileValidation() {
+            await makeRequest('/api/media/validate');
+        }
+
+        async function testImageProcessing() {
+            await makeRequest('/api/media/process/image');
+        }
+
+        async function testImageOptimization() {
+            await makeRequest('/api/media/optimize');
+        }
+
+        async function testThumbnailGeneration() {
+            await makeRequest('/api/media/thumbnails');
+        }
+
+        async function testGetFiles() {
+            await makeRequest('/api/media/files');
+        }
+
+        async function testFileMetadata() {
+            await makeRequest('/api/media/metadata');
+        }
+
+        async function testFileSearch() {
+            await makeRequest('/api/media/search');
+        }
+
+        async function testFileCompression() {
+            await makeRequest('/api/media/compress');
+        }
+
+        async function testFileConversion() {
+            await makeRequest('/api/media/convert');
+        }
+
+        async function testStorageUsage() {
+            await makeRequest('/api/media/storage/usage');
+        }
+
+        async function testCleanup() {
+            await makeRequest('/api/media/cleanup');
+        }
+
+        async function testBackup() {
+            await makeRequest('/api/media/backup');
+        }
+
+        async function testRestore() {
+            await makeRequest('/api/media/restore');
+        }
+
+        async function simulateFileUpload() {
+            const uploadData = {
+                file_name: document.getElementById('fileName').value || 'test-image.jpg',
+                file_type: document.getElementById('fileType').value,
+                file_size: parseFloat(document.getElementById('fileSize').value) || 2.5,
+                processing_options: document.getElementById('processingOptions').value,
+                upload_date: new Date().toISOString()
+            };
+
+            await makeRequest('/api/media/upload', 'POST', uploadData);
+        }
+
+        window.addEventListener('load', async () => {
+            updateOutput('Media Service Test Page Loaded');
+            updateOutput('Performing initial health check...');
+            await testHealth();
+        });
+    </script>
+</body>
+</html>
