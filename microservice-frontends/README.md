@@ -253,3 +253,4 @@ For issues or questions:
 2. Review service logs
 3. Check the main StockPilot documentation
 4. Create an issue in the project repository
+# Force redeploy
