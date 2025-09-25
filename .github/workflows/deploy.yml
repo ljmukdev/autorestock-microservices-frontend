@@ -104,3 +104,4 @@ jobs:
         service: settings-service
         working-directory: microservices/settings-service
 
+

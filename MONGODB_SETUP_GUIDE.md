@@ -1,4 +1,4 @@
-# MongoDB Setup Guide for StockPilot Microservices
+# MongoDB Setup Guide for AutoRestock Microservices
 
 ## Quick Setup with MongoDB Atlas (Recommended)
 

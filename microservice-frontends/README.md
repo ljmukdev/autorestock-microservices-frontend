@@ -1,6 +1,6 @@
-# StockPilot Microservice Frontends
+# AutoRestock Microservice Frontends
 
-This directory contains individual frontend interfaces for each microservice in the StockPilot system. These frontends allow you to test, debug, and monitor each microservice independently before integrating them into the main application.
+This directory contains individual frontend interfaces for each microservice in the AutoRestock system. These frontends allow you to test, debug, and monitor each microservice independently before integrating them into the main application.
 
 ## 🚀 Quick Start
 
@@ -244,14 +244,14 @@ Shared CSS styles and components:
 
 ## 📄 License
 
-This project is part of the StockPilot system. See the main project README for license information.
+This project is part of the AutoRestock system. See the main project README for license information.
 
 ## 🆘 Support
 
 For issues or questions:
 1. Check the troubleshooting section
 2. Review service logs
-3. Check the main StockPilot documentation
+3. Check the main AutoRestock documentation
 4. Create an issue in the project repository
 # Force redeploy
 

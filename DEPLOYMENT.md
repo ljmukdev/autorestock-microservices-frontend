@@ -1,6 +1,6 @@
-# StockPilot Deployment Guide
+# AutoRestock Deployment Guide
 
-This guide covers deploying StockPilot's microservice architecture to Railway with GitHub integration.
+This guide covers deploying AutoRestock's microservice architecture to Railway with GitHub integration.
 
 ## 🚀 Railway Deployment
 
@@ -237,4 +237,5 @@ railway variables
 ---
 
 **Need Help?** Check the individual service READMEs or create an issue in the GitHub repository.
+
 

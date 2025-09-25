@@ -76,7 +76,7 @@ STATUS_SERVICE_URL=https://your-status-service.railway.app
 
 1. Get your API Gateway URL from Railway dashboard
 2. Visit the URL in your browser
-3. You should see your StockPilot frontend
+3. You should see your AutoRestock frontend
 4. Test the navigation and API calls
 
 ## 📁 What's Included
@@ -105,9 +105,10 @@ Your repository now contains:
 
 ## 🎉 You're Done!
 
-Your StockPilot frontend is now deployed and ready to work with your microservice architecture. The frontend will look and work exactly like your old monolithic application, but now it's powered by microservices!
+Your AutoRestock frontend is now deployed and ready to work with your microservice architecture. The frontend will look and work exactly like your old monolithic application, but now it's powered by microservices!
 
 ---
 
 **Need Help?** Check the detailed guides in `DEPLOYMENT.md` and `README-Frontend.md`
+
 

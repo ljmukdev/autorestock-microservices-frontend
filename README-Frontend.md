@@ -1,18 +1,18 @@
-# StockPilot Frontend - Microservice Architecture
+# AutoRestock Frontend - Microservice Architecture
 
-This directory contains the frontend application for StockPilot, adapted to work with the microservice architecture.
+This directory contains the frontend application for AutoRestock, adapted to work with the microservice architecture.
 
 ## Structure
 
 ```
 frontend/
 ├── css/
-│   └── stockpilot-global.css    # Global styles
+│   └── autorestock-global.css    # Global styles
 ├── js/
-│   └── stockpilot-api.js        # API client for microservices
+│   └── autorestock-api.js        # API client for microservices
 ├── images/
-│   ├── stockpilot-logo.png      # Main logo
-│   └── stockpilot-logo-vector.png
+│   ├── autorestock-logo.png      # Main logo
+│   └── autorestock-logo-vector.png
 ├── *.html                       # All HTML pages
 └── public/                      # Additional static assets
 
@@ -101,8 +101,8 @@ npm run dev
 
 ### Frontend Modifications
 - All HTML files are in the `frontend/` directory
-- Global styles are in `frontend/css/stockpilot-global.css`
-- API client is in `frontend/js/stockpilot-api.js`
+- Global styles are in `frontend/css/autorestock-global.css`
+- API client is in `frontend/js/autorestock-api.js`
 - The API client automatically works with the microservice architecture
 
 ## Troubleshooting
@@ -130,4 +130,5 @@ If you see "Service unavailable" errors:
 3. Customize the UI as needed
 4. Add authentication/authorization if required
 5. Implement real-time updates using WebSockets if needed
+
 

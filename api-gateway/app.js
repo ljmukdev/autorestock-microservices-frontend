@@ -1,5 +1,5 @@
 /**
- * StockPilot API Gateway
+ * AutoRestock API Gateway
  * Routes frontend requests to appropriate microservices
  */
 
@@ -830,7 +830,7 @@ app.get('/api/dashboard/summary', async (req, res) => {
 // Test endpoint for frontend connectivity
 app.get('/test', (req, res) => {
   res.json({ 
-    message: 'StockPilot API Gateway is running',
+    message: 'AutoRestock API Gateway is running',
     timestamp: new Date().toISOString(),
     version: '1.0.0'
   });
@@ -852,7 +852,7 @@ app.use((err, req, res, next) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 StockPilot API Gateway running on port ${PORT}`);
+  console.log(`🚀 AutoRestock API Gateway running on port ${PORT}`);
   console.log(`📡 Proxying to microservices:`);
   Object.entries(microservices).forEach(([name, url]) => {
     console.log(`   ${name}: ${url}`);

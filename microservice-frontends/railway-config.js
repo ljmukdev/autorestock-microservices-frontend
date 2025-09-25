@@ -1,5 +1,5 @@
 /**
- * Railway Configuration for StockPilot Microservice Frontends
+ * Railway Configuration for AutoRestock Microservice Frontends
  * This file contains the Railway URLs for each deployed microservice
  */
 

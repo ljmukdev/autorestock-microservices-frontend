@@ -24,5 +24,5 @@ stockpilot-auto-buying-service-service URL: https://stockpilot-auto-buying-servi
 
 Database
 
-StockPilotDB URL: https://shortline.proxy.rlwy.net:10360
+AutoRestockDB URL: https://shortline.proxy.rlwy.net:10360
 

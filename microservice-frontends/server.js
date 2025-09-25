@@ -1,81 +1,36 @@
 
 const express = require('express');
 const path = require('path');
-const cors = require('cors');
 const fs = require('fs');
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
-// Debug logging middleware
+// Set CSP headers to allow eBay service connections
 app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-    console.log(`Request headers:`, req.headers);
-    next();
+  res.setHeader('Content-Security-Policy', 
+    "default-src 'self'; " +
+    "style-src 'self' 'unsafe-inline'; " +
+    "script-src 'self' 'unsafe-inline'; " +
+    "img-src 'self' data: https:; " +
+    "connect-src 'self' https://stockpilot-ebay-oauth-production.up.railway.app https://*.railway.app https://*.up.railway.app; " +
+    "font-src 'self'; " +
+    "object-src 'none'; " +
+    "media-src 'self'; " +
+    "frame-src 'none'; " +
+    "base-uri 'self'; " +
+    "form-action 'self'; " +
+    "frame-ancestors 'self'; " +
+    "script-src-attr 'none'; " +
+    "upgrade-insecure-requests"
+  );
+  next();
 });
 
-app.use(cors({
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
-
-app.use(express.json());
-
-// Debug: List all files in directory
-app.get('/debug/files', (req, res) => {
-    try {
-        const files = fs.readdirSync(__dirname);
-        console.log('Files in directory:', files);
-        res.json({
-            files: files,
-            dashboardExists: files.includes('dashboard.html'),
-            testFiles: files.filter(f => f.startsWith('test-')),
-            timestamp: new Date().toISOString()
-        });
-    } catch (error) {
-        console.error('Error reading directory:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Debug: Check dashboard file
-app.get('/debug/dashboard', (req, res) => {
-    const dashboardPath = path.join(__dirname, 'dashboard.html');
-    try {
-        const stats = fs.statSync(dashboardPath);
-        const content = fs.readFileSync(dashboardPath, 'utf8');
-        console.log('Dashboard file stats:', stats);
-        console.log('Dashboard file size:', stats.size);
-        console.log('Dashboard first 200 chars:', content.substring(0, 200));
-        
-        res.json({
-            exists: true,
-            size: stats.size,
-            modified: stats.mtime,
-            firstChars: content.substring(0, 200),
-            path: dashboardPath
-        });
-    } catch (error) {
-        console.error('Dashboard file error:', error);
-        res.status(404).json({ error: error.message, path: dashboardPath });
-    }
-});
-
-app.get('/', (req, res) => {
-    const dashboardPath = path.join(__dirname, 'dashboard.html');
-    console.log('Serving dashboard from:', dashboardPath);
-    console.log('Dashboard file exists:', fs.existsSync(dashboardPath));
-    
-    try {
-        res.sendFile(dashboardPath);
-        console.log('Dashboard served successfully');
-    } catch (error) {
-        console.error('Error serving dashboard:', error);
-        res.status(500).send('Error serving dashboard: ' + error.message);
-    }
-});
-
+// Serve static files from the root directory (for redirect files)
 app.use(express.static(__dirname));
+
+// Serve static files from the frontend directory
+app.use(express.static(path.join(__dirname, 'frontend')));
 
 app.get('/health', (req, res) => {
     res.json({
@@ -83,6 +38,22 @@ app.get('/health', (req, res) => {
         service: 'microservice-testing-dashboard',
         timestamp: new Date().toISOString()
     });
+});
+
+// Serve microservice dashboard at root
+app.get('/', (req, res) => {
+    const dashboardPath = path.join(__dirname, 'dashboard-microservice.html');
+    console.log('Serving microservice dashboard from:', dashboardPath);
+    console.log('Dashboard file exists:', fs.existsSync(dashboardPath));
+    
+    try {
+        res.sendFile(dashboardPath);
+        console.log('Microservice dashboard served successfully');
+    } catch (error) {
+        console.error('Error serving microservice dashboard:', error);
+        // Fallback to original dashboard
+        res.sendFile(path.join(__dirname, 'frontend', 'dashboard.html'));
+    }
 });
 
 const services = ['settings', 'inventory', 'sales', 'purchases', 'ebay', 'vinted', 'reporting', 'accounting', 'ad-generator', 'rules-engine', 'auto-buying', 'media', 'email-ingest', 'status'];
@@ -103,8 +74,9 @@ services.forEach(service => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-    console.log('MICROSERVICE TESTING DASHBOARD running on port ' + PORT);
-    console.log('Main route: / -> dashboard.html');
+    console.log('🚀 AutoRestock Frontend Server running on port ' + PORT);
+    console.log('📁 Serving microservice dashboard and test pages');
+    console.log('🔒 CSP configured to allow eBay service connections');
 });
 
 module.exports = app;

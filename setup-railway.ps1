@@ -1,7 +1,7 @@
-# StockPilot Railway Setup Script
-# This script helps set up Railway deployment for StockPilot microservices
+# AutoRestock Railway Setup Script
+# This script helps set up Railway deployment for AutoRestock microservices
 
-Write-Host "🚀 StockPilot Railway Setup" -ForegroundColor Green
+Write-Host "🚀 AutoRestock Railway Setup" -ForegroundColor Green
 Write-Host "================================" -ForegroundColor Green
 
 # Check if Railway CLI is installed
@@ -119,4 +119,5 @@ Write-Host "  railway variables       - Manage environment variables" -Foregroun
 Write-Host "  railway domain          - Manage custom domains" -ForegroundColor White
 Write-Host ""
 Write-Host "📖 For detailed instructions, see DEPLOYMENT.md" -ForegroundColor Yellow
+
 

@@ -74,7 +74,7 @@ STATUS_SERVICE_URL=https://your-status-service.railway.app
 
 ## 🎉 Success!
 
-Once deployed, your StockPilot frontend will:
+Once deployed, your AutoRestock frontend will:
 - Look identical to your old monolithic application
 - Work with your existing microservice architecture
 - Handle all API calls through the API Gateway
@@ -85,4 +85,5 @@ Once deployed, your StockPilot frontend will:
 **Total Time**: ~10-15 minutes
 **Difficulty**: Easy
 **Result**: Production-ready frontend with microservice backend
+
 

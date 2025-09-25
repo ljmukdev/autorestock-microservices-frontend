@@ -1,10 +1,10 @@
-# StockPilot - Microservice Architecture
+# AutoRestock - Microservice Architecture
 
 A comprehensive inventory management system built with a microservice architecture, designed for reselling and e-commerce operations.
 
 ## 🏗️ Architecture Overview
 
-StockPilot is built as a collection of microservices, each handling specific business domains:
+AutoRestock is built as a collection of microservices, each handling specific business domains:
 
 ### Core Services
 - **Purchases Service** - Manage purchase records and inventory intake
@@ -42,7 +42,7 @@ StockPilot is built as a collection of microservices, each handling specific bus
 1. **Clone the repository:**
    ```bash
    git clone <your-repo-url>
-   cd stockpilot
+   cd autorestock
    ```
 
 2. **Start the API Gateway and Frontend:**
@@ -65,7 +65,7 @@ This project is configured for Railway deployment. Each microservice can be depl
 ## 📁 Project Structure
 
 ```
-stockpilot/
+autorestock/
 ├── api-gateway/                 # API Gateway and Frontend Server
 ├── frontend/                    # Frontend Application
 ├── microservices/              # Individual Microservices
@@ -144,5 +144,6 @@ For support and questions:
 
 ---
 
-**StockPilot** - Streamlining your reselling business with intelligent automation.
+**AutoRestock** - Streamlining your reselling business with intelligent automation.
+
 

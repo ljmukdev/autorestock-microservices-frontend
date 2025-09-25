@@ -3,7 +3,7 @@
 # Microservices Health Check Script
 # Run this to quickly test all services
 
-echo "🔍 Testing StockPilot Microservices Health..."
+echo "🔍 Testing AutoRestock Microservices Health..."
 
 # Colors for output
 RED='\033[0;31m'

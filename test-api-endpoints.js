@@ -164,7 +164,7 @@ async function testService(serviceName, baseUrl) {
 
 // Main test function
 async function runTests() {
-  console.log(`${colors.bold}${colors.blue}🚀 StockPilot Microservices API Test Suite${colors.reset}`);
+  console.log(`${colors.bold}${colors.blue}🚀 AutoRestock Microservices API Test Suite${colors.reset}`);
   console.log(`${colors.yellow}Testing all microservice endpoints...${colors.reset}\n`);
   
   const results = {};

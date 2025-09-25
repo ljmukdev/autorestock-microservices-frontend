@@ -1,7 +1,7 @@
-# StockPilot Frontend Startup Script
+# AutoRestock Frontend Startup Script
 # Starts the API Gateway and serves the frontend
 
-Write-Host "🚀 Starting StockPilot Frontend..." -ForegroundColor Green
+Write-Host "🚀 Starting AutoRestock Frontend..." -ForegroundColor Green
 
 # Check if Node.js is installed
 try {
@@ -29,4 +29,5 @@ Write-Host ""
 Write-Host "Press Ctrl+C to stop the server" -ForegroundColor Yellow
 
 npm start
+
 

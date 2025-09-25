@@ -1,6 +1,6 @@
 # GitHub Repository Setup Guide
 
-This guide will help you set up your StockPilot repository on GitHub and configure it for Railway deployment.
+This guide will help you set up your AutoRestock repository on GitHub and configure it for Railway deployment.
 
 ## 🚀 Step 1: Create GitHub Repository
 
@@ -194,5 +194,6 @@ railway up
 
 ---
 
-**Your StockPilot microservice architecture is now ready for production deployment! 🎉**
+**Your AutoRestock microservice architecture is now ready for production deployment! 🎉**
+
 

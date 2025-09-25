@@ -142,14 +142,14 @@ app.get('/', (req, res) => {
 app.get('/health', (req, res) => {
   res.json({ 
       status: 'ok', 
-      service: 'StockPilot Frontend', 
+      service: 'AutoRestock Frontend', 
       timestamp: new Date().toISOString() 
   });
 });
 
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 StockPilot Frontend Server running on port ${PORT}`);
+  console.log(`🚀 AutoRestock Frontend Server running on port ${PORT}`);
   console.log(`📁 Serving static files from: ${path.join(__dirname, 'frontend')}`);
   console.log(`🔒 CSP configured to allow eBay service connections`);
   console.log(`🌐 Railway will handle the external URL routing`);

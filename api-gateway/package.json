@@ -1,7 +1,7 @@
 {
-  "name": "stockpilot-api-gateway",
+  "name": "autorestock-api-gateway",
   "version": "1.0.0",
-  "description": "API Gateway for StockPilot Microservices",
+  "description": "API Gateway for AutoRestock Microservices",
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
@@ -20,8 +20,9 @@
   "devDependencies": {
     "nodemon": "^3.0.1"
   },
-  "keywords": ["api-gateway", "microservices", "stockpilot"],
-  "author": "StockPilot Team",
+  "keywords": ["api-gateway", "microservices", "autorestock"],
+  "author": "AutoRestock Team",
   "license": "MIT"
 }
+
 

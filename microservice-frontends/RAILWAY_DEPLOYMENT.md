@@ -1,4 +1,4 @@
-# Railway Deployment Guide for StockPilot Microservice Frontends
+# Railway Deployment Guide for AutoRestock Microservice Frontends
 
 This guide explains how to deploy and configure the microservice frontends to work with your Railway-deployed microservices.
 
@@ -35,7 +35,7 @@ You can deploy the frontends in several ways:
 2. Update the launcher to point to the deployed frontend URLs
 
 #### Option C: Deploy with Main Application
-1. Include the frontends in your main StockPilot application
+1. Include the frontends in your main AutoRestock application
 2. Serve them from a `/microservice-frontends` route
 
 ## 🔧 Configuration Steps

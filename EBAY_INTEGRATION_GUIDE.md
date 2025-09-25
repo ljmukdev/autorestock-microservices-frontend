@@ -20,10 +20,10 @@ Your eBay OAuth integration is now fully functional with automatic token managem
 ### 1. Backend Integration (Node.js)
 
 ```javascript
-const { StockPilotEbayIntegration } = require('./microservices/ebay-service/main-program-integration');
+const { AutoRestockEbayIntegration } = require('./microservices/ebay-service/main-program-integration');
 
 // Create integration instance
-const ebayIntegration = new StockPilotEbayIntegration();
+const ebayIntegration = new AutoRestockEbayIntegration();
 
 // Initialize (handles token validation automatically)
 const initResult = await ebayIntegration.initialize();
@@ -111,8 +111,8 @@ ebayIntegration.stopAutoSync();
 ### Example 1: Get Recent Purchases
 
 ```javascript
-const { StockPilotEbayIntegration } = require('./main-program-integration');
-const integration = new StockPilotEbayIntegration();
+const { AutoRestockEbayIntegration } = require('./main-program-integration');
+const integration = new AutoRestockEbayIntegration();
 
 async function getRecentPurchases() {
     // Initialize (handles auth automatically)
@@ -135,7 +135,7 @@ async function getRecentPurchases() {
 ### Example 2: Auto-Sync with Error Handling
 
 ```javascript
-const integration = new StockPilotEbayIntegration();
+const integration = new AutoRestockEbayIntegration();
 
 async function setupAutoSync() {
     // Initialize
@@ -256,7 +256,7 @@ EBAY_TOKEN_REFRESH_THRESHOLD=5
 ### Customization Options
 
 ```javascript
-const integration = new StockPilotEbayIntegration();
+const integration = new AutoRestockEbayIntegration();
 
 // Custom auto-sync interval
 integration.startAutoSync(60); // 60 minutes
@@ -307,4 +307,4 @@ If you encounter any issues:
 3. Test with the demo page: `frontend/ebay-integration-demo.html`
 4. Run the test suite: `node test-complete-integration.js`
 
-Your eBay integration is now ready to power your StockPilot application! 🎉
+Your eBay integration is now ready to power your AutoRestock application! 🎉

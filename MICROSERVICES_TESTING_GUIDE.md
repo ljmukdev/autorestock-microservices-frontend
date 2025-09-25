@@ -1,4 +1,4 @@
-# 🚀 StockPilot Microservices Testing Guide
+# 🚀 AutoRestock Microservices Testing Guide
 
 ## **Phase 1: Quick Health Check (5 minutes)**
 
