@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StockPilot - Add Consumable</title>
+    <title>AutoRestock - Add Consumable</title>
     <style>
         * {
             margin: 0;
@@ -335,7 +335,7 @@
             }
         }
     </style>
-    <script src="js/stockpilot-api.js"></script>
+    <script src="js/autorestock-api.js"></script>
 </head>
 <body>
     <div class="container">
@@ -652,8 +652,8 @@ async function refreshDynamicData() {
     console.log('🔄 Refreshing dynamic data...');
     
     // Clear API cache
-    if (window.stockpilotAPI) {
-        window.stockpilotAPI.clearCache();
+    if (window.autorestockAPI) {
+        window.autorestockAPI.clearCache();
     }
     
     // Reload page to refresh everything

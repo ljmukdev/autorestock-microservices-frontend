@@ -1,5 +1,5 @@
 /**
- * StockPilot Core Configuration
+ * AutoRestock Core Configuration
  * Environment settings, service URLs, and feature flags
  */
 
@@ -46,7 +46,7 @@ export const FEATURES = {
 // Debug logging helper
 export function debugLog(message, data = null) {
   if (FEATURES.ENABLE_DEBUG_LOGGING) {
-    console.log(`[StockPilot] ${message}`, data || '');
+    console.log(`[AutoRestock] ${message}`, data || '');
   }
 }
 

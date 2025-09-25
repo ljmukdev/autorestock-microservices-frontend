@@ -1,5 +1,5 @@
 /**
- * StockPilot Log Sale Service
+ * AutoRestock Log Sale Service
  * Placeholder for sale logging functionality
  */
 

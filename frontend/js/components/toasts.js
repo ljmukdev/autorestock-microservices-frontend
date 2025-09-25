@@ -1,5 +1,5 @@
 /**
- * StockPilot Toast Component
+ * AutoRestock Toast Component
  * Notification system for user feedback
  */
 

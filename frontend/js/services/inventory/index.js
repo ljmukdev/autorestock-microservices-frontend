@@ -1,5 +1,5 @@
 /**
- * StockPilot Inventory Service
+ * AutoRestock Inventory Service
  * Placeholder for inventory management functionality
  */
 

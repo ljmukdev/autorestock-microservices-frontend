@@ -1,5 +1,5 @@
 /**
- * Professional OAuth Handler for StockPilot
+ * Professional OAuth Handler for AutoRestock
  * Handles eBay OAuth redirects and token validation
  */
 

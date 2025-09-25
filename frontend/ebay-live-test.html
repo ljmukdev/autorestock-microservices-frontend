@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>eBay Live Data Test - StockPilot</title>
+    <title>eBay Live Data Test - AutoRestock</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -107,8 +107,8 @@
         </div>
     </div>
 
-    <!-- Include the updated StockPilot API -->
-    <script src="js/stockpilot-api.js"></script>
+    <!-- Include the updated AutoRestock API -->
+    <script src="js/autorestock-api.js"></script>
     
     <script>
         class EbayLiveTester {
@@ -139,7 +139,7 @@
                 this.log('🔗 Testing eBay connection...', 'loading');
                 
                 try {
-                    const result = await stockpilotAPI.testEbayService();
+                    const result = await autorestockAPI.testEbayService();
                     
                     if (result.success) {
                         this.log('✅ eBay Connection Successful!', 'success');
@@ -158,7 +158,7 @@
                 this.log('📦 Getting live eBay purchases...', 'loading');
                 
                 try {
-                    const result = await stockpilotAPI.getEbayOrders(10);
+                    const result = await autorestockAPI.getEbayOrders(10);
                     
                     if (result.success) {
                         this.log('✅ Live Purchases Retrieved!', 'success');
@@ -179,7 +179,7 @@
                 this.log('💰 Getting live eBay sales...', 'loading');
                 
                 try {
-                    const result = await stockpilotAPI.getEbaySales(10);
+                    const result = await autorestockAPI.getEbaySales(10);
                     
                     if (result.success) {
                         this.log('✅ Live Sales Retrieved!', 'success');
@@ -197,7 +197,7 @@
                 this.log('👤 Getting live eBay account data...', 'loading');
                 
                 try {
-                    const result = await stockpilotAPI.getEbayAccountSummary();
+                    const result = await autorestockAPI.getEbayAccountSummary();
                     
                     if (result.success) {
                         this.log('✅ Live Account Data Retrieved!', 'success');

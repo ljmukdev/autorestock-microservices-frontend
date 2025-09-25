@@ -1,5 +1,5 @@
  exact replica of the program,. test functionality. aapi/**
- * StockPilot Purchases View
+ * AutoRestock Purchases View
  * Coordinates purchases service with UI
  */
 

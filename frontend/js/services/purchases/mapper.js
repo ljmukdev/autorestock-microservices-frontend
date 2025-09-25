@@ -1,5 +1,5 @@
 /**
- * StockPilot Purchases Mapper
+ * AutoRestock Purchases Mapper
  * Defensive mapping of eBay payloads to normalized purchase format
  */
 

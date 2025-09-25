@@ -1,5 +1,5 @@
 /**
- * OAuth Integration for StockPilot Frontend
+ * OAuth Integration for AutoRestock Frontend
  * Provides seamless eBay OAuth integration for purchase syncing
  */
 

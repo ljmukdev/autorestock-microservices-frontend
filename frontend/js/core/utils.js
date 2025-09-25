@@ -1,5 +1,5 @@
 /**
- * StockPilot Core Utilities
+ * AutoRestock Core Utilities
  * Common helper functions and DOM utilities
  */
 

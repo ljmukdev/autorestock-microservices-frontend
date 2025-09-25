@@ -1,5 +1,5 @@
 /**
- * StockPilot Home View
+ * AutoRestock Home View
  * Dashboard and overview functionality
  */
 
@@ -41,8 +41,8 @@ class HomeView {
 
     const html = `
       <div class="card">
-        <h3 class="section-title">🏠 StockPilot Dashboard</h3>
-        <p>Welcome to StockPilot - Your automated inventory management system.</p>
+        <h3 class="section-title">🏠 AutoRestock Dashboard</h3>
+        <p>Welcome to AutoRestock - Your automated inventory management system.</p>
         
         <div class="stats-grid">
           <div class="stat-card">

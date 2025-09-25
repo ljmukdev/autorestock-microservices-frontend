@@ -1,5 +1,5 @@
 /**
- * StockPilot HTTP Client with OAuth Auto-Redirect
+ * AutoRestock HTTP Client with OAuth Auto-Redirect
  */
 
 import { DEFAULT_REQUEST_OPTIONS, debugLog } from './config.js';

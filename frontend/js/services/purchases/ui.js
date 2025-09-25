@@ -1,5 +1,5 @@
 /**
- * StockPilot Purchases UI
+ * AutoRestock Purchases UI
  * Renders purchase lists, cards, and status information
  */
 

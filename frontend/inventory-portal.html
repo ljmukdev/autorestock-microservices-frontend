@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StockPilot - Inventory Management</title>
+    <title>AutoRestock - Inventory Management</title>
     <style>
         * {
             margin: 0;
@@ -404,7 +404,7 @@
             }
         }
     </style>
-    <script src="js/stockpilot-api.js"></script>
+    <script src="js/autorestock-api.js"></script>
 </head>
 <body>
     <div class="container">
@@ -486,7 +486,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             selectElement.innerHTML = '<option value="">Loading...</option>';
             selectElement.disabled = true;
             
-            const options = await stockpilotAPI.getPlatformOptions();
+            const options = await autorestockAPI.getPlatformOptions();
             
             selectElement.innerHTML = '<option value="">Select platform...</option>';
             
@@ -863,8 +863,8 @@ async function refreshDynamicData() {
     console.log('🔄 Refreshing dynamic data...');
     
     // Clear API cache
-    if (window.stockpilotAPI) {
-        window.stockpilotAPI.clearCache();
+    if (window.autorestockAPI) {
+        window.autorestockAPI.clearCache();
     }
     
     // Reload page to refresh everything

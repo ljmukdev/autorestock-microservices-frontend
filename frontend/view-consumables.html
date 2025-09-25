@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StockPilot - Consumables Management</title>
+    <title>AutoRestock - Consumables Management</title>
     <style>
         /* Research-Based Brown Theme for Consumables */
         body {
@@ -633,13 +633,13 @@
             }
         }
     </style>
-    <script src="js/stockpilot-api.js"></script>
+    <script src="js/autorestock-api.js"></script>
 </head>
 <body>
     <div class="container">
         <!-- Page Header - Now at the top -->
         <div class="header">
-            <h1>&#129520; StockPilot Consumables</h1>
+            <h1>&#129520; AutoRestock Consumables</h1>
             <p>Track your consumable supplies and costs with precision</p>
         </div>
 
@@ -845,7 +845,7 @@
         };
 
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('ðŸš€ StockPilot Consumables initialized');
+            console.log('ðŸš€ AutoRestock Consumables initialized');
             checkAPIs();
             loadConsumables();
             // Set today's date as default
@@ -1275,8 +1275,8 @@ async function refreshDynamicData() {
     console.log('🔄 Refreshing dynamic data...');
     
     // Clear API cache
-    if (window.stockpilotAPI) {
-        window.stockpilotAPI.clearCache();
+    if (window.autorestockAPI) {
+        window.autorestockAPI.clearCache();
     }
     
     // Reload page to refresh everything

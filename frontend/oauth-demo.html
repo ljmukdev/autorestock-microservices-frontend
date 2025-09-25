@@ -1,380 +1,46 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StockPilot - OAuth Integration Demo</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
-            color: white;
-            padding: 40px;
-            text-align: center;
-        }
-
-        .header h1 {
-            margin: 0;
-            font-size: 2.5rem;
-            font-weight: 700;
-        }
-
-        .header p {
-            margin: 10px 0 0 0;
-            opacity: 0.9;
-            font-size: 1.1rem;
-        }
-
-        .content {
-            padding: 40px;
-        }
-
-        .demo-section {
-            margin-bottom: 40px;
-            padding: 30px;
-            background: #f8fafc;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
-        }
-
-        .demo-section h2 {
-            margin: 0 0 20px 0;
-            color: #1e293b;
-            font-size: 1.5rem;
-        }
-
-        .demo-section p {
-            margin: 0 0 20px 0;
-            color: #64748b;
-            line-height: 1.6;
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-decoration: none;
-            margin-right: 12px;
-            margin-bottom: 12px;
-        }
-
-        .btn-primary {
-            background: #2563eb;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #1d4ed8;
-            transform: translateY(-1px);
-        }
-
-        .btn-secondary {
-            background: #64748b;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #475569;
-        }
-
-        .btn-success {
-            background: #10b981;
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #059669;
-        }
-
-        .status-display {
-            margin-top: 20px;
-            padding: 20px;
-            border-radius: 8px;
-            font-family: 'Monaco', 'Menlo', monospace;
-            font-size: 0.9rem;
-            white-space: pre-wrap;
-            background: #1e293b;
-            color: #e2e8f0;
-            overflow-x: auto;
-        }
-
-        .status-success {
-            background: #064e3b;
-            color: #a7f3d0;
-        }
-
-        .status-error {
-            background: #7f1d1d;
-            color: #fecaca;
-        }
-
-        .status-info {
-            background: #1e3a8a;
-            color: #bfdbfe;
-        }
-
-        .feature-list {
-            list-style: none;
-            padding: 0;
-        }
-
-        .feature-list li {
-            padding: 8px 0;
-            color: #64748b;
-        }
-
-        .feature-list li::before {
-            content: '✅ ';
-            margin-right: 8px;
-        }
-
-        .oauth-status {
-            padding: 16px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-weight: 500;
-        }
-
-        .oauth-status.connected {
-            background: #dcfce7;
-            color: #166534;
-            border: 1px solid #bbf7d0;
-        }
-
-        .oauth-status.disconnected {
-            background: #fef2f2;
-            color: #dc2626;
-            border: 1px solid #fecaca;
-        }
-
-        .oauth-status.checking {
-            background: #fef3c7;
-            color: #d97706;
-            border: 1px solid #fed7aa;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <title>AutoRestock – eBay OAuth Result</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {font-family: system-ui,Segoe UI,Roboto,Arial,sans-serif; background:#0b0f17; color:#e6edf3; padding:40px;}
+    .card {max-width:720px;margin:0 auto;background:#111827;border:1px solid #1f2937;border-radius:16px;padding:28px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    h1 {margin:0 0 12px}
+    .ok {color:#22c55e}
+    .bad {color:#f97316}
+    .btn {display:inline-block;margin-top:16px;padding:10px 16px;border-radius:12px;border:1px solid #374151;background:#1f2937;color:#fff;text-decoration:none}
+    .btn:hover {background:#2b3646}
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🔐 StockPilot OAuth Integration</h1>
-            <p>Professional eBay Authentication & Purchase Syncing</p>
-        </div>
-
-        <div class="content">
-            <!-- Authentication Status -->
-            <div class="demo-section">
-                <h2>🔍 Authentication Status</h2>
-                <div id="oauth-status" class="oauth-status checking">
-                    Checking authentication status...
-                </div>
-                <button id="check-auth-btn" class="btn btn-secondary">
-                    🔍 Check Status
-                </button>
-                <button id="test-connection-btn" class="btn btn-primary">
-                    🔗 Test Connection
-                </button>
-            </div>
-
-            <!-- Purchase Sync Demo -->
-            <div class="demo-section">
-                <h2>🛒 Purchase Sync Demo</h2>
-                <p>Click the button below to sync your eBay purchases. If authentication is required, you'll see a professional OAuth modal.</p>
-                
-                <button id="sync-purchases-btn" class="btn btn-primary">
-                    🔄 Sync Purchases
-                </button>
-                
-                <button id="get-purchases-btn" class="btn btn-secondary">
-                    📋 Get Recent Purchases
-                </button>
-            </div>
-
-            <!-- Features -->
-            <div class="demo-section">
-                <h2>✨ Features</h2>
-                <ul class="feature-list">
-                    <li>Automatic OAuth token validation</li>
-                    <li>Professional modal with auto-redirect</li>
-                    <li>Seamless fallback to local data</li>
-                    <li>Real-time authentication status</li>
-                    <li>Mobile-responsive design</li>
-                    <li>Error handling and retry logic</li>
-                </ul>
-            </div>
-
-            <!-- Status Display -->
-            <div class="demo-section">
-                <h2>📊 Status & Logs</h2>
-                <div id="status-display" class="status-display">
-Ready to test OAuth integration...
-
-Click any button above to see the OAuth system in action.
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Load OAuth Integration Scripts -->
-    <script src="js/oauth-handler.js"></script>
-    <script src="js/oauth-api-wrapper.js"></script>
-    <script src="js/oauth-integration.js"></script>
-
-    <script>
-        // Demo functionality
-        let statusDisplay = document.getElementById('status-display');
-        let oauthStatus = document.getElementById('oauth-status');
-
-        // Update status display
-        function updateStatus(message, type = 'info') {
-            const timestamp = new Date().toLocaleTimeString();
-            statusDisplay.textContent += `\n[${timestamp}] ${message}`;
-            statusDisplay.className = `status-display status-${type}`;
-            statusDisplay.scrollTop = statusDisplay.scrollHeight;
-        }
-
-        // Update OAuth status
-        function updateOAuthStatus(status, message) {
-            oauthStatus.className = `oauth-status ${status}`;
-            oauthStatus.textContent = message;
-        }
-
-        // Check authentication status
-        async function checkAuthStatus() {
-            updateOAuthStatus('checking', 'Checking authentication status...');
-            updateStatus('Checking eBay authentication status...', 'info');
-
-            try {
-                const authStatus = await window.oauthApiWrapper.checkAuthStatus();
-                
-                if (authStatus.authenticated) {
-                    updateOAuthStatus('connected', `✅ Connected - Token expires in ${Math.floor(authStatus.tokenStatus.expires_in_seconds / 60)} minutes`);
-                    updateStatus('✅ Authentication successful - eBay API is ready', 'success');
-                } else {
-                    updateOAuthStatus('disconnected', '❌ Not authenticated - OAuth required');
-                    updateStatus('❌ Authentication required - OAuth flow will be triggered', 'error');
-                }
-            } catch (error) {
-                updateOAuthStatus('disconnected', '❌ Error checking status');
-                updateStatus(`❌ Error: ${error.message}`, 'error');
-            }
-        }
-
-        // Test connection
-        async function testConnection() {
-            updateStatus('Testing eBay API connection...', 'info');
-
-            try {
-                const result = await window.oauthApiWrapper.testConnection();
-                
-                if (result.oauth_required) {
-                    updateStatus('OAuth required - Modal will be shown automatically', 'info');
-                } else if (result.success) {
-                    updateStatus('✅ Connection test successful!', 'success');
-                    updateAuthStatus();
-                } else {
-                    updateStatus(`❌ Connection test failed: ${result.error}`, 'error');
-                }
-            } catch (error) {
-                updateStatus(`❌ Connection error: ${error.message}`, 'error');
-            }
-        }
-
-        // Sync purchases
-        async function syncPurchases() {
-            updateStatus('Starting purchase sync...', 'info');
-
-            try {
-                const result = await window.oauthApiWrapper.getPurchases({ limit: 10 });
-                
-                if (result.oauth_required) {
-                    updateStatus('OAuth required - Professional modal will be shown', 'info');
-                } else if (result.success) {
-                    const purchaseCount = result.data?.data?.recentPurchases?.length || 0;
-                    updateStatus(`✅ Sync successful - Found ${purchaseCount} purchases`, 'success');
-                } else {
-                    updateStatus(`❌ Sync failed: ${result.error}`, 'error');
-                }
-            } catch (error) {
-                updateStatus(`❌ Sync error: ${error.message}`, 'error');
-            }
-        }
-
-        // Get recent purchases
-        async function getRecentPurchases() {
-            updateStatus('Fetching recent purchases...', 'info');
-
-            try {
-                const result = await window.oauthApiWrapper.getPurchases({ limit: 5 });
-                
-                if (result.oauth_required) {
-                    updateStatus('OAuth required - Authentication modal will appear', 'info');
-                } else if (result.success) {
-                    const purchases = result.data?.data?.recentPurchases || [];
-                    updateStatus(`✅ Retrieved ${purchases.length} recent purchases`, 'success');
-                    
-                    if (purchases.length > 0) {
-                        updateStatus('Recent purchases:', 'info');
-                        purchases.forEach((purchase, index) => {
-                            updateStatus(`  ${index + 1}. ${purchase.title} - £${purchase.price}`, 'info');
-                        });
-                    }
-                } else {
-                    updateStatus(`❌ Failed to get purchases: ${result.error}`, 'error');
-                }
-            } catch (error) {
-                updateStatus(`❌ Error: ${error.message}`, 'error');
-            }
-        }
-
-        // Event listeners
-        document.getElementById('check-auth-btn').addEventListener('click', checkAuthStatus);
-        document.getElementById('test-connection-btn').addEventListener('click', testConnection);
-        document.getElementById('sync-purchases-btn').addEventListener('click', syncPurchases);
-        document.getElementById('get-purchases-btn').addEventListener('click', getRecentPurchases);
-
-        // Listen for OAuth events
-        document.addEventListener('oauthSuccess', (event) => {
-            updateStatus('🎉 OAuth authentication successful!', 'success');
-            checkAuthStatus(); // Refresh status
-        });
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            updateStatus('OAuth integration loaded successfully!', 'success');
-            
-            // Wait for OAuth components to load
-            setTimeout(() => {
-                checkAuthStatus();
-            }, 1000);
-        });
-    </script>
+  <div class="card">
+    <h1 id="title">Authorising…</h1>
+    <p id="msg">Please wait.</p>
+    <a id="sync" class="btn" href="#" style="display:none;">Run Purchases Sync (last 30 days)</a>
+  </div>
+  <script>
+    (function(){
+      const qs = new URLSearchParams(location.search);
+      const ok = qs.get('ok');
+      const err = qs.get('err');
+      const title = document.getElementById('title');
+      const msg = document.getElementById('msg');
+      const syncBtn = document.getElementById('sync');
+      const EBAY_SERVICE_BASE = 'https://delightful-liberation-production.up.railway.app';
+      if (ok === '1') {
+        title.textContent = 'eBay Connected ✅';
+        title.className = 'ok';
+        msg.textContent = 'Your account is now authorised. You can start syncing purchases.';
+        syncBtn.style.display = 'inline-block';
+        syncBtn.href = EBAY_SERVICE_BASE + '/sync/purchases?days=30';
+      } else {
+        title.textContent = 'eBay Authorisation Failed';
+        title.className = 'bad';
+        msg.textContent = 'Please try again.' + (err ? (' Details: ' + err) : '');
+      }
+    })();
+  </script>
 </body>
 </html>
-
-
-
-

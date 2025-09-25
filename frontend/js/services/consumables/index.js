@@ -1,5 +1,5 @@
 /**
- * StockPilot Consumables Service
+ * AutoRestock Consumables Service
  * Placeholder for consumables management functionality
  */
 

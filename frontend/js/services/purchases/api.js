@@ -1,5 +1,5 @@
 /**
- * StockPilot Purchases API
+ * AutoRestock Purchases API
  * Handles all purchase-related API calls
  */
 

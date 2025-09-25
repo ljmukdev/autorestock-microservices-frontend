@@ -1,5 +1,5 @@
 /**
- * StockPilot OAuth Service with Auto-Redirect
+ * AutoRestock OAuth Service with Auto-Redirect
  */
 
 import { API_ENDPOINTS, debugLog } from '../../core/config.js';

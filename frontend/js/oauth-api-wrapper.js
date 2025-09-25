@@ -1,5 +1,5 @@
 /**
- * OAuth API Wrapper for StockPilot
+ * OAuth API Wrapper for AutoRestock
  * Automatically handles OAuth redirects for eBay API calls
  */
 

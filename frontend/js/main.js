@@ -1,5 +1,5 @@
 /**
- * StockPilot SPA Main Entry Point
+ * AutoRestock SPA Main Entry Point
  * Bootstraps the modular single-page application
  */
 
@@ -17,7 +17,7 @@ import { reportsService } from './services/reports/index.js';
 import { settingsService } from './services/settings/index.js';
 import { oauthService } from './services/auth/oauth.js';
 
-class StockPilotApp {
+class AutoRestockApp {
   constructor() {
     this.isInitialized = false;
     this.views = new Map();
@@ -28,7 +28,7 @@ class StockPilotApp {
    */
   async init() {
     try {
-      debugLog('Initializing StockPilot SPA');
+      debugLog('Initializing AutoRestock SPA');
       
       // Validate configuration
       if (!validateConfig()) {
@@ -45,10 +45,10 @@ class StockPilotApp {
       await this.initializeOAuth();
       
       this.isInitialized = true;
-      debugLog('StockPilot SPA initialized successfully');
+      debugLog('AutoRestock SPA initialized successfully');
       
     } catch (error) {
-      console.error('Failed to initialize StockPilot SPA:', error);
+      console.error('Failed to initialize AutoRestock SPA:', error);
       this.showError('Failed to initialize application. Please refresh the page.');
     }
   }
@@ -243,7 +243,7 @@ class StockPilotApp {
       `;
     }
     
-    console.error('StockPilot Error:', message);
+    console.error('AutoRestock Error:', message);
   }
 
   /**
@@ -262,13 +262,13 @@ class StockPilotApp {
 // Initialize application when DOM is ready
 document.addEventListener('DOMContentLoaded', async () => {
   try {
-    const app = new StockPilotApp();
+    const app = new AutoRestockApp();
     await app.init();
     
     // Make app globally available for debugging
-    window.StockPilotApp = app;
+    window.AutoRestockApp = app;
     
-    debugLog('StockPilot SPA ready');
+    debugLog('AutoRestock SPA ready');
   } catch (error) {
     console.error('Critical error during app initialization:', error);
   }
@@ -276,8 +276,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Handle page unload
 window.addEventListener('beforeunload', () => {
-  debugLog('StockPilot SPA unloading');
+  debugLog('AutoRestock SPA unloading');
 });
 
 // Export for testing
-export { StockPilotApp };
+export { AutoRestockApp };

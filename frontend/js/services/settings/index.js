@@ -1,5 +1,5 @@
 /**
- * StockPilot Settings Service
+ * AutoRestock Settings Service
  * Placeholder for settings functionality
  */
 

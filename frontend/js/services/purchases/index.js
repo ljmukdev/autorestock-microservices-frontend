@@ -1,5 +1,5 @@
 /**
- * StockPilot Purchases Service
+ * AutoRestock Purchases Service
  * Main controller for purchase-related functionality
  */
 

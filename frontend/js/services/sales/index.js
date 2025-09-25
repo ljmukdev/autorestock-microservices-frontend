@@ -1,5 +1,5 @@
 /**
- * StockPilot Sales Service
+ * AutoRestock Sales Service
  * Placeholder for sales management functionality
  */
 

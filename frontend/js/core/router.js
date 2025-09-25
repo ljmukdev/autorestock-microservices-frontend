@@ -1,5 +1,5 @@
 /**
- * StockPilot Simple Router
+ * AutoRestock Simple Router
  * Tab-based navigation without history API
  */
 

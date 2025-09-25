@@ -1,5 +1,5 @@
 /**
- * StockPilot Modal Component
+ * AutoRestock Modal Component
  * Reusable modal functionality
  */
 

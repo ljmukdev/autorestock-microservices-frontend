@@ -1,5 +1,5 @@
 /**
- * StockPilot Reports Service
+ * AutoRestock Reports Service
  * Placeholder for reporting functionality
  */
 

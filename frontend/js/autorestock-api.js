@@ -1,23 +1,23 @@
 /**
- * File: stockpilot-api.js
- * Location: frontend/js/stockpilot-api.js
- * Purpose: JavaScript API client for StockPilot frontend communication with backend
+ * File: autorestock-api.js
+ * Location: frontend/js/autorestock-api.js
+ * Purpose: JavaScript API client for AutoRestock frontend communication with backend
  * Description: Provides methods for all API endpoints including settings, eBay integration, 
  *              database operations, purchases, sales, inventory, and reports
- * Author: StockPilot Development Team
+ * Author: AutoRestock Development Team
  * Created: July 16, 2025
  * Last Modified: July 16, 2025
  */
 
-// StockPilot API Client Class
-class StockPilotAPI {
+// AutoRestock API Client Class
+class AutoRestockAPI {
     constructor(baseURL = '') {
         this.baseURL = baseURL;
         this.headers = {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         };
-        console.log('📡 StockPilot API initialized with base URL:', baseURL || 'relative');
+        console.log('📡 AutoRestock API initialized with base URL:', baseURL || 'relative');
     }
 
     /**
@@ -637,27 +637,27 @@ class StockPilotAPI {
 }
 
 // Create global instance
-const stockpilotAPI = new StockPilotAPI();
+const autorestockAPI = new AutoRestockAPI();
 
 // Make API available globally
-window.stockpilotAPI = stockpilotAPI;
+window.autorestockAPI = autorestockAPI;
 
 // Export for Node.js environments
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { StockPilotAPI, stockpilotAPI };
+    module.exports = { AutoRestockAPI, autorestockAPI };
 }
 
 // Initialize API when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 StockPilot API ready');
-    console.log('📡 Available methods:', Object.getOwnPropertyNames(StockPilotAPI.prototype).filter(name => name !== 'constructor'));
+    console.log('🚀 AutoRestock API ready');
+    console.log('📡 Available methods:', Object.getOwnPropertyNames(AutoRestockAPI.prototype).filter(name => name !== 'constructor'));
 });
 
 // Debug helper
-window.debugStockPilotAPI = function() {
-    console.log('🔍 StockPilot API Debug Info:');
-    console.log('- API Instance:', stockpilotAPI);
-    console.log('- Available Methods:', Object.getOwnPropertyNames(StockPilotAPI.prototype).filter(name => name !== 'constructor'));
-    console.log('- Base URL:', stockpilotAPI.baseURL);
-    console.log('- Headers:', stockpilotAPI.headers);
+window.debugAutoRestockAPI = function() {
+    console.log('🔍 AutoRestock API Debug Info:');
+    console.log('- API Instance:', autorestockAPI);
+    console.log('- Available Methods:', Object.getOwnPropertyNames(AutoRestockAPI.prototype).filter(name => name !== 'constructor'));
+    console.log('- Base URL:', autorestockAPI.baseURL);
+    console.log('- Headers:', autorestockAPI.headers);
 };

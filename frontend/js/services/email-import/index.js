@@ -1,5 +1,5 @@
 /**
- * StockPilot Email Import Service
+ * AutoRestock Email Import Service
  * Placeholder for email import functionality
  */
 

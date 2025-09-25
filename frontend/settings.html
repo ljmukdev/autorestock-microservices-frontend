@@ -1,8 +1,8 @@
 /**
  * File: settings.html
  * Location: frontend/settings.html
- * Purpose: StockPilot Settings page with eBay integration and database management
- * Author: StockPilot Development Team
+ * Purpose: AutoRestock Settings page with eBay integration and database management
+ * Author: AutoRestock Development Team
  * Last Modified: July 16, 2025
  */
 
@@ -11,7 +11,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StockPilot - Settings</title>
+    <title>AutoRestock - Settings</title>
     <style>
         /* Research-Based Slate Theme for Settings */
         body {
@@ -720,15 +720,15 @@
             }
         }
     </style>
-    <!-- Load StockPilot API first -->
-    <script src="js/stockpilot-api.js"></script>
+    <!-- Load AutoRestock API first -->
+    <script src="js/autorestock-api.js"></script>
 	<script src="js/ebay-fix.js"></script>
 </head>
 <body>
     <div class="container">
         <!-- Page Header -->
         <div class="header">
-            <h1>&#128295; StockPilot Settings</h1>
+            <h1>&#128295; AutoRestock Settings</h1>
             <p>Configure your system preferences and manage your database</p>
         </div>
 
@@ -1230,7 +1230,7 @@
     <script>
         /**
          * Settings Page JavaScript
-         * Uses StockPilot API for backend communication
+         * Uses AutoRestock API for backend communication
          */
 
         let settingsAPIAvailable = false;
@@ -1239,7 +1239,7 @@
         // Setup event listeners when DOM is ready
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 DOM Content Loaded');
-            console.log('🔍 Checking for stockpilotAPI:', typeof stockpilotAPI);
+            console.log('🔍 Checking for autorestockAPI:', typeof autorestockAPI);
             
             // Delay event listener setup to ensure all elements are available
             setTimeout(function() {
@@ -1268,13 +1268,13 @@
         function setupEventListeners() {
             console.log('🔧 Setting up event listeners...');
             
-            // Check if stockpilotAPI is available
-            if (typeof stockpilotAPI === 'undefined') {
-                console.error('❌ stockpilotAPI is not available. Cannot setup event listeners.');
+            // Check if autorestockAPI is available
+            if (typeof autorestockAPI === 'undefined') {
+                console.error('❌ autorestockAPI is not available. Cannot setup event listeners.');
                 return;
             }
             
-            console.log('✅ stockpilotAPI is available');
+            console.log('✅ autorestockAPI is available');
             
             // Find all buttons and log them
             const allButtons = document.querySelectorAll('button');
@@ -1382,12 +1382,12 @@
             console.log('🔍 Loading system status...');
             
             // Check if API is available
-            if (typeof stockpilotAPI !== 'undefined') {
-                console.log('✅ StockPilot API loaded successfully');
+            if (typeof autorestockAPI !== 'undefined') {
+                console.log('✅ AutoRestock API loaded successfully');
                 checkAPIs();
             } else {
-                console.error('❌ StockPilot API not loaded - Check if js/stockpilot-api.js exists');
-                showMessage('StockPilot API not available - check console for details', 'error');
+                console.error('❌ AutoRestock API not loaded - Check if js/autorestock-api.js exists');
+                showMessage('AutoRestock API not available - check console for details', 'error');
             }
         }
 
@@ -1405,7 +1405,7 @@
                 settingsAPIAvailable = true;
                 
                 // Check database API
-                const response = await stockpilotAPI.getDatabaseStats();
+                const response = await autorestockAPI.getDatabaseStats();
                 if (response.success) {
                     databaseAPIAvailable = true;
                 }
@@ -1435,7 +1435,7 @@
         // eBay Integration Functions
         async function checkEbayStatus() {
             try {
-                const response = await stockpilotAPI.testEbayConnection();
+                const response = await autorestockAPI.testEbayConnection();
                 
                 if (response.success) {
                     updateEbayStatus('connected', 'eBay API connected and working');
@@ -1502,12 +1502,12 @@
                 saveEbaySettings();
                 
                 // Check if API is available
-                if (typeof stockpilotAPI === 'undefined') {
-                    throw new Error('StockPilot API not loaded');
+                if (typeof autorestockAPI === 'undefined') {
+                    throw new Error('AutoRestock API not loaded');
                 }
                 
-                console.log('📡 Calling stockpilotAPI.testEbayConnection()');
-                const response = await stockpilotAPI.testEbayConnection();
+                console.log('📡 Calling autorestockAPI.testEbayConnection()');
+                const response = await autorestockAPI.testEbayConnection();
                 console.log('📡 Response:', response);
                 
                 if (response.success) {
@@ -1529,7 +1529,7 @@
                 saveEbaySettings();
                 showMessage('🔐 Starting eBay authentication...', 'info');
                 
-                const response = await stockpilotAPI.startEbayOAuth();
+                const response = await autorestockAPI.startEbayOAuth();
                 
                 if (response.success && response.authUrl) {
                     // Open eBay auth in new window
@@ -1538,7 +1538,7 @@
                     // Check for completion
                     const checkAuth = setInterval(async () => {
                         try {
-                            const statusResponse = await stockpilotAPI.getEbayProfile();
+                            const statusResponse = await autorestockAPI.getEbayProfile();
                             if (statusResponse.success) {
                                 clearInterval(checkAuth);
                                 updateEbayStatus('connected', 'eBay authentication successful');
@@ -1564,7 +1564,7 @@
             try {
                 showMessage('🔄 Syncing eBay purchase data...', 'info');
                 
-                const response = await stockpilotAPI.syncEbayData();
+                const response = await autorestockAPI.syncEbayData();
                 
                 if (response.success) {
                     const syncInfo = document.getElementById('ebaySyncInfo');
@@ -1584,7 +1584,7 @@
         async function clearEbayAuth() {
             if (confirm('Clear eBay authentication? You will need to re-authenticate.')) {
                 try {
-                    await stockpilotAPI.clearEbayAuth();
+                    await autorestockAPI.clearEbayAuth();
                     localStorage.removeItem('stockpilot_ebay_auth');
                     updateEbayStatus('disconnected', 'eBay authentication cleared');
                     document.getElementById('ebaySyncInfo').style.display = 'none';
@@ -1638,7 +1638,7 @@
             }
 
             try {
-                const response = await stockpilotAPI.getDatabaseStats();
+                const response = await autorestockAPI.getDatabaseStats();
                 
                 if (response.success) {
                     document.getElementById('total-tables').textContent = response.data.tableList.length;
@@ -1705,7 +1705,7 @@
             }
 
             try {
-                const response = await stockpilotAPI.clearTable(tableName);
+                const response = await autorestockAPI.clearTable(tableName);
                 
                 if (response.success) {
                     showMessage(response.message, 'success');
@@ -2031,8 +2031,8 @@
             console.log('🔄 Refreshing dynamic data...');
             
             // Clear API cache if available
-            if (window.stockpilotAPI && window.stockpilotAPI.clearCache) {
-                window.stockpilotAPI.clearCache();
+            if (window.autorestockAPI && window.autorestockAPI.clearCache) {
+                window.autorestockAPI.clearCache();
             }
             
             // Reload page to refresh everything
