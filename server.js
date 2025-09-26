@@ -89,18 +89,34 @@ app.get('/debug/dashboard', (req, res) => {
     }
 });
 
-// Serve the microservice testing dashboard
+// Serve the main AutoRestock application
 app.get('/', (req, res) => {
-    const dashboardPath = path.join(__dirname, 'microservice-frontends', 'dashboard.html');
-    console.log('Serving microservice dashboard from:', dashboardPath);
-    console.log('Dashboard file exists:', fs.existsSync(dashboardPath));
+    const mainAppPath = path.join(__dirname, 'frontend', 'index.html');
+    console.log('Serving main AutoRestock app from:', mainAppPath);
+    console.log('Main app file exists:', fs.existsSync(mainAppPath));
     
     try {
-        res.sendFile(dashboardPath);
-        console.log('Microservice dashboard served successfully');
+        res.sendFile(mainAppPath);
+        console.log('Main AutoRestock app served successfully');
     } catch (error) {
-        console.error('Error serving microservice dashboard:', error);
-        res.status(500).send('Error serving microservice dashboard: ' + error.message);
+        console.error('Error serving main app:', error);
+        // Fallback to dashboard if index.html doesn't exist
+        const dashboardPath = path.join(__dirname, 'frontend', 'dashboard.html');
+        res.sendFile(dashboardPath);
+    }
+});
+
+// Microservice testing dashboard (accessible at /microservices)
+app.get('/microservices', (req, res) => {
+    const microserviceDashboardPath = path.join(__dirname, 'microservice-frontends', 'dashboard.html');
+    console.log('Serving microservice testing dashboard from:', microserviceDashboardPath);
+    
+    try {
+        res.sendFile(microserviceDashboardPath);
+        console.log('Microservice testing dashboard served successfully');
+    } catch (error) {
+        console.error('Error serving microservice testing dashboard:', error);
+        res.status(500).send('Error serving microservice testing dashboard: ' + error.message);
     }
 });
 
@@ -142,8 +158,13 @@ app.get('/', (req, res) => {
 app.get('/health', (req, res) => {
   res.json({ 
       status: 'ok', 
-      service: 'AutoRestock Frontend', 
-      timestamp: new Date().toISOString() 
+      service: 'AutoRestock Main Application', 
+      timestamp: new Date().toISOString(),
+      features: {
+        mainApp: true,
+        microserviceTesting: true,
+        userService: 'https://autorestock-user-service-production.up.railway.app'
+      }
   });
 });
 

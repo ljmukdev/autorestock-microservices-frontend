@@ -1,15 +1,15 @@
 {
-  "name": "autorestock-microservice-frontends",
+  "name": "autorestock",
   "version": "2.0.2",
-  "description": "AutoRestock Microservices Test Dashboard",
+  "description": "AutoRestock - Complete Inventory Management System",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "express": "^4.18.2"
   },
   "engines": {
     "node": ">=18.0.0",
@@ -17,11 +17,11 @@
   },
   "keywords": [
     "autorestock",
-    "microservices",
-    "testing",
-    "dashboard"
+    "inventory",
+    "management",
+    "ecommerce",
+    "reselling"
   ],
   "author": "LJMUK",
   "license": "MIT"
 }
-
