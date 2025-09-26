@@ -120,6 +120,20 @@ app.get('/microservices', (req, res) => {
     }
 });
 
+// Handle trailing slash redirect
+app.get('/microservices/', (req, res) => {
+    const microserviceDashboardPath = path.join(__dirname, 'microservice-frontends', 'dashboard.html');
+    console.log('Serving microservice testing dashboard from:', microserviceDashboardPath);
+    
+    try {
+        res.sendFile(microserviceDashboardPath);
+        console.log('Microservice testing dashboard served successfully');
+    } catch (error) {
+        console.error('Error serving microservice testing dashboard:', error);
+        res.status(500).send('Error serving microservice testing dashboard: ' + error.message);
+    }
+});
+
 // Microservice test routes - Added for microservice testing dashboard
 const services = ['settings', 'inventory', 'sales', 'purchases', 'ebay', 'vinted', 'reporting', 'accounting', 'ad-generator', 'rules-engine', 'auto-buying', 'media', 'email-ingest', 'status'];
 services.forEach(service => {
