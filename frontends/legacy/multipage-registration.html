@@ -709,10 +709,10 @@
 
             // Add timestamp to email for testing
             const timestamp = new Date().getTime();
-            formData.email = formData.email.replace('@', +@);
+            formData.email = formData.email.replace('@', `+${timestamp}@`);
 
             try {
-                const response = await fetch(${userServiceUrl}/api/v1/users/register, {
+                const response = await fetch(`${userServiceUrl}/api/v1/users/register`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
