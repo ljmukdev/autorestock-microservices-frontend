@@ -223,6 +223,46 @@ class UserController {
       });
     }
   }
+
+  // Update user
+  async updateUser(req, res) {
+    try {
+      const userId = req.params.userId;
+      const { firstName, lastName, forwardingEmail } = req.body;
+
+      // Check if user exists
+      const existingUser = dataStore.getUserById(userId);
+      if (!existingUser) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+
+      // Update user data
+      const updateData = {
+        firstName: firstName || existingUser.firstName,
+        lastName: lastName || existingUser.lastName,
+        forwardingEmail: forwardingEmail || existingUser.forwardingEmail,
+        updatedAt: new Date().toISOString()
+      };
+
+      const updatedUser = dataStore.updateUser(userId, updateData);
+
+      res.json({
+        success: true,
+        message: 'User updated successfully',
+        data: updatedUser
+      });
+
+    } catch (error) {
+      console.error('Error updating user:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
 }
 
 module.exports = new UserController();
