@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoRestock - Log Sale</title>
+    <style>
+        /* Research-Based Green Theme for Log Sale */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #48BB78 0%, #38A169 100%);
+            min-height: 100vh;
+        }
+
+        /* Main Container with Integrated Navigation */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(72, 187, 120, 0.15);
+            overflow: hidden;
+        }
+
+        /* Navigation Tabs - Integrated into container */
+        .nav-tabs-container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 30px 0;
+            position: relative;
+        }
+
+        .nav-tabs-container::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #48BB78;
+            z-index: 1;
+        }
+
+        .nav-tabs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 2px;
+            background: transparent;
+            padding: 0;
+            margin: 0;
+            list-style: none;
+        }
+
+        .nav-tab {
+            background: linear-gradient(135deg, #F5F7FA, #E2E8F0);
+            border: none;
+            padding: 12px 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: #2D3748;
+            font-weight: 500;
+            font-size: 13px;
+            border-radius: 12px 12px 0 0;
+            position: relative;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .nav-tab:hover {
+            text-decoration: none;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(72, 187, 120, 0.2);
+        }
+
+        .nav-tab.active {
+            transform: translateY(0);
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.8);
+        }
+
+        .nav-tab.home {
+            background: linear-gradient(135deg, #8E9AAE, #718096);
+            color: white;
+        }
+
+        .nav-tab.purchases {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            color: white;
+        }
+
+        .nav-tab.inventory {
+            background: linear-gradient(135deg, #4A90E2, #357ABD);
+            color: white;
+        }
+
+        .nav-tab.consumables {
+            background: linear-gradient(135deg, #A67C5A, #8B6F3F);
+            color: white;
+        }
+
+        .nav-tab.log-sale {
+            background: linear-gradient(135deg, #48BB78, #38A169);
+            color: white;
+        }
+
+        .nav-tab.sales {
+            background: linear-gradient(135deg, #8B7EC8, #7B6CB8);
+            color: white;
+        }
+
+        .nav-tab.email-import {
+            background: linear-gradient(135deg, #5D6AAF, #4A5A9E);
+            color: white;
+        }
+
+        .nav-tab.settings {
+            background: linear-gradient(135deg, #2D3748, #1A202C);
+            color: white;
+        }
+
+        /* Content Area */
+        .content-area {
+            padding: 30px;
+            background: #F8FAFC;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 30px 10px 30px;
+        }
+
+        .header h1 {
+            color: #2D3748;
+            margin-bottom: 5px;
+            font-size: 1.8em;
+        }
+
+        .header p {
+            margin: 0;
+            font-size: 0.9em;
+            color: #8E9AAE;
+        }
+
+        /* Connection Status */
+        .connection-status {
+            background: #E3F2FD;
+            color: #1565C0;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #BBDEFB;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .connection-status.online {
+            background: #E8F5E8;
+            color: #2E7D32;
+            border-color: #C8E6C9;
+        }
+
+        .connection-status.offline {
+            background: #FFF3E0;
+            color: #EF6C00;
+            border-color: #FFCC80;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-section {
+            background: #FFFFFF;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(72, 187, 120, 0.08);
+            margin-bottom: 20px;
+        }
+
+        .form-section-header {
+            background: #2D3748;
+            color: white;
+            padding: 15px 20px;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .form-section-content {
+            padding: 20px;
+        }
+
+        .section-title {
+            color: #2D3748;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            font-weight: 600;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #48BB78;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2D3748;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #E2E8F0;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+            background: #FFFFFF;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #48BB78;
+            box-shadow: 0 0 0 3px rgba(72, 187, 120, 0.1);
+        }
+
+        .platform-presets {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .preset-btn {
+            padding: 8px 12px;
+            border: 2px solid #E2E8F0;
+            border-radius: 8px;
+            background: #FFFFFF;
+            color: #2D3748;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .preset-btn:hover {
+            background: #F5F7FA;
+            border-color: #48BB78;
+        }
+
+        .preset-btn.active {
+            background: linear-gradient(135deg, #48BB78, #38A169);
+            color: white;
+            border-color: #48BB78;
+        }
+
+        .profit-calculator {
+            background: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            border: 1px solid #E2E8F0;
+            border-left: 4px solid #48BB78;
+        }
+
+        .calc-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            color: #2D3748;
+            font-size: 0.9rem;
+        }
+
+        .calc-row.total {
+            border-top: 1px solid #E2E8F0;
+            padding-top: 8px;
+            font-weight: 600;
+            color: #2D3748;
+        }
+
+        .profit-positive {
+            color: #48BB78;
+        }
+
+        .profit-negative {
+            color: #E53E3E;
+        }
+
+        .inventory-item {
+            background: linear-gradient(135deg, #F8FAFC 0%, #FFFFFF 100%);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 5px solid #4A90E2;
+            box-shadow: 0 2px 10px rgba(72, 187, 120, 0.05);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1px solid #E2E8F0;
+        }
+
+        .inventory-item:hover {
+            box-shadow: 0 4px 20px rgba(72, 187, 120, 0.1);
+            transform: translateX(5px);
+        }
+
+        .inventory-item.selected {
+            background: linear-gradient(135deg, rgba(72, 187, 120, 0.1), rgba(56, 161, 105, 0.1));
+            border-left-color: #48BB78;
+            box-shadow: 0 4px 20px rgba(72, 187, 120, 0.2);
+            border-color: #48BB78;
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .item-id {
+            color: #4A90E2;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .item-value {
+            color: #48BB78;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .item-details {
+            color: #2D3748;
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+        }
+
+        .item-condition {
+            color: #8E9AAE;
+            font-size: 0.8rem;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #4A90E2;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+            background: #FFFFFF;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #48BB78;
+            box-shadow: 0 0 0 3px rgba(72, 187, 120, 0.1);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #48BB78, #38A169);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #38A169, #2F855A);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+        }
+
+        .btn-warning {
+            background: #ED8936;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #DD7808;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(237, 137, 54, 0.3);
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+            background: #4A90E2;
+            color: white;
+        }
+
+        .btn-small:hover {
+            background: #357ABD;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
+        }
+
+        .btn-success {
+            background: #48BB78;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #38A169;
+        }
+
+        .d-flex {
+            display: flex;
+        }
+
+        .gap-2 {
+            gap: 10px;
+        }
+
+        .flex-wrap {
+            flex-wrap: wrap;
+        }
+
+        .mb-3 {
+            margin-bottom: 20px;
+        }
+
+        .mt-3 {
+            margin-top: 20px;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-muted {
+            color: #8E9AAE;
+        }
+
+        .text-danger {
+            color: #E53E3E;
+        }
+
+        .p-4 {
+            padding: 20px;
+        }
+
+        .d-none {
+            display: none;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .message-success {
+            background: #E8F5E8;
+            color: #2E7D32;
+            border: 1px solid #C8E6C9;
+        }
+
+        .message-error {
+            background: #FFEBEE;
+            color: #C62828;
+            border: 1px solid #FFCDD2;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #8E9AAE;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .nav-tabs-container {
+                padding: 10px 15px 0;
+            }
+            
+            .content-area {
+                padding: 20px;
+            }
+            
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .right-column {
+                order: -1;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-tab {
+                font-size: 11px;
+                padding: 10px 12px;
+                min-width: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Page Header - Now at the top -->
+        <div class="header">
+            <h1>&#128176; AutoRestock Log Sale</h1>
+            <p>Record a new sale and track your profits</p>
+        </div>
+
+        <!-- Navigation Tabs - REORDERED TO MATCH OTHER PAGES -->
+        <div class="nav-tabs-container">
+            <div class="nav-tabs">
+                <a href="/" class="nav-tab home">
+                    &#127968; Home
+                </a>
+                <a href="view-purchases.html" class="nav-tab purchases">
+                    &#128722; Purchases
+                </a>
+                <a href="view-inventory.html" class="nav-tab inventory">
+                    &#128230; Inventory
+                </a>
+                <a href="view-consumables.html" class="nav-tab consumables">
+                    &#129520; Consumables
+                </a>
+                <a href="log-sale.html" class="nav-tab log-sale active">
+                    &#128176; Log Sale
+                </a>
+                <a href="view-sales.html" class="nav-tab sales">
+                    &#128200; View Sales
+                </a>
+                <a href="email-import.html" class="nav-tab email-import">
+                    &#128231; Email Import
+                </a>
+                <a href="reports.html" class="nav-link">?? Reports</a>
+                    <a href="settings.html" class="nav-tab settings">
+                    &#128295; Settings
+                </a>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            <!-- Connection Status -->
+            <div id="connectionStatus" class="connection-status">
+                <span>🔄</span> Checking connection...
+            </div>
+
+            <!-- Status Messages -->
+            <div id="statusMessage" class="message d-none"></div>
+
+            <!-- Main Content Grid -->
+            <div class="main-content">
+                <!-- Form Section -->
+                <div class="form-section">
+                    <div class="form-section-header">
+                        &#128221; Sale Details
+                    </div>
+                    <div class="form-section-content">
+                        <form id="saleForm">
+                            <div class="form-group">
+                                <label for="platformInput">Platform</label>
+                                <input type="text" name="platform" id="platformInput" placeholder="e.g., eBay, Facebook Marketplace" required>
+                                <div class="platform-presets">
+                                    <div class="preset-btn" data-platform="eBay">eBay</div>
+                                    <div class="preset-btn" data-platform="Facebook">Facebook</div>
+                                    <div class="preset-btn" data-platform="Vinted">Vinted</div>
+                                    <div class="preset-btn" data-platform="Amazon">Amazon</div>
+                                    <div class="preset-btn" data-platform="Gumtree">Gumtree</div>
+                                    <div class="preset-btn" data-platform="Local">Local Sale</div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="itemDescription">Item Description</label>
+                                <input type="text" name="item_description" id="itemDescription" placeholder="Brief description of the item sold" required>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="salePrice">Sale Price (£)</label>
+                                    <input type="number" name="sale_price" id="salePrice" step="0.01" placeholder="0.00" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="saleDate">Sale Date</label>
+                                    <input type="date" name="sale_date" id="saleDate" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="postageCharged">Postage Charged (£)</label>
+                                    <input type="number" name="postage_charged" id="postageCharged" step="0.01" placeholder="0.00">
+                                </div>
+                                <div class="form-group">
+                                    <label for="postageCost">Postage Cost (£)</label>
+                                    <input type="number" name="postage_cost" id="postageCost" step="0.01" placeholder="0.00">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="fees">Platform Fees (£)</label>
+                                <input type="number" name="fees" id="fees" step="0.01" placeholder="0.00">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="consumablesUsed">Consumables Used</label>
+                                <input type="text" name="consumables_used" id="consumablesUsed" placeholder="e.g., Bubble wrap, thermal paste">
+                            </div>
+
+                            <div class="d-flex gap-2 mt-3">
+                                <button type="submit" class="btn btn-primary">&#128190; Log Sale</button>
+                                <button type="button" class="btn btn-warning" onclick="clearForm()">&#128260; Clear Form</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="right-column">
+                    <!-- Inventory Selection Section -->
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            &#128230; Select Inventory Item
+                        </div>
+                        <div class="form-section-content">
+                            <input type="text" class="search-box" id="inventorySearch" placeholder="&#128269; Search inventory by ID, brand, model...">
+                            
+                            <div class="d-flex gap-2 mb-3 flex-wrap">
+                                <button class="btn btn-small" onclick="filterInventory('available')">Available Only</button>
+                                <button class="btn btn-small" onclick="filterInventory('all')">Show All</button>
+                                <button class="btn btn-small" onclick="refreshInventory()">&#128260; Refresh</button>
+                            </div>
+
+                            <div id="inventoryList">
+                                <div class="text-muted text-center p-4 loading">
+                                    &#128260; Loading inventory...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profit Calculator Section -->
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            &#128176; Profit Calculator
+                        </div>
+                        <div class="form-section-content">
+                            <div class="calc-row">
+                                <span>Sale Price:</span>
+                                <span id="calcSalePrice">£0.00</span>
+                            </div>
+                            <div class="calc-row">
+                                <span>Postage Profit:</span>
+                                <span id="calcPostageProfit">£0.00</span>
+                            </div>
+                            <div class="calc-row">
+                                <span>Platform Fees:</span>
+                                <span id="calcFees">-£0.00</span>
+                            </div>
+                            <div class="calc-row">
+                                <span>Item Cost:</span>
+                                <span id="calcItemCost">-£0.00</span>
+                            </div>
+                            <div class="calc-row total">
+                                <span>Net Profit:</span>
+                                <span id="calcNetProfit">£0.00</span>
+                            </div>
+                            <div class="calc-row">
+                                <span>Profit Margin:</span>
+                                <span id="calcProfitMargin">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let inventoryData = [];
+        let selectedInventoryItem = null;
+        let currentFilter = 'available';
+        let salesAPIAvailable = false;
+
+        const API_CONFIG = {
+            inventory: '/api/inventory',
+            sales: '/api/sales'
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 AutoRestock Log Sale initialized');
+            checkAPIs();
+            loadInventory();
+            setupEventListeners();
+            setTodayDate();
+            setupPlatformPresets();
+        });
+
+        async function checkAPIs() {
+            try {
+                const response = await fetch('/api/sales/test/ping');
+                if (response.ok) {
+                    salesAPIAvailable = true;
+                    updateConnectionStatus(true);
+                    console.log('✅ Sales API available');
+                } else {
+                    throw new Error('API not responding');
+                }
+            } catch (error) {
+                salesAPIAvailable = false;
+                updateConnectionStatus(false);
+                console.log('⚠️ Sales API not available:', error.message);
+            }
+        }
+
+        function updateConnectionStatus(online) {
+            const statusEl = document.getElementById('connectionStatus');
+            if (online) {
+                statusEl.className = 'connection-status online';
+                statusEl.innerHTML = '<span>✅</span> Connected to API - Real-time data available';
+            } else {
+                statusEl.className = 'connection-status offline';
+                statusEl.innerHTML = '<span>⚠️</span> Offline mode - Limited functionality';
+            }
+        }
+
+        function setupEventListeners() {
+            // Real-time profit calculation
+            ['salePrice', 'postageCharged', 'postageCost', 'fees'].forEach(id => {
+                document.getElementById(id).addEventListener('input', calculateProfit);
+            });
+
+            // Search functionality
+            document.getElementById('inventorySearch').addEventListener('input', function() {
+                filterInventoryDisplay();
+            });
+
+            // Form submission
+            document.getElementById('saleForm').addEventListener('submit', handleFormSubmit);
+        }
+
+        function setupPlatformPresets() {
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const platform = this.dataset.platform;
+                    document.getElementById('platformInput').value = platform;
+                    
+                    // Update active state
+                    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Auto-populate fees based on platform
+                    autoFillPlatformFees(platform);
+                });
+            });
+        }
+
+        function autoFillPlatformFees(platform) {
+            const feeStructures = {
+                'eBay': { feeRate: 0.129 }, // 12.9%
+                'Facebook': { feeRate: 0.05 }, // 5%
+                'Vinted': { feeRate: 0.09 }, // 9% buyer protection
+                'Amazon': { feeRate: 0.15 }, // 15%
+                'Gumtree': { feeRate: 0 },
+                'Local': { feeRate: 0 }
+            };
+
+            const salePrice = parseFloat(document.getElementById('salePrice').value) || 0;
+            if (salePrice > 0 && feeStructures[platform]) {
+                const estimatedFees = salePrice * feeStructures[platform].feeRate;
+                document.getElementById('fees').value = estimatedFees.toFixed(2);
+                calculateProfit();
+            }
+        }
+
+        function setTodayDate() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('saleDate').value = today;
+        }
+
+        async function loadInventory() {
+            try {
+                console.log('📦 Loading inventory...');
+                showInventoryLoading(true);
+
+                // Try API first if available
+                if (salesAPIAvailable) {
+                    try {
+                        const response = await fetch(API_CONFIG.inventory);
+                        if (response.ok) {
+                            const data = await response.json();
+                            console.log('✅ Loaded from API:', data.length, 'items');
+                            inventoryData = data;
+                            // Save to localStorage as backup
+                            localStorage.setItem('stockpilot_inventory', JSON.stringify(data));
+                            filterInventoryDisplay();
+                            return;
+                        }
+                    } catch (apiError) {
+                        console.log('API failed, falling back to localStorage');
+                    }
+                }
+
+                // Fallback to localStorage
+                const stored = localStorage.getItem('stockpilot_inventory') || localStorage.getItem('inventory');
+                if (stored) {
+                    inventoryData = JSON.parse(stored);
+                    console.log('✅ Loaded from localStorage:', inventoryData.length, 'items');
+                    filterInventoryDisplay();
+                } else {
+                    document.getElementById('inventoryList').innerHTML = 
+                        '<div class="text-danger text-center p-4">❌ No inventory data found</div>';
+                    inventoryData = [];
+                }
+            } catch (error) {
+                console.error('Error loading inventory:', error);
+                document.getElementById('inventoryList').innerHTML = 
+                    '<div class="text-danger text-center p-4">❌ Error loading inventory</div>';
+            }
+        }
+
+        function showInventoryLoading(show) {
+            if (show) {
+                document.getElementById('inventoryList').innerHTML = 
+                    '<div class="text-muted text-center p-4 loading">&#128260; Loading inventory...</div>';
+            }
+        }
+
+        function filterInventory(type) {
+            currentFilter = type;
+            filterInventoryDisplay();
+            
+            // Update button states - reset all buttons to default style
+            document.querySelectorAll('.form-section .btn-small').forEach(btn => {
+                btn.className = 'btn btn-small';
+            });
+            // Highlight the active filter button
+            event.target.className = 'btn btn-small btn-success';
+        }
+
+        function filterInventoryDisplay() {
+            const searchTerm = document.getElementById('inventorySearch').value.toLowerCase();
+            
+            let filteredData = inventoryData.filter(item => {
+                const matchesSearch = 
+                    (item.identifier && item.identifier.toLowerCase().includes(searchTerm)) ||
+                    (item.brand && item.brand.toLowerCase().includes(searchTerm)) ||
+                    (item.model && item.model.toLowerCase().includes(searchTerm)) ||
+                    (item.category && item.category.toLowerCase().includes(searchTerm)) ||
+                    (item.name && item.name.toLowerCase().includes(searchTerm));
+                
+                const matchesFilter = currentFilter === 'all' || 
+                    (currentFilter === 'available' && (!item.status || item.status !== 'sold'));
+                
+                return matchesSearch && matchesFilter;
+            });
+
+            displayInventory(filteredData);
+        }
+
+        function displayInventory(items) {
+            const container = document.getElementById('inventoryList');
+            
+            if (items.length === 0) {
+                container.innerHTML = '<div class="text-muted text-center p-4">📭 No items found</div>';
+                return;
+            }
+
+            container.innerHTML = items.map(item => {
+                const name = getItemName(item);
+                const value = getItemValue(item);
+                const condition = item.condition || 'Unknown';
+                const category = item.category || 'Uncategorized';
+                const isAvailable = !item.status || item.status !== 'sold';
+                
+                return `
+                    <div class="inventory-item" onclick="selectInventoryItem(${item.id})" id="inventory-${item.id}">
+                        <div class="item-header">
+                            <span class="item-id">#${item.identifier || item.id}</span>
+                            <span class="item-value">£${value.toFixed(2)}</span>
+                        </div>
+                        <div class="item-details">
+                            ${name}
+                        </div>
+                        <div class="item-condition">
+                            ${condition} • ${category}
+                            ${isAvailable ? ' • ✅ Available' : ' • ❌ SOLD'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getItemName(item) {
+            return item.name || 
+                   item.model || 
+                   item.product_name || 
+                   item.part_name ||
+                   `${item.brand || 'Unknown'} ${item.model || 'Item'}`.trim() ||
+                   'Unknown Item';
+        }
+
+        function getItemValue(item) {
+            return parseFloat(item.current_value || item.selling_price || item.listing_price || item.part_value || item.total_paid || 0);
+        }
+
+        function selectInventoryItem(itemId) {
+            // Clear previous selection
+            document.querySelectorAll('.inventory-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+
+            // Select new item
+            const selectedElement = document.getElementById(`inventory-${itemId}`);
+            if (selectedElement) {
+                selectedElement.classList.add('selected');
+            }
+            
+            selectedInventoryItem = inventoryData.find(item => item.id === itemId);
+            
+            // Auto-fill form
+            if (selectedInventoryItem) {
+                const name = getItemName(selectedInventoryItem);
+                const condition = selectedInventoryItem.condition || 'Good';
+                document.getElementById('itemDescription').value = `${name} - ${condition}`;
+                
+                calculateProfit();
+            }
+        }
+
+        function calculateProfit() {
+            const salePrice = parseFloat(document.getElementById('salePrice').value) || 0;
+            const postageCharged = parseFloat(document.getElementById('postageCharged').value) || 0;
+            const postageCost = parseFloat(document.getElementById('postageCost').value) || 0;
+            const fees = parseFloat(document.getElementById('fees').value) || 0;
+            
+            const postageProfit = postageCharged - postageCost;
+            const itemCost = selectedInventoryItem ? getItemCost(selectedInventoryItem) : 0;
+            const netProfit = salePrice + postageProfit - fees - itemCost;
+            const profitMargin = salePrice > 0 ? (netProfit / salePrice) * 100 : 0;
+
+            // Update display
+            document.getElementById('calcSalePrice').textContent = `£${salePrice.toFixed(2)}`;
+            document.getElementById('calcPostageProfit').textContent = `£${postageProfit.toFixed(2)}`;
+            document.getElementById('calcFees').textContent = `-£${fees.toFixed(2)}`;
+            document.getElementById('calcItemCost').textContent = `-£${itemCost.toFixed(2)}`;
+            
+            const netProfitElement = document.getElementById('calcNetProfit');
+            netProfitElement.textContent = `£${netProfit.toFixed(2)}`;
+            netProfitElement.className = netProfit >= 0 ? 'profit-positive' : 'profit-negative';
+            
+            const marginElement = document.getElementById('calcProfitMargin');
+            marginElement.textContent = `${profitMargin.toFixed(1)}%`;
+            marginElement.className = profitMargin >= 0 ? 'profit-positive' : 'profit-negative';
+        }
+
+        function getItemCost(item) {
+            return parseFloat(item.cost_price || item.total_paid || item.part_value || 0);
+        }
+
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const saleData = {
+                platform: formData.get('platform'),
+                item_description: formData.get('item_description'),
+                sale_price: parseFloat(formData.get('sale_price')),
+                postage_charged: parseFloat(formData.get('postage_charged')) || 0,
+                postage_cost: parseFloat(formData.get('postage_cost')) || 0,
+                fees: parseFloat(formData.get('fees')) || 0,
+                consumables_used: formData.get('consumables_used'),
+                sale_date: formData.get('sale_date'),
+                inventory_item_id: selectedInventoryItem ? selectedInventoryItem.id : null
+            };
+
+            try {
+                if (salesAPIAvailable) {
+                    const response = await fetch(API_CONFIG.sales, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(saleData)
+                    });
+
+                    if (response.ok) {
+                        showStatus('✅ Sale logged successfully!', 'success');
+                        clearForm();
+                        loadInventory(); // Refresh to show updated status
+                    } else {
+                        const error = await response.json();
+                        showStatus(`❌ Error: ${error.error}`, 'error');
+                    }
+                } else {
+                    // Offline mode - save to localStorage
+                    const existingSales = JSON.parse(localStorage.getItem('stockpilot_sales') || '[]');
+                    saleData.id = Date.now();
+                    existingSales.push(saleData);
+                    localStorage.setItem('stockpilot_sales', JSON.stringify(existingSales));
+                    
+                    // Mark inventory item as sold
+                    if (selectedInventoryItem) {
+                        const inventoryIndex = inventoryData.findIndex(item => item.id === selectedInventoryItem.id);
+                        if (inventoryIndex !== -1) {
+                            inventoryData[inventoryIndex].status = 'sold';
+                            localStorage.setItem('stockpilot_inventory', JSON.stringify(inventoryData));
+                        }
+                    }
+                    
+                    showStatus('✅ Sale logged locally (offline mode)', 'success');
+                    clearForm();
+                    loadInventory();
+                }
+            } catch (error) {
+                console.error('Error logging sale:', error);
+                showStatus('❌ Network error occurred', 'error');
+            }
+        }
+
+        function showStatus(message, type) {
+            const statusElement = document.getElementById('statusMessage');
+            statusElement.textContent = message;
+            statusElement.className = `message message-${type}`;
+            statusElement.classList.remove('d-none');
+            
+            setTimeout(() => {
+                statusElement.classList.add('d-none');
+            }, 5000);
+        }
+
+        function clearForm() {
+            document.getElementById('saleForm').reset();
+            selectedInventoryItem = null;
+            document.querySelectorAll('.inventory-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            setTodayDate();
+            calculateProfit();
+        }
+
+        function refreshInventory() {
+            loadInventory();
+        }
+    </script>
+</body>
+</html>

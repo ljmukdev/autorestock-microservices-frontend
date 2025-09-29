@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>AutoRestock – eBay OAuth Result</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {font-family: system-ui,Segoe UI,Roboto,Arial,sans-serif; background:#0b0f17; color:#e6edf3; padding:40px;}
+    .card {max-width:720px;margin:0 auto;background:#111827;border:1px solid #1f2937;border-radius:16px;padding:28px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    h1 {margin:0 0 12px}
+    .ok {color:#22c55e}
+    .bad {color:#f97316}
+    .btn {display:inline-block;margin-top:16px;padding:10px 16px;border-radius:12px;border:1px solid #374151;background:#1f2937;color:#fff;text-decoration:none}
+    .btn:hover {background:#2b3646}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1 id="title">Authorising…</h1>
+    <p id="msg">Please wait.</p>
+    <a id="sync" class="btn" href="#" style="display:none;">Run Purchases Sync (last 30 days)</a>
+  </div>
+  <script>
+    (function(){
+      const qs = new URLSearchParams(location.search);
+      const ok = qs.get('ok');
+      const err = qs.get('err');
+      const title = document.getElementById('title');
+      const msg = document.getElementById('msg');
+      const syncBtn = document.getElementById('sync');
+      const EBAY_SERVICE_BASE = 'https://delightful-liberation-production.up.railway.app';
+      if (ok === '1') {
+        title.textContent = 'eBay Connected ✅';
+        title.className = 'ok';
+        msg.textContent = 'Your account is now authorised. You can start syncing purchases.';
+        syncBtn.style.display = 'inline-block';
+        syncBtn.href = EBAY_SERVICE_BASE + '/sync/purchases?days=30';
+      } else {
+        title.textContent = 'eBay Authorisation Failed';
+        title.className = 'bad';
+        msg.textContent = 'Please try again.' + (err ? (' Details: ' + err) : '');
+      }
+    })();
+  </script>
+</body>
+</html>
