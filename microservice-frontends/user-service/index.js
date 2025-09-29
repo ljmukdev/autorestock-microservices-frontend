@@ -15,7 +15,7 @@ const authMiddleware = require('./middleware/auth');
 const errorHandler = require('./middleware/errorHandler');
 
 // Import data store
-const dataStore = require('./data/store');
+const dataStore = require('./data/mongodb-store');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,7 +24,9 @@ console.log('🔧 Environment:', {
   NODE_ENV: process.env.NODE_ENV,
   PORT: PORT,
   JWT_SECRET: process.env.JWT_SECRET ? 'SET' : 'NOT SET',
-  ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS || 'NOT SET'
+  ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS || 'NOT SET',
+  MONGODB_URI: process.env.MONGODB_URI ? 'SET' : 'NOT SET',
+  DATABASE_URL: process.env.DATABASE_URL ? 'SET' : 'NOT SET'
 });
 
 // Security middleware
@@ -112,18 +114,28 @@ dataStore.initialize().then(() => {
 });
 
 // Graceful shutdown
-process.on('SIGTERM', () => {
+process.on('SIGTERM', async () => {
   console.log('SIGTERM received, shutting down gracefully');
-  dataStore.save().then(() => {
+  try {
+    await dataStore.close();
+    console.log('MongoDB connection closed successfully');
     process.exit(0);
-  });
+  } catch (error) {
+    console.error('Error closing MongoDB connection:', error);
+    process.exit(1);
+  }
 });
 
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
   console.log('SIGINT received, shutting down gracefully');
-  dataStore.save().then(() => {
+  try {
+    await dataStore.close();
+    console.log('MongoDB connection closed successfully');
     process.exit(0);
-  });
+  } catch (error) {
+    console.error('Error closing MongoDB connection:', error);
+    process.exit(1);
+  }
 });
 
 module.exports = app;
