@@ -37,7 +37,7 @@ export const useUserApi = (config: UseUserApiConfig): UseUserApiReturn => {
     clearError();
     
     try {
-      const response = await api.post<User>('/users', data);
+      const response = await api.post<User>('/api/v1/users', data);
       return response.data;
     } catch (err) {
       return handleError(err);
@@ -51,7 +51,7 @@ export const useUserApi = (config: UseUserApiConfig): UseUserApiReturn => {
     clearError();
     
     try {
-      const response = await api.get<User>(`/users/${userId}`);
+      const response = await api.get<User>(`/api/v1/users/${userId}`);
       return response.data;
     } catch (err) {
       return handleError(err);
@@ -65,7 +65,7 @@ export const useUserApi = (config: UseUserApiConfig): UseUserApiReturn => {
     clearError();
     
     try {
-      const response = await api.put<User>(`/users/${userId}`, data);
+      const response = await api.put<User>(`/api/v1/users/${userId}`, data);
       return response.data;
     } catch (err) {
       return handleError(err);
@@ -79,7 +79,7 @@ export const useUserApi = (config: UseUserApiConfig): UseUserApiReturn => {
     clearError();
     
     try {
-      const response = await api.post<EmailAlias>(`/tenants/${data.tenantId}/aliases`, {
+      const response = await api.post<EmailAlias>(`/api/v1/tenants/${data.tenantId}/aliases`, {
         alias: data.alias
       });
       return response.data;
@@ -95,7 +95,7 @@ export const useUserApi = (config: UseUserApiConfig): UseUserApiReturn => {
     clearError();
     
     try {
-      const response = await api.get<EmailAlias[]>(`/tenants/${tenantId}/aliases`);
+      const response = await api.get<EmailAlias[]>(`/api/v1/tenants/${tenantId}/aliases`);
       return response.data;
     } catch (err) {
       return handleError(err);
@@ -109,7 +109,7 @@ export const useUserApi = (config: UseUserApiConfig): UseUserApiReturn => {
     clearError();
     
     try {
-      const response = await api.get<OnboardingStatus>(`/onboarding/status`, {
+      const response = await api.get<OnboardingStatus>(`/api/v1/onboarding/status`, {
         params: { userId }
       });
       return response.data;
