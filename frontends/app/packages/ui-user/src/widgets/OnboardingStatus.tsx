@@ -14,7 +14,7 @@ export const OnboardingStatus: React.FC<OnboardingStatusProps> = ({
   const [status, setStatus] = useState<OnboardingStatusType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const intervalRef = useRef<number | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const { getOnboardingStatus } = useUserApi({ apiBase, authToken });
 
