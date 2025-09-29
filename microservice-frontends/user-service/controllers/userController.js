@@ -9,7 +9,7 @@ class UserController {
   // Create a simple user (MVP endpoint)
   async createUser(req, res) {
     try {
-      const { email, name } = req.body;
+      const { email, firstName, lastName, forwardingEmail } = req.body;
 
       // Check if user already exists
       const existingUser = dataStore.getUserByEmail(email);
@@ -27,8 +27,9 @@ class UserController {
       const user = {
         id: userId,
         email,
-        name,
-        tenantId,
+        firstName: firstName || '',
+        lastName: lastName || '',
+        forwardingEmail: forwardingEmail || '',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
@@ -36,7 +37,7 @@ class UserController {
       const tenant = {
         id: tenantId,
         userId,
-        name: `${name}'s Tenant`,
+        name: `${firstName || 'User'}'s Tenant`,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
@@ -48,10 +49,13 @@ class UserController {
         success: true,
         message: 'User created successfully',
         user: {
-          userId,
-          tenantId,
+          id: userId,
           email,
-          name
+          firstName: firstName || '',
+          lastName: lastName || '',
+          forwardingEmail: forwardingEmail || '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         }
       });
     } catch (error) {

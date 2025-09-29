@@ -8,7 +8,8 @@ const router = express.Router();
 // Validation middleware
 const validateUser = [
   body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
-  body('name').trim().isLength({ min: 1 }).withMessage('Name is required'),
+  body('firstName').trim().isLength({ min: 1 }).withMessage('First name is required'),
+  body('lastName').trim().isLength({ min: 1 }).withMessage('Last name is required'),
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -45,5 +46,6 @@ router.post('/', validateUser, userController.createUser);
 router.post('/register', validateRegistration, userController.registerUser);
 router.get('/me', authMiddleware, userController.getCurrentUser);
 router.get('/:userId', authMiddleware, userController.getUserById);
+router.put('/:userId', authMiddleware, userController.updateUser);
 
 module.exports = router;
