@@ -1,0 +1,253 @@
+========================================
+AUTORESTOCK PROJECT STRUCTURE ANALYSIS
+========================================
+Generated: 09/26/2025 10:01:36
+Project Root: C:\development\Projects\autorestock
+
+========================================
+1. ROOT LEVEL FILES
+========================================
+📄 .gitignore (1.4KB)
+📄 analyze-project.ps1 (4.9KB)
+📄 app.html (9.5KB)
+📄 architecture.md (2.9KB)
+📄 dashboard-microservice.html (11.6KB)
+📄 DEPLOYMENT_CHECKLIST.md (2.9KB)
+📄 DEPLOYMENT.md (7.2KB)
+📄 EBAY_INTEGRATION_GUIDE.md (8.5KB)
+📄 find-railway-urls.js (2.7KB)
+📄 GITHUB_SETUP.md (5.8KB)
+📄 MICROSERVICES_TESTING_GUIDE.md (5.6KB)
+📄 MONGODB_SETUP_GUIDE.md (3.6KB)
+📄 package-lock.json (30.6KB)
+📄 package.json (0.5KB)
+📄 PROJECT_ANALYSIS.txt (0.3KB)
+📄 QUICK_SETUP.md (3.7KB)
+📄 railway.json (0.2KB)
+📄 README-Frontend.md (4.6KB)
+📄 README.md (1.7KB)
+📄 server.js (2.3KB)
+📄 setup-railway.ps1 (4.1KB)
+📄 start-frontend.ps1 (1.1KB)
+📄 test-accounting.html (15.4KB)
+📄 test-ad-generator.html (15.9KB)
+📄 test-api-endpoints.js (6.9KB)
+📄 test-auto-buying.html (15.9KB)
+📄 test-complete-system.js (10.9KB)
+📄 test-ebay.html (13.9KB)
+📄 test-email-ingest.html (15.9KB)
+📄 test-media.html (15.9KB)
+📄 test-microservices-route.js (4.2KB)
+📄 test-microservices.sh (1.6KB)
+📄 test-purchases.html (12.7KB)
+📄 test-railway-deployment.js (3.7KB)
+📄 test-reporting.html (14.0KB)
+📄 test-rules-engine.html (15.5KB)
+📄 test-sales.html (11.3KB)
+📄 test-settings.html (11.2KB)
+📄 test-status.html (16.2KB)
+📄 test-user-service.js (10.4KB)
+📄 test-vinted.html (14.1KB)
+📄 view-purchases.html (2.0KB)
+
+========================================
+2. CRITICAL FILE CONTENTS
+========================================
+
+--- ROOT package.json ---
+{
+  "name": "autorestock-microservice-frontends",
+  "version": "1.0.0",
+  "description": "AutoRestock Microservice Testing Dashboard",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "keywords": [
+    "autorestock",
+    "microservices",
+    "testing",
+    "dashboard"
+  ],
+  "author": "LJMUK",
+  "license": "MIT"
+}
+
+--- ROOT server.js (first 30 lines) ---
+const express = require('express');
+const path = require('path');
+const cors = require('cors');
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Enable CORS for all routes
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Serve static files from the current directory
+app.use(express.static(path.join(__dirname)));
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.json({
+        status: 'ok',
+        service: 'microservice-testing-dashboard',
+        timestamp: new Date().toISOString()
+    });
+});
+
+// Serve microservice dashboard at root
+app.get('/', (req, res) => {
+    const dashboardPath = path.join(__dirname, 'dashboard.html');
+    console.log('Serving microservice dashboard from:', dashboardPath);
+    
+
+--- railway.json ---
+{
+  "deploy": {
+    "startCommand": "npm start",
+    "healthcheckPath": "/health",
+    "healthcheckTimeout": 300,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 10
+  }
+}
+
+========================================
+3. FRONTEND FOLDER ANALYSIS
+========================================
+✅ frontend/ directory exists
+📁 Contents:
+   📄 dashboard.html (1.5KB)
+   📄 ebay-import.html (23.0KB)
+   📄 ebay-integration-demo.html (13.3KB)
+   📄 ebay-live-test.html (9.7KB)
+   📄 ebay-test.html (11.5KB)
+   📄 email-import.html (50.1KB)
+   📄 emailimportdebuginterface.html (10.9KB)
+   📄 index.html (29.4KB)
+   📄 inventory-portal.html (32.2KB)
+   📄 inventory.html (0.1KB)
+   📄 log-consumable.html (23.8KB)
+   📄 log-sale.html (38.0KB)
+   📄 manual-entry.html (5.7KB)
+   📄 multipage-registration.html (27.9KB)
+   📄 oauth-demo.html (1.9KB)
+   📄 package.json (0.5KB)
+   📄 railway.json (0.3KB)
+   📄 reports.html (24.1KB)
+   📄 server.js (1.7KB)
+   📄 settings.html (79.0KB)
+   📄 test-user-registration.html (15.2KB)
+   📄 user-registration.html (0.0KB)
+   📄 view-consumables.html (44.8KB)
+   📄 view-inventory-exact-125518.html (28.2KB)
+   📄 view-inventory.html (43.0KB)
+   📄 view-reports.html (1.2KB)
+   📄 view-sales.html (34.8KB)
+   📄 Vinted-Email-Finder.html (9.8KB)
+   📄 css\autorestock-global.css (24.0KB)
+   📄 images\autorestock-logo-vector.png (1074.0KB)
+   📄 images\autorestock-logo.png (580.0KB)
+   📄 js\AddPurchaseModal.jsx (10.8KB)
+   📄 js\autorestock-api.js (17.7KB)
+   📄 js\ebay-integration.js (12.6KB)
+   📄 js\main.js (8.4KB)
+   📄 js\oauth-api-wrapper.js (6.4KB)
+   📄 js\oauth-handler.js (16.2KB)
+   📄 js\oauth-integration.js (9.5KB)
+   📄 js\components\modal.js (4.8KB)
+   📄 js\components\toasts.js (6.0KB)
+   📄 js\core\config.js (2.0KB)
+   📄 js\core\dom.js (0.3KB)
+   📄 js\core\http.js (4.9KB)
+   📄 js\core\router.js (5.3KB)
+   📄 js\core\utils.js (7.0KB)
+   📄 js\services\auth\oauth.js (9.3KB)
+   📄 js\services\consumables\index.js (2.0KB)
+   📄 js\services\email-import\index.js (1.5KB)
+   📄 js\services\inventory\index.js (2.8KB)
+   📄 js\services\log-sale\index.js (1.4KB)
+   📄 js\services\purchases\api.js (6.0KB)
+   📄 js\services\purchases\index.js (27.8KB)
+   📄 js\services\purchases\mapper.js (11.3KB)
+   📄 js\services\purchases\ui.js (39.6KB)
+   📄 js\services\reports\index.js (1.4KB)
+   📄 js\services\sales\index.js (2.7KB)
+   📄 js\services\settings\index.js (1.5KB)
+   📄 js\views\home.js (3.1KB)
+   📄 js\views\purchases.js (12.5KB)
+
+🔍 KEY FRONTEND FILES CHECK:
+✅ server.js exists
+✅ package.json exists
+✅ multipage-registration.html exists
+
+--- frontend/multipage-registration.html (first 20 lines) ---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoRestock - Complete Registration</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+
+--- frontend/package.json ---
+{"name":"autorestock-frontend","version":"1.0.0","private":true,"description":"AutoRestock main frontend application","main":"server.js","scripts":{"start":"node server.js","dev":"node server.js","build":"echo \"No build step required for static frontend\""},"engines":{"node":">=18.0.0"},"dependencies":{"express":"^4.19.2","cors":"^2.8.5","helmet":"^7.1.0","compression":"^1.7.4"},"keywords":["autorestock","frontend","inventory-management","ecommerce"],"author":"AutoRestock Team","license":"MIT"}
+
+--- frontend/server.js (first 30 lines) ---
+const express = require('express');
+const path = require('path');
+const cors = require('cors');
+const helmet = require('helmet');
+const compression = require('compression');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Security middleware
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "https://autorestock-user-service-production.up.railway.app"],
+    },
+  },
+}));
+
+// Enable CORS for API calls
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Compression middleware

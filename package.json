@@ -1,27 +1,31 @@
 {
   "name": "autorestock",
-  "version": "2.0.2",
-  "description": "AutoRestock - Complete Inventory Management System",
-  "main": "server.js",
+  "version": "1.0.0",
+  "description": "AutoRestock Monorepo - Microservices and Frontends",
+  "private": true,
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "build": "pnpm -r --filter='@autorestock/*' build && pnpm -r --filter='./frontends/*' build",
+    "dev": "pnpm -r --parallel dev",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "clean": "pnpm -r clean && rm -rf node_modules",
+    "start:legacy": "node server.js"
   },
-  "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^4.18.2"
+  "devDependencies": {
+    "@changesets/cli": "^2.26.2",
+    "typescript": "^5.2.2"
   },
   "engines": {
     "node": ">=18.0.0",
-    "npm": ">=8.0.0"
+    "pnpm": ">=8.0.0"
   },
   "keywords": [
     "autorestock",
-    "inventory",
-    "management",
-    "ecommerce",
-    "reselling"
+    "monorepo",
+    "microservices",
+    "frontend"
   ],
   "author": "LJMUK",
-  "license": "MIT"
+  "license": "MIT",
+  "packageManager": "pnpm@8.10.0"
 }

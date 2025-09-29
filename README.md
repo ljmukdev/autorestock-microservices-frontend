@@ -1,151 +1,59 @@
-# AutoRestock - Microservice Architecture
+# AutoRestock Microservice Testing Dashboard
 
-A comprehensive inventory management system built with a microservice architecture, designed for reselling and e-commerce operations.
-
-## 🏗️ Architecture Overview
-
-AutoRestock is built as a collection of microservices, each handling specific business domains:
-
-### Core Services
-- **Purchases Service** - Manage purchase records and inventory intake
-- **Sales Service** - Handle sales transactions and revenue tracking
-- **Inventory Service** - Track stock levels and item management
-- **Settings Service** - Application configuration and user preferences
-
-### Integration Services
-- **eBay Service** - eBay API integration and automation
-- **Vinted Service** - Vinted platform integration
-- **Email Service** - Email parsing and data ingestion
-
-### Support Services
-- **Reporting Service** - Analytics and business intelligence
-- **Media Service** - Image and file management
-- **Accounting Service** - Financial reporting and bookkeeping
-- **Rules Engine** - Business logic and automation rules
-- **Auto-buying Service** - Automated purchasing decisions
-- **Ad Generator Service** - Marketing content creation
-- **Status Service** - System health monitoring
-
-### Frontend & Gateway
-- **API Gateway** - Single entry point for all frontend requests
-- **Frontend** - React-based web application
+A clean, standalone repository for testing AutoRestock microservices.
 
 ## 🚀 Quick Start
 
-### Prerequisites
-- Node.js 18+ 
-- MongoDB (or Railway MongoDB)
-- Git
+This repository contains testing interfaces for all AutoRestock microservices.
 
-### Local Development
+### Features
 
-1. **Clone the repository:**
-   ```bash
-   git clone <your-repo-url>
-   cd autorestock
-   ```
+- **Dashboard**: Central testing interface for all microservices
+- **Individual Tests**: Dedicated test pages for each microservice
+- **Health Monitoring**: Service status and connectivity testing
 
-2. **Start the API Gateway and Frontend:**
-   ```powershell
-   .\start-frontend.ps1
-   ```
+### Available Services
 
-3. **Start individual microservices:**
-   ```bash
-   # Each service can be started independently
-   cd microservices/purchases-service
-   npm install
-   npm start
-   ```
+- **Core Services**: Settings, Inventory, Sales, Purchases
+- **Integration Services**: eBay, Vinted, Email Ingestion
+- **Support Services**: Reporting, Accounting, Media, Rules Engine
+- **Automation Services**: Auto-buying, Ad Generator, Status
 
-### Production Deployment
+### Deployment
 
-This project is configured for Railway deployment. Each microservice can be deployed independently.
+This repository is configured for Railway deployment with:
 
-## 📁 Project Structure
+- **Health Check**: `/health` endpoint
+- **Auto-restart**: On failure with retry policy
+- **CORS Enabled**: For cross-origin requests
 
-```
-autorestock/
-├── api-gateway/                 # API Gateway and Frontend Server
-├── frontend/                    # Frontend Application
-├── microservices/              # Individual Microservices
-│   ├── purchases-service/
-│   ├── sales-service/
-│   ├── inventory-service/
-│   ├── settings-service/
-│   ├── ebay-service/
-│   ├── vinted-service/
-│   ├── email-ingestion-service/
-│   ├── reporting-service/
-│   ├── media-service/
-│   ├── accounting-integration-service/
-│   ├── rules-engine-service/
-│   ├── auto-buying-service/
-│   ├── ad-generator-service/
-│   └── status-service/
-├── shared/                      # Shared utilities and types
-└── docs/                       # Documentation
-```
+### Usage
 
-## 🔧 Configuration
-
-### Environment Variables
-
-Each service uses environment variables for configuration. See individual service READMEs for specific requirements.
-
-Common variables:
-- `PORT` - Service port (default varies by service)
-- `MONGODB_URI` - MongoDB connection string
-- `NODE_ENV` - Environment (development/production)
+1. **Main Dashboard**: Access the central testing interface
+2. **Service Tests**: Use `/test/{service-name}` for specific service testing
+3. **Health Check**: Monitor service status via `/health`
 
 ### Railway Configuration
 
-Each service includes a `railway.json` configuration file for deployment.
+- **Start Command**: `npm start`
+- **Health Check Path**: `/health`
+- **Port**: Auto-assigned by Railway
 
-## 🧪 Testing
+## 🔧 Development
 
 ```bash
-# Run tests for a specific service
-cd microservices/purchases-service
-npm test
-
-# Run all tests
-npm run test:all
+npm install
+npm start
 ```
 
-## 📊 Monitoring
+## 📊 Testing
 
-- **Health Checks**: Each service exposes `/health` endpoint
-- **Status Service**: Centralized monitoring and alerting
-- **Logging**: Structured logging across all services
+Each microservice has its own dedicated test interface accessible at:
+- `/test/ebay` - eBay service testing
+- `/test/purchases` - Purchase service testing
+- `/test/sales` - Sales service testing
+- And more...
 
-## 🤝 Contributing
+## 🎯 Purpose
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
-
-## 📄 License
-
-MIT License - see LICENSE file for details
-
-## 🆘 Support
-
-For support and questions:
-- Create an issue in this repository
-- Check the documentation in the `docs/` folder
-- Review individual service READMEs
-
-## 🔄 Deployment Status
-
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/your-template-id)
-
----
-
-**AutoRestock** - Streamlining your reselling business with intelligent automation.
-
-
-# Navigation fix 09/25/2025 14:59:01
-# CSP fix 09/25/2025 15:01:20
+This repository provides a clean, focused testing environment for AutoRestock microservices without the complexity of the main application structure.

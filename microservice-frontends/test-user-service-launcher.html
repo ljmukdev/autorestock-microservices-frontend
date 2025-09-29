@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Service Test Launcher - AutoRestock</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+        }
+
+        .service-status {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 4px solid #28a745;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #28a745;
+        }
+
+        .status-text {
+            font-weight: 600;
+            color: #28a745;
+        }
+
+        .service-url {
+            font-family: monospace;
+            background: #e9ecef;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .launch-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .description {
+            color: #666;
+            font-size: 14px;
+            margin-top: 20px;
+            line-height: 1.5;
+        }
+
+        .features {
+            text-align: left;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .features h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .features ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .features li {
+            padding: 5px 0;
+            color: #666;
+        }
+
+        .features li:before {
+            content: "✅ ";
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">AutoRestock</div>
+        <div class="subtitle">User Service Test Launcher</div>
+
+        <div class="service-status">
+            <div class="status-indicator">
+                <div class="status-dot" id="statusDot"></div>
+                <span class="status-text" id="statusText">Checking...</span>
+            </div>
+            <div class="service-url" id="serviceUrl">http://localhost:3000</div>
+        </div>
+
+        <div class="launch-buttons">
+            <a href="test-user-service-dashboard.html" class="btn btn-primary">
+                🚀 Open Full Test Dashboard
+            </a>
+            <a href="test-user-registration.html" class="btn btn-secondary">
+                📝 User Registration Only
+            </a>
+            <a href="http://localhost:3000" class="btn btn-success" target="_blank">
+                🔗 Service API Docs
+            </a>
+        </div>
+
+        <div class="description">
+            <p>Choose a test interface to interact with the User Service endpoints:</p>
+        </div>
+
+        <div class="features">
+            <h3>Available Test Features:</h3>
+            <ul>
+                <li>User Registration (Full & Simple)</li>
+                <li>Alias Management & Lookup</li>
+                <li>Connection Status (eBay & Gmail)</li>
+                <li>Onboarding Status Tracking</li>
+                <li>JWT Authentication Testing</li>
+                <li>Mock Authentication Testing</li>
+                <li>Real-time API Response Display</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Check service health on page load
+        async function checkServiceHealth() {
+            const serviceUrl = 'http://localhost:3000';
+            document.getElementById('serviceUrl').textContent = serviceUrl;
+            
+            try {
+                const response = await fetch(`${serviceUrl}/health`);
+                const healthData = await response.json();
+                
+                document.getElementById('statusDot').style.background = '#28a745';
+                document.getElementById('statusText').textContent = 'Service Online';
+                document.getElementById('statusText').style.color = '#28a745';
+                
+                console.log('✅ Service is healthy:', healthData);
+            } catch (error) {
+                document.getElementById('statusDot').style.background = '#dc3545';
+                document.getElementById('statusText').textContent = 'Service Offline';
+                document.getElementById('statusText').style.color = '#dc3545';
+                
+                console.error('❌ Service health check failed:', error);
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', checkServiceHealth);
+    </script>
+</body>
+</html>

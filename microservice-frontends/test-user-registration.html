@@ -190,9 +190,10 @@
         </div>
 
         <div class="service-info">
-            <strong>Service URL:</strong> https://autorestock-user-service-production.up.railway.app<br>
+            <strong>Service URL:</strong> <span id="serviceUrl">http://localhost:3000</span><br>
             <strong>Endpoint:</strong> /api/v1/users/register<br>
-            <strong>Method:</strong> POST
+            <strong>Method:</strong> POST<br>
+            <small>Update SERVICE_URL in script to use Railway deployment</small>
         </div>
 
         <form id="registrationForm">
@@ -336,8 +337,8 @@
         const loading = document.getElementById('loading');
         const result = document.getElementById('result');
 
-        // Service URL
-        const SERVICE_URL = 'https://autorestock-user-service-production.up.railway.app';
+        // Service URL - Update this to your deployed Railway URL
+        const SERVICE_URL = 'http://localhost:3000'; // Change to 'https://autorestock-user-service-production.up.railway.app' for production
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
