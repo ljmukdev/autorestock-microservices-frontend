@@ -20,6 +20,13 @@ const dataStore = require('./data/store');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+console.log('🔧 Environment:', {
+  NODE_ENV: process.env.NODE_ENV,
+  PORT: PORT,
+  JWT_SECRET: process.env.JWT_SECRET ? 'SET' : 'NOT SET',
+  ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS || 'NOT SET'
+});
+
 // Security middleware
 app.use(helmet());
 
@@ -87,10 +94,12 @@ app.use('*', (req, res) => {
 });
 
 // Initialize data store
+console.log('🔄 Initializing data store...');
 dataStore.initialize().then(() => {
   console.log('✅ Data store initialized');
   
   // Start server
+  console.log('🚀 Starting server...');
   app.listen(PORT, () => {
     console.log(`🚀 User Service running on port ${PORT}`);
     console.log(`📊 Health check: http://localhost:${PORT}/health`);
@@ -98,6 +107,7 @@ dataStore.initialize().then(() => {
   });
 }).catch((error) => {
   console.error('❌ Failed to initialize data store:', error);
+  console.error('❌ Stack trace:', error.stack);
   process.exit(1);
 });
 
