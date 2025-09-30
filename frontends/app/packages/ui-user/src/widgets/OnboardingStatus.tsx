@@ -78,7 +78,7 @@ export const OnboardingStatus: React.FC<OnboardingStatusProps> = ({
   };
 
   const getProgressPercentage = (): number => {
-    if (!status) return 0;
+    if (!status || !status.steps) return 0;
     
     const completedSteps = Object.values(status.steps).filter(Boolean).length;
     const totalSteps = Object.keys(status.steps).length;
