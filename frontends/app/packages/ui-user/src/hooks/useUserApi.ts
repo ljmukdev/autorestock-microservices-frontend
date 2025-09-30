@@ -80,7 +80,7 @@ export const useUserApi = (config: UseUserApiConfig): UseUserApiReturn => {
     
     try {
       const response = await api.post<EmailAlias>(`/tenants/${data.tenantId}/aliases`, {
-        alias: data.alias
+        localPart: data.alias
       });
       return response.data;
     } catch (err) {
