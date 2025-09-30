@@ -13,8 +13,11 @@ export interface User {
 
 export interface CreateUserRequest {
   email: string;
+  password: string;
+  tenantName: string;
   firstName?: string;
   lastName?: string;
+  companyName?: string;
   forwardingEmail?: string;
 }
 

@@ -12,8 +12,11 @@ export const UserRegister: React.FC<UserRegisterProps> = ({
 }) => {
   const [formData, setFormData] = useState<CreateUserRequest>({
     email: '',
+    password: '',
+    tenantName: '',
     firstName: '',
     lastName: '',
+    companyName: '',
     forwardingEmail: '',
   });
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -27,6 +30,16 @@ export const UserRegister: React.FC<UserRegisterProps> = ({
       errors.email = 'Email is required';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       errors.email = 'Please enter a valid email address';
+    }
+
+    if (!formData.password.trim()) {
+      errors.password = 'Password is required';
+    } else if (formData.password.length < 8) {
+      errors.password = 'Password must be at least 8 characters';
+    }
+
+    if (!formData.companyName?.trim()) {
+      errors.companyName = 'Company name is required';
     }
 
     if (!formData.firstName?.trim()) {
@@ -53,12 +66,22 @@ export const UserRegister: React.FC<UserRegisterProps> = ({
     }
 
     try {
-      const user = await createUser(formData);
+      // Map form data to backend's expected format
+      const userData = {
+        email: formData.email,
+        password: formData.password,
+        tenantName: formData.companyName || `${formData.firstName} ${formData.lastName}`.trim(),
+      };
+      
+      const user = await createUser(userData as CreateUserRequest);
       onSuccess?.(user);
       setFormData({
         email: '',
+        password: '',
+        tenantName: '',
         firstName: '',
         lastName: '',
+        companyName: '',
         forwardingEmail: '',
       });
       setValidationErrors({});
@@ -103,6 +126,29 @@ export const UserRegister: React.FC<UserRegisterProps> = ({
             fullWidth
             disabled={loading}
             placeholder="user@example.com"
+          />
+
+          <Input
+            label="Password *"
+            type="password"
+            value={formData.password}
+            onChange={handleInputChange('password')}
+            error={validationErrors.password}
+            fullWidth
+            disabled={loading}
+            placeholder="At least 8 characters"
+            helperText="Minimum 8 characters required"
+          />
+
+          <Input
+            label="Company Name *"
+            type="text"
+            value={formData.companyName}
+            onChange={handleInputChange('companyName')}
+            error={validationErrors.companyName}
+            fullWidth
+            disabled={loading}
+            placeholder="Your Company Ltd"
           />
 
           <Input
