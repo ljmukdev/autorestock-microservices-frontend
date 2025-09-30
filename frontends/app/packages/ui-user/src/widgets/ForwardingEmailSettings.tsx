@@ -57,12 +57,17 @@ export const ForwardingEmailSettings: React.FC<ForwardingEmailSettingsProps> = (
     }
 
     try {
-      const updatedUser = await updateUser(userId, {
-        forwardingEmail: forwardingEmail.trim(),
-      });
-      
-      setCurrentUser(updatedUser);
-      onSuccess?.(updatedUser);
+      // If email changed, update it
+      if (isEmailChanged) {
+        const updatedUser = await updateUser(userId, {
+          forwardingEmail: forwardingEmail.trim(),
+        });
+        setCurrentUser(updatedUser);
+        onSuccess?.(updatedUser);
+      } else {
+        // If no changes, just proceed to next step
+        onSuccess?.(currentUser!);
+      }
     } catch (err) {
       onError?.(err as any);
     }
@@ -120,9 +125,9 @@ export const ForwardingEmailSettings: React.FC<ForwardingEmailSettingsProps> = (
             size="lg"
             fullWidth
             loading={loading}
-            disabled={loading || !isEmailChanged}
+            disabled={loading}
           >
-            {isEmailChanged ? 'Update Forwarding Email' : 'No Changes to Save'}
+            {isEmailChanged ? 'Update Forwarding Email' : 'Continue to Next Step'}
           </Button>
         </Stack>
       </form>
