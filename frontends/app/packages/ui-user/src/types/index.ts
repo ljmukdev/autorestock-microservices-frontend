@@ -7,6 +7,13 @@ export interface User {
   firstName?: string;
   lastName?: string;
   forwardingEmail?: string;
+  tenantId?: string;
+  isCompany?: boolean;
+  companyName?: string;
+  companyType?: string;
+  companyRegistrationNumber?: string;
+  isVatRegistered?: boolean;
+  vatNumber?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -19,6 +26,11 @@ export interface CreateUserRequest {
   lastName?: string;
   companyName?: string;
   forwardingEmail?: string;
+  isCompany?: boolean;
+  companyType?: string;
+  companyRegistrationNumber?: string;
+  isVatRegistered?: boolean;
+  vatNumber?: string;
 }
 
 export interface UpdateUserRequest {
@@ -65,6 +77,7 @@ export interface ForwardingEmailSettingsProps extends BaseWidgetProps {
 export interface AliasCreatorProps extends BaseWidgetProps {
   tenantId: string;
   userId: string;
+  user?: User;
   onAliasCreated?: (alias: EmailAlias) => void;
 }
 

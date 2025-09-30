@@ -188,8 +188,9 @@ export default function OnboardingPage() {
               <AliasCreator
                 apiBase={config.userApiBase}
                 authToken={config.authToken}
-                tenantId={createdUser.id} // Using user ID as tenant ID for demo
+                tenantId={createdUser.tenantId || createdUser.id}
                 userId={createdUser.id}
+                user={createdUser}
                 onSuccess={handleAliasCreated}
                 onError={handleError}
               />
