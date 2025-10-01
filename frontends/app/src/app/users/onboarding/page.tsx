@@ -81,7 +81,7 @@ export default function OnboardingPage() {
     { number: 3, title: 'Create Alias', description: 'Set up email alias' },
     { number: 4, title: 'Platform Setup', description: 'Add to platforms' },
     { number: 5, title: 'Test Email', description: 'Verify delivery' },
-    { number: 6, title: 'Complete!', description: 'You're ready' },
+    { number: 6, title: 'Complete!', description: 'All set' },
   ]
 
   return (
