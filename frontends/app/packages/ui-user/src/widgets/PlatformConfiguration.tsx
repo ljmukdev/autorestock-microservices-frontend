@@ -156,7 +156,7 @@ export const PlatformConfiguration: React.FC<PlatformConfigurationProps> = ({
             />
             <Button
               variant={copiedEmail ? 'primary' : 'outline'}
-              onClick={handleCopyEmail}
+              onClick={() => handleCopyEmail()}
             >
               {copiedEmail ? '✓ Copied' : 'Copy Email'}
             </Button>
