@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Button, Card, Alert, Stack } from '@autorestock/ui-kit';
+import { EmailWhitelistInstructions } from './EmailWhitelistInstructions';
 
 export interface EmailDeliveryTestProps {
   alias: string;
@@ -220,10 +221,14 @@ export const EmailDeliveryTest: React.FC<EmailDeliveryTestProps> = ({
           border: '1px solid #fbbf24'
         }}>
           <div style={{ fontSize: '0.875rem', color: '#92400e' }}>
-            <strong>How to Test:</strong> Send an email from any address (Gmail, Outlook, etc.) to{' '}
-            <strong style={{ fontFamily: 'monospace' }}>{fullAddress}</strong> and it will be forwarded to{' '}
-            <strong>{forwardingEmail}</strong>. This tests the complete email routing system.
+            <strong>How to Test:</strong> Click "Send Test Email" above, then check your inbox at{' '}
+            <strong>{forwardingEmail}</strong>. The email may arrive in your spam folder initially - this is normal for forwarded emails.
           </div>
+        </div>
+
+        {/* Whitelist Instructions */}
+        <div style={{ marginTop: '2rem' }}>
+          <EmailWhitelistInstructions forwardingEmail={forwardingEmail} />
         </div>
 
         {testStatus !== 'confirmed' && onSkip && (

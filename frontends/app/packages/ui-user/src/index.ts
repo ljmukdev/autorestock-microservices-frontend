@@ -13,4 +13,5 @@ export { EmailStrategySelector } from './widgets/EmailStrategySelector';
 export { MultiAliasCreator } from './widgets/MultiAliasCreator';
 export { PlatformConfiguration } from './widgets/PlatformConfiguration';
 export { EmailDeliveryTest } from './widgets/EmailDeliveryTest';
+export { EmailWhitelistInstructions } from './widgets/EmailWhitelistInstructions';
 export { OnboardingComplete } from './widgets/OnboardingComplete';
