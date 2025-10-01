@@ -169,7 +169,7 @@ export const EmailDeliveryTest: React.FC<EmailDeliveryTestProps> = ({
             {(testStatus === 'sent' || testStatus === 'error') && (
               <>
                 <Button
-                  variant="success"
+                  variant="primary"
                   size="lg"
                   fullWidth
                   onClick={handleConfirmReceived}
@@ -207,12 +207,12 @@ export const EmailDeliveryTest: React.FC<EmailDeliveryTestProps> = ({
           </div>
         </div>
 
-        {testStatus !== 'confirmed' && (
+        {testStatus !== 'confirmed' && onSkip && (
           <Button
             variant="ghost"
             size="md"
             fullWidth
-            onClick={handleSkipForNow}
+            onClick={onSkip}
           >
             Skip Email Test (I'll test later)
           </Button>
