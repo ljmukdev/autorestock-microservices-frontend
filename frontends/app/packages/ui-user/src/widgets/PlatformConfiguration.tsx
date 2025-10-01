@@ -23,12 +23,13 @@ const PLATFORMS: Platform[] = [
     name: 'eBay',
     icon: '🛒',
     steps: [
-      'Log into eBay.com',
-      'Go to My eBay → Account Settings',
+      'Log into eBay.com and go to Account Settings',
       'Click on your profile',
-      'Navigate to Business info or Personal info',
-      'Add or update your email address',
-      'Verify the email when prompted'
+      'Find "Contact info" section',
+      'Click "Edit" next to Email address',
+      'Add your AutoRestock email',
+      'eBay will send a verification email to your AutoRestock address',
+      'Check your forwarding inbox and click the verification link'
     ],
     helpUrl: 'https://accountsettings.ebay.com/profile'
   },
