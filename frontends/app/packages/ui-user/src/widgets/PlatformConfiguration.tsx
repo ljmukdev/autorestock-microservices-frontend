@@ -13,6 +13,7 @@ export interface PlatformConfigurationProps {
   alias: string;
   fullAddress: string;
   forwardingEmail: string;
+  aliases?: any[];
   onComplete: (configuredPlatforms: string[]) => void;
   onSkip?: () => void;
 }
@@ -51,6 +52,7 @@ export const PlatformConfiguration: React.FC<PlatformConfigurationProps> = ({
   alias,
   fullAddress,
   forwardingEmail,
+  aliases = [],
   onComplete,
   onSkip
 }) => {
@@ -59,8 +61,17 @@ export const PlatformConfiguration: React.FC<PlatformConfigurationProps> = ({
   const [gdprAgreed, setGdprAgreed] = useState(false);
   const [signature, setSignature] = useState('');
 
-  const handleCopyEmail = () => {
-    navigator.clipboard.writeText(fullAddress);
+  // Helper to get email for specific platform
+  const getEmailForPlatform = (platformId: string) => {
+    if (aliases.length > 1) {
+      const platformAlias = aliases.find((a: any) => a.platform === platformId || a.service === platformId);
+      return platformAlias ? `${platformAlias.alias}@in.autorestock.app` : fullAddress;
+    }
+    return fullAddress;
+  };
+
+  const handleCopyEmail = (email?: string) => {
+    navigator.clipboard.writeText(email || fullAddress);
     setCopiedEmail(true);
     setTimeout(() => setCopiedEmail(false), 2000);
   };
@@ -156,13 +167,15 @@ export const PlatformConfiguration: React.FC<PlatformConfigurationProps> = ({
           </Alert>
         </div>
 
-        <div>
-          <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem' }}>
-            Select the platforms you use:
-          </h3>
+            <div>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem' }}>
+                Add these email addresses to your platforms:
+              </h3>
 
-          <Stack spacing="md">
-            {PLATFORMS.map((platform) => (
+              <Stack spacing="md">
+            {PLATFORMS.map((platform) => {
+              const platformEmail = getEmailForPlatform(platform.id);
+              return (
               <div
                 key={platform.id}
                 style={{
@@ -180,6 +193,35 @@ export const PlatformConfiguration: React.FC<PlatformConfigurationProps> = ({
                     <h4 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '0.5rem' }}>
                       {platform.name}
                     </h4>
+
+                    {/* Platform-Specific Email */}
+                    <div style={{
+                      padding: '0.75rem',
+                      backgroundColor: '#f0f9ff',
+                      borderRadius: '8px',
+                      marginBottom: '1rem',
+                      border: '1px solid #0ea5e9'
+                    }}>
+                      <div style={{ fontSize: '0.75rem', color: '#0c4a6e', marginBottom: '0.25rem' }}>
+                        Your {platform.name} email:
+                      </div>
+                      <div style={{ 
+                        fontFamily: 'monospace', 
+                        fontSize: '1rem',
+                        fontWeight: '600',
+                        color: '#0ea5e9',
+                        marginBottom: '0.5rem'
+                      }}>
+                        {platformEmail}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCopyEmail(platformEmail)}
+                      >
+                        {copiedEmail ? '✓ Copied' : 'Copy Email'}
+                      </Button>
+                    </div>
 
                     <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '1rem' }}>
                       <strong>Quick Steps:</strong>
@@ -218,7 +260,8 @@ export const PlatformConfiguration: React.FC<PlatformConfigurationProps> = ({
                   </div>
                 </div>
               </div>
-            ))}
+            );
+            })}
           </Stack>
         </div>
 

@@ -50,6 +50,8 @@ export interface EmailAlias {
 export interface CreateAliasRequest {
   tenantId: string;
   alias: string;
+  forwardTo?: string;
+  service?: string;
 }
 
 export interface OnboardingStatus {

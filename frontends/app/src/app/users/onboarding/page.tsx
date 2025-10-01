@@ -4,8 +4,10 @@ import { useState } from 'react'
 import { Container, Stack, Alert, Card } from '@autorestock/ui-kit'
 import { 
   UserRegister, 
-  ForwardingEmailSettings, 
-  AliasCreator, 
+  ForwardingEmailSettings,
+  EmailStrategySelector,
+  AliasCreator,
+  MultiAliasCreator,
   OnboardingStatus,
   PlatformConfiguration,
   EmailDeliveryTest,
@@ -30,7 +32,8 @@ interface OnboardingStatusType {
 export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(1)
   const [createdUser, setCreatedUser] = useState<User | null>(null)
-  const [createdAlias, setCreatedAlias] = useState<EmailAlias | null>(null)
+  const [emailStrategy, setEmailStrategy] = useState<'single' | 'multiple' | null>(null)
+  const [createdAliases, setCreatedAliases] = useState<any[]>([])
   const [configuredPlatforms, setConfiguredPlatforms] = useState<string[]>([])
   const [onboardingStatus, setOnboardingStatus] = useState<OnboardingStatusType | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -49,21 +52,33 @@ export default function OnboardingPage() {
     setCurrentStep(3)
   }
 
-  const handleAliasCreated = (alias: EmailAlias) => {
-    setCreatedAlias(alias)
+  const handleStrategySelected = (strategy: 'single' | 'multiple') => {
+    setEmailStrategy(strategy)
     setError(null)
     setCurrentStep(4)
+  }
+
+  const handleSingleAliasCreated = (alias: EmailAlias) => {
+    setCreatedAliases([alias])
+    setError(null)
+    setCurrentStep(5)
+  }
+
+  const handleMultipleAliasesCreated = (aliases: any[]) => {
+    setCreatedAliases(aliases)
+    setError(null)
+    setCurrentStep(5)
   }
 
   const handlePlatformsConfigured = (platforms: string[]) => {
     setConfiguredPlatforms(platforms)
     setError(null)
-    setCurrentStep(5)
+    setCurrentStep(6)
   }
 
   const handleEmailTestComplete = () => {
     setError(null)
-    setCurrentStep(6)
+    setCurrentStep(7)
   }
 
   const handleStatusChange = (status: OnboardingStatusType) => {
@@ -76,12 +91,13 @@ export default function OnboardingPage() {
   }
 
   const steps = [
-    { number: 1, title: 'User Registration', description: 'Create your account' },
-    { number: 2, title: 'Email Settings', description: 'Configure forwarding' },
-    { number: 3, title: 'Create Alias', description: 'Set up email alias' },
-    { number: 4, title: 'Platform Setup', description: 'Add to platforms' },
-    { number: 5, title: 'Test Email', description: 'Verify delivery' },
-    { number: 6, title: 'Complete!', description: 'All set' },
+    { number: 1, title: 'Register', description: 'Create account' },
+    { number: 2, title: 'Email', description: 'Forwarding' },
+    { number: 3, title: 'Strategy', description: 'Choose setup' },
+    { number: 4, title: 'Aliases', description: 'Create emails' },
+    { number: 5, title: 'Platforms', description: 'Setup guides' },
+    { number: 6, title: 'Test', description: 'Verify' },
+    { number: 7, title: 'Done!', description: 'All set' },
   ]
 
   return (
@@ -196,68 +212,95 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Step 3: Alias Creation */}
+          {/* Step 3: Email Strategy Selection */}
           {currentStep >= 3 && createdUser && (
             <div>
               <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1rem' }}>
-                Step 3: Create Email Alias
+                Step 3: Choose Your Email Setup
               </h2>
-              <AliasCreator
-                apiBase={config.userApiBase}
-                authToken={config.authToken}
-                tenantId={createdUser.tenantId || createdUser.id}
-                userId={createdUser.id}
-                user={createdUser}
-                onSuccess={handleAliasCreated}
-                onError={handleError}
+              <EmailStrategySelector
+                onSelectStrategy={handleStrategySelected}
               />
             </div>
           )}
 
-          {/* Step 4: Platform Configuration */}
-          {currentStep >= 4 && createdUser && createdAlias && (
+          {/* Step 4: Alias Creation (Single or Multiple) */}
+          {currentStep >= 4 && createdUser && emailStrategy && (
             <div>
               <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1rem' }}>
-                Step 4: Add Email to Your Platforms
+                Step 4: Create Your Email {emailStrategy === 'multiple' ? 'Aliases' : 'Alias'}
+              </h2>
+              {emailStrategy === 'single' ? (
+                <AliasCreator
+                  apiBase={config.userApiBase}
+                  authToken={config.authToken}
+                  tenantId={createdUser.tenantId || createdUser.id}
+                  userId={createdUser.id}
+                  user={createdUser}
+                  onSuccess={handleSingleAliasCreated}
+                  onError={handleError}
+                />
+              ) : (
+                <MultiAliasCreator
+                  apiBase={config.userApiBase}
+                  authToken={config.authToken}
+                  tenantId={createdUser.tenantId || createdUser.id}
+                  userId={createdUser.id}
+                  user={createdUser}
+                  defaultForwardingEmail={createdUser.forwardingEmail || createdUser.email || ''}
+                  onSuccess={handleMultipleAliasesCreated}
+                  onError={handleError}
+                />
+              )}
+            </div>
+          )}
+
+          {/* Step 5: Platform Configuration */}
+          {currentStep >= 5 && createdUser && createdAliases.length > 0 && (
+            <div>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1rem' }}>
+                Step 5: Add Email to Your Platforms
               </h2>
               <PlatformConfiguration
-                alias={createdAlias.alias}
-                fullAddress={`${createdAlias.alias}@in.autorestock.app`}
+                alias={createdAliases[0].alias}
+                fullAddress={`${createdAliases[0].alias}@in.autorestock.app`}
                 forwardingEmail={createdUser.forwardingEmail || createdUser.email || ''}
+                aliases={createdAliases}
                 onComplete={handlePlatformsConfigured}
-                onSkip={() => setCurrentStep(5)}
-              />
-            </div>
-          )}
-
-          {/* Step 5: Email Delivery Test */}
-          {currentStep >= 5 && createdUser && createdAlias && (
-            <div>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1rem' }}>
-                Step 5: Test Email Delivery
-              </h2>
-              <EmailDeliveryTest
-                alias={createdAlias.alias}
-                fullAddress={`${createdAlias.alias}@in.autorestock.app`}
-                forwardingEmail={createdUser.forwardingEmail || createdUser.email || ''}
-                userId={createdUser.id}
-                apiBase={config.userApiBase}
-                authToken={config.authToken}
-                onTestSuccess={handleEmailTestComplete}
                 onSkip={() => setCurrentStep(6)}
               />
             </div>
           )}
 
-          {/* Step 6: Onboarding Complete */}
-          {currentStep >= 6 && createdUser && createdAlias && (
+          {/* Step 6: Email Delivery Test */}
+          {currentStep >= 6 && createdUser && createdAliases.length > 0 && (
             <div>
               <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1rem' }}>
-                Step 6: All Done!
+                Step 6: Test Email Delivery
+              </h2>
+              <EmailDeliveryTest
+                alias={createdAliases[0].alias}
+                fullAddress={`${createdAliases[0].alias}@in.autorestock.app`}
+                forwardingEmail={createdUser.forwardingEmail || createdUser.email || ''}
+                userId={createdUser.id}
+                apiBase={config.userApiBase}
+                authToken={config.authToken}
+                onTestSuccess={handleEmailTestComplete}
+                onSkip={() => setCurrentStep(7)}
+              />
+            </div>
+          )}
+
+          {/* Step 7: Onboarding Complete */}
+          {currentStep >= 7 && createdUser && createdAliases.length > 0 && (
+            <div>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1rem' }}>
+                Step 7: All Done!
               </h2>
               <OnboardingComplete
                 user={createdUser}
-                alias={createdAlias}
+                alias={createdAliases[0]}
+                aliases={createdAliases}
                 platforms={configuredPlatforms}
                 onGoToDashboard={() => window.location.href = '/'}
               />

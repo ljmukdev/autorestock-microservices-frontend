@@ -5,6 +5,7 @@ import { User, EmailAlias } from '../types';
 export interface OnboardingCompleteProps {
   user: User;
   alias: EmailAlias;
+  aliases?: any[];
   platforms?: string[];
   onGoToDashboard?: () => void;
 }
@@ -12,11 +13,12 @@ export interface OnboardingCompleteProps {
 export const OnboardingComplete: React.FC<OnboardingCompleteProps> = ({
   user,
   alias,
+  aliases = [],
   platforms = [],
   onGoToDashboard
 }) => {
-  const handleCopyEmail = () => {
-    const fullAddress = `${alias.alias}@in.autorestock.app`;
+  const handleCopyEmail = (email?: string) => {
+    const fullAddress = email || `${alias.alias}@in.autorestock.app`;
     navigator.clipboard.writeText(fullAddress);
   };
 
@@ -118,9 +120,12 @@ export const OnboardingComplete: React.FC<OnboardingCompleteProps> = ({
                 ✓
               </div>
               <div>
-                <strong>Email alias created</strong>
+                <strong>{aliases.length > 1 ? `${aliases.length} email aliases` : 'Email alias'} created</strong>
                 <div style={{ fontSize: '0.875rem', color: '#6b7280', fontFamily: 'monospace' }}>
-                  {alias.alias}@in.autorestock.app
+                  {aliases.length > 1 
+                    ? aliases.map((a: any) => a.alias || a.localPart).join(', ') + '@in.autorestock.app'
+                    : `${alias.alias}@in.autorestock.app`
+                  }
                 </div>
               </div>
             </div>
@@ -160,36 +165,50 @@ export const OnboardingComplete: React.FC<OnboardingCompleteProps> = ({
           border: '2px solid #0ea5e9'
         }}>
           <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem' }}>
-            📧 Your AutoRestock Email
+            📧 Your AutoRestock Email{aliases.length > 1 ? 's' : ''}
           </h3>
           
-          <div style={{ 
-            padding: '1rem',
-            backgroundColor: '#f0f9ff',
-            borderRadius: '8px',
-            marginBottom: '1rem'
-          }}>
-            <div style={{ 
-              fontSize: '1.25rem', 
-              fontFamily: 'monospace',
-              fontWeight: '600',
-              color: '#0ea5e9',
-              marginBottom: '0.5rem'
-            }}>
-              {alias.alias}@in.autorestock.app
-            </div>
-            <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-              → Forwards to: {user.forwardingEmail || user.email}
-            </div>
-          </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCopyEmail}
-          >
-            📋 Copy Email Address
-          </Button>
+          <Stack spacing="md">
+            {(aliases.length > 0 ? aliases : [alias]).map((a: any, idx: number) => {
+              const emailAddress = a.alias || a.localPart;
+              const fullEmail = `${emailAddress}@in.autorestock.app`;
+              const forwardEmail = a.forwardTo || user.forwardingEmail || user.email;
+              const platformName = a.platformName || a.service || '';
+              
+              return (
+                <div key={idx} style={{ 
+                  padding: '1rem',
+                  backgroundColor: '#f0f9ff',
+                  borderRadius: '8px'
+                }}>
+                  {platformName && (
+                    <div style={{ fontSize: '0.75rem', color: '#0c4a6e', marginBottom: '0.25rem', fontWeight: '600' }}>
+                      {platformName.toUpperCase()}
+                    </div>
+                  )}
+                  <div style={{ 
+                    fontSize: '1.1rem', 
+                    fontFamily: 'monospace',
+                    fontWeight: '600',
+                    color: '#0ea5e9',
+                    marginBottom: '0.25rem'
+                  }}>
+                    {fullEmail}
+                  </div>
+                  <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.75rem' }}>
+                    → Forwards to: {forwardEmail}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleCopyEmail(fullEmail)}
+                  >
+                    📋 Copy
+                  </Button>
+                </div>
+              );
+            })}
+          </Stack>
         </div>
 
         {/* Next Steps */}
