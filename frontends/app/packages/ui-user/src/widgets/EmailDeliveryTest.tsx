@@ -46,6 +46,8 @@ export const EmailDeliveryTest: React.FC<EmailDeliveryTestProps> = ({
       const result = await response.json();
 
       if (result.success) {
+        // Note: For MVP, backend returns instructions, not actual email sent
+        // Status 'sent' means "ready for manual test"
         setTestStatus('sent');
       } else {
         setTestStatus('error');
@@ -218,8 +220,9 @@ export const EmailDeliveryTest: React.FC<EmailDeliveryTestProps> = ({
           border: '1px solid #fbbf24'
         }}>
           <div style={{ fontSize: '0.875rem', color: '#92400e' }}>
-            <strong>Alternative Test:</strong> Send an email from any address to{' '}
-            <strong style={{ fontFamily: 'monospace' }}>{fullAddress}</strong> and check if it arrives in your inbox.
+            <strong>How to Test:</strong> Send an email from any address (Gmail, Outlook, etc.) to{' '}
+            <strong style={{ fontFamily: 'monospace' }}>{fullAddress}</strong> and it will be forwarded to{' '}
+            <strong>{forwardingEmail}</strong>. This tests the complete email routing system.
           </div>
         </div>
 
