@@ -30,11 +30,27 @@ export const EmailDeliveryTest: React.FC<EmailDeliveryTestProps> = ({
     setErrorMessage('');
 
     try {
-      // In the future, call backend endpoint to send test email
-      // For now, we'll simulate it
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      setTestStatus('sent');
+      const response = await fetch(`${apiBase}/test-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+        },
+        body: JSON.stringify({
+          userId,
+          alias,
+          forwardingEmail
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setTestStatus('sent');
+      } else {
+        setTestStatus('error');
+        setErrorMessage(result.message || 'Failed to send test email');
+      }
     } catch (error: any) {
       setTestStatus('error');
       setErrorMessage(error.message || 'Failed to send test email');
