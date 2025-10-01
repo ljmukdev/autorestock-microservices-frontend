@@ -24,48 +24,25 @@ const PLATFORMS: Platform[] = [
     icon: '🛒',
     steps: [
       'Log into eBay.com',
-      'Click "My eBay" → "Account Settings"',
-      'Navigate to "Communication Preferences"',
-      'Under "Email notifications", click "Edit"',
-      'Add email and verify'
+      'Go to My eBay → Account Settings',
+      'Click on your profile',
+      'Navigate to Business info or Personal info',
+      'Add or update your email address',
+      'Verify the email when prompted'
     ],
-    helpUrl: 'https://www.ebay.com/help/account/account-settings/changing-account-settings'
+    helpUrl: 'https://accountsettings.ebay.com/profile'
   },
   {
     id: 'vinted',
     name: 'Vinted',
     icon: '👕',
     steps: [
-      'Open Vinted app or website',
-      'Go to Settings',
-      'Select "Notifications"',
-      'Add email and verify'
+      'Log into Vinted.com',
+      'Go to Settings → Account',
+      'Update your email address',
+      'Verify the email when prompted'
     ],
-    helpUrl: 'https://www.vinted.com/help'
-  },
-  {
-    id: 'depop',
-    name: 'Depop',
-    icon: '👗',
-    steps: [
-      'Open Depop app',
-      'Go to Profile → Settings',
-      'Select "Notifications"',
-      'Add email and verify'
-    ],
-    helpUrl: 'https://depophelp.zendesk.com'
-  },
-  {
-    id: 'facebook',
-    name: 'Facebook Marketplace',
-    icon: '📱',
-    steps: [
-      'Go to Facebook Marketplace',
-      'Click Settings',
-      'Navigate to Notifications',
-      'Add email and verify'
-    ],
-    helpUrl: 'https://www.facebook.com/help/marketplace'
+    helpUrl: 'https://www.vinted.com/settings/account'
   }
 ];
 
