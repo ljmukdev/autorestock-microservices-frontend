@@ -154,32 +154,54 @@ export default function OnboardingPage() {
             <li>
               <button
                 onClick={() => {
-                  // Auto-fill the form with test data
-                  const emailField = document.querySelector('input[type="email"]') as HTMLInputElement;
-                  const firstNameField = document.querySelector('input[placeholder*="first" i]') as HTMLInputElement;
-                  const lastNameField = document.querySelector('input[placeholder*="last" i]') as HTMLInputElement;
+                  // Helper to trigger React onChange event
+                  const setNativeValue = (element: HTMLInputElement | HTMLSelectElement, value: string) => {
+                    const valueSetter = Object.getOwnPropertyDescriptor(element, 'value')?.set;
+                    const prototype = Object.getPrototypeOf(element);
+                    const prototypeValueSetter = Object.getOwnPropertyDescriptor(prototype, 'value')?.set;
+                    
+                    if (valueSetter && valueSetter !== prototypeValueSetter) {
+                      prototypeValueSetter?.call(element, value);
+                    } else {
+                      valueSetter?.call(element, value);
+                    }
+                    
+                    element.dispatchEvent(new Event('input', { bubbles: true }));
+                    element.dispatchEvent(new Event('change', { bubbles: true }));
+                  };
+                  
+                  // Find inputs by placeholder
+                  const emailField = document.querySelector('input[placeholder="user@example.com"]') as HTMLInputElement;
+                  const passwordField = document.querySelector('input[type="password"]') as HTMLInputElement;
+                  const firstNameField = document.querySelector('input[placeholder="John"]') as HTMLInputElement;
+                  const lastNameField = document.querySelector('input[placeholder="Doe"]') as HTMLInputElement;
                   const companyCheckbox = document.querySelector('input[type="checkbox"]') as HTMLInputElement;
                   
-                  if (emailField) emailField.value = 'ebay@ljmuk.co.uk';
-                  if (firstNameField) firstNameField.value = 'Jake';
-                  if (lastNameField) lastNameField.value = 'Loynes';
+                  // Fill basic fields
+                  if (emailField) setNativeValue(emailField, 'ebay@ljmuk.co.uk');
+                  if (passwordField) setNativeValue(passwordField, 'TestPassword123!');
+                  if (firstNameField) setNativeValue(firstNameField, 'Jake');
+                  if (lastNameField) setNativeValue(lastNameField, 'Loynes');
                   
-                  // Trigger checkbox click
+                  // Click company checkbox if not checked
                   if (companyCheckbox && !companyCheckbox.checked) {
                     companyCheckbox.click();
                     
-                    // Wait for company fields to appear, then fill them
+                    // Wait for company fields to appear
                     setTimeout(() => {
-                      const companyNameField = document.querySelector('input[placeholder*="company name" i]') as HTMLInputElement;
-                      const companyRegField = document.querySelector('input[placeholder*="registration" i]') as HTMLInputElement;
+                      const companyNameField = Array.from(document.querySelectorAll('input[type="text"]'))
+                        .find(input => (input as HTMLInputElement).value === '' && 
+                              input.previousElementSibling?.textContent?.includes('Company Name')) as HTMLInputElement;
+                      const companyRegField = Array.from(document.querySelectorAll('input[type="text"]'))
+                        .find(input => input.previousElementSibling?.textContent?.includes('Company Registration')) as HTMLInputElement;
                       const companyTypeSelect = document.querySelector('select') as HTMLSelectElement;
                       
-                      if (companyNameField) companyNameField.value = 'LJMUK Ltd';
-                      if (companyRegField) companyRegField.value = '15866416';
-                      if (companyTypeSelect) companyTypeSelect.value = 'limited';
+                      if (companyNameField) setNativeValue(companyNameField, 'LJMUK Ltd');
+                      if (companyRegField) setNativeValue(companyRegField, '15866416');
+                      if (companyTypeSelect) setNativeValue(companyTypeSelect, 'limited');
                       
                       alert('✅ Form auto-filled with test data!');
-                    }, 100);
+                    }, 200);
                   } else {
                     alert('✅ Form auto-filled with test data!');
                   }
