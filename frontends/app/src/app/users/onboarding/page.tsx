@@ -4,8 +4,7 @@ import { useState } from 'react'
 import { Container, Stack, Alert, Card } from '@autorestock/ui-kit'
 import { 
   UserRegister, 
-  ForwardingEmailSettings,
-  EmailStrategySelector,
+  EmailConfiguration,
   AliasCreator,
   MultiAliasCreator,
   OnboardingStatus,
@@ -33,6 +32,7 @@ export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(1)
   const [createdUser, setCreatedUser] = useState<User | null>(null)
   const [emailStrategy, setEmailStrategy] = useState<'single' | 'multiple' | null>(null)
+  const [emailConfig, setEmailConfig] = useState<any>(null)
   const [createdAliases, setCreatedAliases] = useState<any[]>([])
   const [configuredPlatforms, setConfiguredPlatforms] = useState<string[]>([])
   const [onboardingStatus, setOnboardingStatus] = useState<OnboardingStatusType | null>(null)
@@ -46,39 +46,34 @@ export default function OnboardingPage() {
     setCurrentStep(2)
   }
 
-  const handleEmailUpdated = (user: User) => {
-    setCreatedUser(user)
+  const handleEmailConfigured = (strategy: 'single' | 'multiple', config: any) => {
+    setEmailStrategy(strategy)
+    setEmailConfig(config)
     setError(null)
     setCurrentStep(3)
-  }
-
-  const handleStrategySelected = (strategy: 'single' | 'multiple') => {
-    setEmailStrategy(strategy)
-    setError(null)
-    setCurrentStep(4)
   }
 
   const handleSingleAliasCreated = (alias: EmailAlias) => {
     setCreatedAliases([alias])
     setError(null)
-    setCurrentStep(5)
+    setCurrentStep(4)
   }
 
   const handleMultipleAliasesCreated = (aliases: any[]) => {
     setCreatedAliases(aliases)
     setError(null)
-    setCurrentStep(5)
+    setCurrentStep(4)
   }
 
   const handlePlatformsConfigured = (platforms: string[]) => {
     setConfiguredPlatforms(platforms)
     setError(null)
-    setCurrentStep(6)
+    setCurrentStep(5)
   }
 
   const handleEmailTestComplete = () => {
     setError(null)
-    setCurrentStep(7)
+    setCurrentStep(6)
   }
 
   const handleStatusChange = (status: OnboardingStatusType) => {
@@ -92,12 +87,11 @@ export default function OnboardingPage() {
 
   const steps = [
     { number: 1, title: 'Register', description: 'Create account' },
-    { number: 2, title: 'Email', description: 'Forwarding' },
-    { number: 3, title: 'Strategy', description: 'Choose setup' },
-    { number: 4, title: 'Aliases', description: 'Create emails' },
-    { number: 5, title: 'Platforms', description: 'Setup guides' },
-    { number: 6, title: 'Test', description: 'Verify' },
-    { number: 7, title: 'Done!', description: 'All set' },
+    { number: 2, title: 'Email Setup', description: 'Configure forwarding' },
+    { number: 3, title: 'Aliases', description: 'Create emails' },
+    { number: 4, title: 'Platforms', description: 'Setup guides' },
+    { number: 5, title: 'Test', description: 'Verify' },
+    { number: 6, title: 'Done!', description: 'All set' },
   ]
 
   return (
