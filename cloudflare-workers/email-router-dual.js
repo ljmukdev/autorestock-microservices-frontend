@@ -119,12 +119,15 @@ export default {
       
       console.log('✓ Email sent to ingestion service (async)');
       
-      // Step 3: Forward copy to user's inbox
-      console.log('Step 3: Forwarding copy to user:', forwardTo);
-      await message.forward(forwardTo);
-      console.log('✅ EMAIL FORWARDED to', forwardTo);
+      // Step 3: Email Ingestion Service will forward via SMTP
+      // We don't use message.forward() because it requires Cloudflare destination verification
+      // SMTP forwarding happens automatically in the Email Ingestion Service
+      console.log('✓ Email Ingestion Service will forward to user via SMTP:', forwardTo);
       
       console.log('=== DUAL-PATH COMPLETE ===');
+      
+      // Accept the email (don't reject it)
+      // The forwarding will be handled by Email Ingestion Service via SMTP
       
     } catch (error) {
       console.error('WORKER ERROR:', error.message);
