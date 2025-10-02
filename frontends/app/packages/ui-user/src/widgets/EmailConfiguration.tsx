@@ -196,6 +196,11 @@ export const EmailConfiguration: React.FC<EmailConfigurationProps> = ({
           {/* Multiple Email Mode */}
           {separateEmails && (
             <div>
+              <Alert variant="warning" style={{ marginBottom: '1rem' }}>
+                <strong>⚠️ Important:</strong> Enter email addresses that <strong>already exist</strong> and you can access. 
+                These will be used to forward notifications from each platform.
+              </Alert>
+              
               <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem' }}>
                 Configure forwarding address for each platform:
               </h3>
@@ -223,13 +228,15 @@ export const EmailConfiguration: React.FC<EmailConfigurationProps> = ({
                       onChange={(e) => updatePlatformEmail(platform.platform, e.target.value)}
                       fullWidth
                       disabled={loading}
-                      placeholder={`${platform.platform}@example.com`}
+                      placeholder={`your-existing-email@example.com`}
+                      helperText="Use an email address you already have access to"
                     />
                   </div>
                 ))}
               </Stack>
-              <Alert variant="warning" style={{ marginTop: '1rem' }}>
-                <strong>Note:</strong> Make sure these email addresses exist and you have access to them.
+              <Alert variant="info" style={{ marginTop: '1rem' }}>
+                <strong>💡 Tip:</strong> You can use the same email for multiple platforms, or separate ones. 
+                For example: <code>your-main-email@gmail.com</code> for all platforms is perfectly fine!
               </Alert>
             </div>
           )}
