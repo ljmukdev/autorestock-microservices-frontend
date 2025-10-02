@@ -144,10 +144,47 @@ export default function OnboardingPage() {
                   borderRadius: '6px',
                   cursor: 'pointer',
                   fontSize: '0.875rem',
-                  fontWeight: '500'
+                  fontWeight: '500',
+                  marginRight: '0.5rem'
                 }}
               >
                 🗑️ Clear DB
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={() => {
+                  const secret = prompt('Enter admin secret:');
+                  if (!secret) return;
+                  
+                  fetch('https://autorestock-user-service-production.up.railway.app/api/v1/admin/populate-database', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ secret })
+                  })
+                  .then(r => r.json())
+                  .then(data => {
+                    if (data.success) {
+                      alert(`✅ Database populated!\nUser: ${data.data.user.email}\nCompany: ${data.data.user.companyName}`);
+                      window.location.reload();
+                    } else {
+                      alert(`❌ Error: ${data.message || data.error}`);
+                    }
+                  })
+                  .catch(err => alert(`❌ Failed: ${err.message}`));
+                }}
+                style={{
+                  background: '#22c55e',
+                  color: 'white',
+                  border: 'none',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  fontWeight: '500'
+                }}
+              >
+                ➕ Populate DB
               </button>
             </li>
           </ul>
