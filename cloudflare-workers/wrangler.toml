@@ -1,0 +1,30 @@
+# Cloudflare Worker Configuration for AutoRestock Email Router
+# 
+# To deploy:
+# 1. Install Wrangler: npm install -g wrangler
+# 2. Login: wrangler login
+# 3. Deploy: wrangler deploy
+#
+# To set environment variables:
+# wrangler secret put INGESTION_SERVICE_URL
+# wrangler secret put CF_WEBHOOK_TOKEN
+# wrangler secret put DEFAULT_FORWARD_EMAIL
+
+name = "autorestock-email-router"
+main = "email-router.js"
+compatibility_date = "2024-01-01"
+
+# Email routing configuration
+[email]
+# This worker will handle email routing
+enabled = true
+
+# Environment variables (non-secret)
+[vars]
+# Add non-secret variables here if needed
+# DOMAIN = "in.autorestock.app"
+
+# Secrets (set via: wrangler secret put SECRET_NAME)
+# - INGESTION_SERVICE_URL
+# - CF_WEBHOOK_TOKEN  
+# - DEFAULT_FORWARD_EMAIL
