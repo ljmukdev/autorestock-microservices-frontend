@@ -18,6 +18,7 @@ export interface MultiAliasCreatorProps {
   userId: string;
   user: any;
   defaultForwardingEmail: string;
+  platformEmailConfig?: Array<{ platform: string; email: string }>; // Pre-configured platform-specific emails from Step 2
   onSuccess: (aliases: any[]) => void;
   onError?: (error: any) => void;
 }
@@ -34,6 +35,7 @@ export const MultiAliasCreator: React.FC<MultiAliasCreatorProps> = ({
   userId,
   user,
   defaultForwardingEmail,
+  platformEmailConfig,
   onSuccess,
   onError
 }) => {
@@ -47,22 +49,30 @@ export const MultiAliasCreator: React.FC<MultiAliasCreatorProps> = ({
   useEffect(() => {
     const baseName = generateBaseName(user);
     
-    // Extract domain from defaultForwardingEmail
-    const emailDomain = defaultForwardingEmail.includes('@') 
-      ? defaultForwardingEmail.split('@')[1] 
-      : 'ljmuk.co.uk';
-    
-    const initialPlatforms: PlatformAlias[] = AVAILABLE_PLATFORMS.map(p => ({
-      platform: p.id,
-      platformName: p.name,
-      icon: p.icon,
-      enabled: true,
-      alias: `${p.id}-${baseName}`,
-      // Smart default: platform-specific forwarding email
-      forwardTo: `${p.id}@${emailDomain}`
-    }));
+    const initialPlatforms: PlatformAlias[] = AVAILABLE_PLATFORMS.map(p => {
+      // Use pre-configured email from Step 2 if available
+      const configuredEmail = platformEmailConfig?.find(config => config.platform === p.id)?.email;
+      
+      // Fallback: auto-generate from domain
+      let forwardEmail = configuredEmail;
+      if (!forwardEmail) {
+        const emailDomain = defaultForwardingEmail.includes('@') 
+          ? defaultForwardingEmail.split('@')[1] 
+          : 'ljmuk.co.uk';
+        forwardEmail = `${p.id}@${emailDomain}`;
+      }
+      
+      return {
+        platform: p.id,
+        platformName: p.name,
+        icon: p.icon,
+        enabled: true,
+        alias: `${p.id}-${baseName}`,
+        forwardTo: forwardEmail
+      };
+    });
     setPlatforms(initialPlatforms);
-  }, [user, defaultForwardingEmail]);
+  }, [user, defaultForwardingEmail, platformEmailConfig]);
 
   const generateBaseName = (userData: any): string => {
     if (userData.isCompany && userData.companyName) {
