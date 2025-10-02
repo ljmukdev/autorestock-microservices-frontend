@@ -87,8 +87,12 @@ export const PlatformConfiguration: React.FC<PlatformConfigurationProps> = ({
   };
 
   const handleContinue = () => {
+    console.log('Button clicked!', { gdprAgreed, signature, configuredPlatforms: Array.from(configuredPlatforms) });
     if (gdprAgreed && signature.trim()) {
+      console.log('Calling onComplete...');
       onComplete(Array.from(configuredPlatforms));
+    } else {
+      console.log('Validation failed:', { gdprAgreed, signatureLength: signature.trim().length });
     }
   };
 
