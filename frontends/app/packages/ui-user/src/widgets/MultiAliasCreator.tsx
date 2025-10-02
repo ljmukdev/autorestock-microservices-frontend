@@ -184,7 +184,7 @@ export const MultiAliasCreator: React.FC<MultiAliasCreatorProps> = ({
 
       // Show verification alert if needed
       if (verificationNeeded.length > 0) {
-        const uniqueEmails = [...new Set(verificationNeeded)];
+        const uniqueEmails = Array.from(new Set(verificationNeeded));
         setError(
           `✅ Aliases created! 📧 Verification emails sent to: ${uniqueEmails.join(', ')}. ` +
           `Please check your inbox and click the verification links from Cloudflare before emails can be forwarded.`
