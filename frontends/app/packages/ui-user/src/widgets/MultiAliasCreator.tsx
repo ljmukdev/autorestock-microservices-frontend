@@ -47,11 +47,23 @@ export const MultiAliasCreator: React.FC<MultiAliasCreatorProps> = ({
 
   // Initialize platforms
   useEffect(() => {
+    console.log('MultiAliasCreator - Initializing with:', {
+      platformEmailConfig,
+      defaultForwardingEmail,
+      user
+    });
+    
     const baseName = generateBaseName(user);
     
     const initialPlatforms: PlatformAlias[] = AVAILABLE_PLATFORMS.map(p => {
       // Use pre-configured email from Step 2 if available
       const configuredEmail = platformEmailConfig?.find(config => config.platform === p.id)?.email;
+      
+      console.log(`Platform ${p.id}:`, {
+        configuredEmail,
+        platformEmailConfig,
+        found: platformEmailConfig?.find(config => config.platform === p.id)
+      });
       
       // Fallback: auto-generate from domain
       let forwardEmail = configuredEmail;
@@ -60,6 +72,9 @@ export const MultiAliasCreator: React.FC<MultiAliasCreatorProps> = ({
           ? defaultForwardingEmail.split('@')[1] 
           : 'ljmuk.co.uk';
         forwardEmail = `${p.id}@${emailDomain}`;
+        console.log(`${p.id}: No configured email, using fallback: ${forwardEmail}`);
+      } else {
+        console.log(`${p.id}: Using configured email: ${forwardEmail}`);
       }
       
       return {
@@ -71,6 +86,8 @@ export const MultiAliasCreator: React.FC<MultiAliasCreatorProps> = ({
         forwardTo: forwardEmail
       };
     });
+    
+    console.log('Final platforms:', initialPlatforms);
     setPlatforms(initialPlatforms);
   }, [user, defaultForwardingEmail, platformEmailConfig]);
 
