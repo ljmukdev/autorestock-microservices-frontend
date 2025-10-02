@@ -296,40 +296,28 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Step 2: Email Settings */}
+          {/* Step 2: Email Configuration (Combined) */}
           {currentStep >= 2 && createdUser && (
             <div>
               <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1rem' }}>
-                Step 2: Email Settings
+                Step 2: Email Configuration
               </h2>
-              <ForwardingEmailSettings
+              <EmailConfiguration
                 apiBase={config.userApiBase}
                 authToken={config.authToken}
                 userId={createdUser.id}
                 user={createdUser}
-                onSuccess={handleEmailUpdated}
+                onSuccess={handleEmailConfigured}
                 onError={handleError}
               />
             </div>
           )}
 
-          {/* Step 3: Email Strategy Selection */}
-          {currentStep >= 3 && createdUser && (
+          {/* Step 3: Alias Creation (Single or Multiple) */}
+          {currentStep >= 3 && createdUser && emailStrategy && emailConfig && (
             <div>
               <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1rem' }}>
-                Step 3: Choose Your Email Setup
-              </h2>
-              <EmailStrategySelector
-                onSelectStrategy={handleStrategySelected}
-              />
-            </div>
-          )}
-
-          {/* Step 4: Alias Creation (Single or Multiple) */}
-          {currentStep >= 4 && createdUser && emailStrategy && (
-            <div>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1rem' }}>
-                Step 4: Create Your Email {emailStrategy === 'multiple' ? 'Aliases' : 'Alias'}
+                Step 3: Create Your Email {emailStrategy === 'multiple' ? 'Aliases' : 'Alias'}
               </h2>
               {emailStrategy === 'single' ? (
                 <AliasCreator
@@ -356,11 +344,11 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Step 5: Platform Configuration */}
-          {currentStep >= 5 && createdUser && createdAliases.length > 0 && (
+          {/* Step 4: Platform Configuration */}
+          {currentStep >= 4 && createdUser && createdAliases.length > 0 && (
             <div>
               <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1rem' }}>
-                Step 5: Add Email to Your Platforms
+                Step 4: Add Email to Your Platforms
               </h2>
               <PlatformConfiguration
                 alias={createdAliases[0].alias}
@@ -368,7 +356,7 @@ export default function OnboardingPage() {
                 forwardingEmail={createdUser.forwardingEmail || createdUser.email || ''}
                 aliases={createdAliases}
                 onComplete={handlePlatformsConfigured}
-                onSkip={() => setCurrentStep(6)}
+                onSkip={() => setCurrentStep(5)}
               />
             </div>
           )}
@@ -392,11 +380,11 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Step 7: Onboarding Complete */}
-          {currentStep >= 7 && createdUser && createdAliases.length > 0 && (
+          {/* Step 6: Onboarding Complete */}
+          {currentStep >= 6 && createdUser && createdAliases.length > 0 && (
             <div>
               <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1rem' }}>
-                Step 7: All Done!
+                Step 6: All Done!
               </h2>
               <OnboardingComplete
                 user={createdUser}
