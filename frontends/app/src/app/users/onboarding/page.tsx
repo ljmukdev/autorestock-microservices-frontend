@@ -154,24 +154,35 @@ export default function OnboardingPage() {
             <li>
               <button
                 onClick={() => {
-                  const secret = prompt('Enter admin secret:');
-                  if (!secret) return;
+                  // Auto-fill the form with test data
+                  const emailField = document.querySelector('input[type="email"]') as HTMLInputElement;
+                  const firstNameField = document.querySelector('input[placeholder*="first" i]') as HTMLInputElement;
+                  const lastNameField = document.querySelector('input[placeholder*="last" i]') as HTMLInputElement;
+                  const companyCheckbox = document.querySelector('input[type="checkbox"]') as HTMLInputElement;
                   
-                  fetch('https://autorestock-user-service-production.up.railway.app/api/v1/admin/populate-database', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ secret })
-                  })
-                  .then(r => r.json())
-                  .then(data => {
-                    if (data.success) {
-                      alert(`✅ Database populated!\nUser: ${data.data.user.email}\nCompany: ${data.data.user.companyName}`);
-                      window.location.reload();
-                    } else {
-                      alert(`❌ Error: ${data.message || data.error}`);
-                    }
-                  })
-                  .catch(err => alert(`❌ Failed: ${err.message}`));
+                  if (emailField) emailField.value = 'ebay@ljmuk.co.uk';
+                  if (firstNameField) firstNameField.value = 'Jake';
+                  if (lastNameField) lastNameField.value = 'Loynes';
+                  
+                  // Trigger checkbox click
+                  if (companyCheckbox && !companyCheckbox.checked) {
+                    companyCheckbox.click();
+                    
+                    // Wait for company fields to appear, then fill them
+                    setTimeout(() => {
+                      const companyNameField = document.querySelector('input[placeholder*="company name" i]') as HTMLInputElement;
+                      const companyRegField = document.querySelector('input[placeholder*="registration" i]') as HTMLInputElement;
+                      const companyTypeSelect = document.querySelector('select') as HTMLSelectElement;
+                      
+                      if (companyNameField) companyNameField.value = 'LJMUK Ltd';
+                      if (companyRegField) companyRegField.value = '15866416';
+                      if (companyTypeSelect) companyTypeSelect.value = 'limited';
+                      
+                      alert('✅ Form auto-filled with test data!');
+                    }, 100);
+                  } else {
+                    alert('✅ Form auto-filled with test data!');
+                  }
                 }}
                 style={{
                   background: '#22c55e',
@@ -184,7 +195,7 @@ export default function OnboardingPage() {
                   fontWeight: '500'
                 }}
               >
-                ➕ Populate DB
+                ➕ Auto-Fill Form
               </button>
             </li>
           </ul>
