@@ -46,13 +46,20 @@ export const MultiAliasCreator: React.FC<MultiAliasCreatorProps> = ({
   // Initialize platforms
   useEffect(() => {
     const baseName = generateBaseName(user);
+    
+    // Extract domain from defaultForwardingEmail
+    const emailDomain = defaultForwardingEmail.includes('@') 
+      ? defaultForwardingEmail.split('@')[1] 
+      : 'ljmuk.co.uk';
+    
     const initialPlatforms: PlatformAlias[] = AVAILABLE_PLATFORMS.map(p => ({
       platform: p.id,
       platformName: p.name,
       icon: p.icon,
       enabled: true,
       alias: `${p.id}-${baseName}`,
-      forwardTo: defaultForwardingEmail
+      // Smart default: platform-specific forwarding email
+      forwardTo: `${p.id}@${emailDomain}`
     }));
     setPlatforms(initialPlatforms);
   }, [user, defaultForwardingEmail]);
@@ -162,8 +169,9 @@ export const MultiAliasCreator: React.FC<MultiAliasCreatorProps> = ({
           )}
 
           <Alert variant="info">
-            <strong>Platform-Specific Emails:</strong> Each platform will have its own email address, 
-            allowing you to organize notifications and forward them to different inboxes if needed.
+            <strong>Platform-Specific Emails:</strong> Each platform will have its own email address. 
+            We've automatically suggested forwarding addresses based on your domain (e.g., ebay@yourdomain.com, vinted@yourdomain.com). 
+            You can edit these if you want to use different inboxes.
           </Alert>
 
           <div>
@@ -234,7 +242,7 @@ export const MultiAliasCreator: React.FC<MultiAliasCreatorProps> = ({
                           placeholder="platform-specific@email.com"
                         />
                         <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
-                          Default: {defaultForwardingEmail}
+                          💡 Tip: Use different inboxes for better organization
                         </div>
                       </div>
                     </Stack>
