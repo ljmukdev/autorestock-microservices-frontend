@@ -9,6 +9,7 @@ export interface EmailDeliveryTestProps {
   userId: string;
   apiBase: string;
   authToken?: string;
+  aliases?: any[]; // All created aliases for multi-platform setup
   onTestSuccess: () => void;
   onSkip?: () => void;
 }
@@ -20,9 +21,11 @@ export const EmailDeliveryTest: React.FC<EmailDeliveryTestProps> = ({
   userId,
   apiBase,
   authToken,
+  aliases = [],
   onTestSuccess,
   onSkip
 }) => {
+  const hasMultipleAliases = aliases.length > 1;
   const [testStatus, setTestStatus] = useState<'idle' | 'sending' | 'sent' | 'confirmed' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -94,33 +97,79 @@ export const EmailDeliveryTest: React.FC<EmailDeliveryTestProps> = ({
           Let's verify that email forwarding is working correctly before you finish.
         </Alert>
 
-        <div style={{
-          padding: '1.5rem',
-          backgroundColor: '#f9fafb',
-          borderRadius: '12px',
-          border: '1px solid #e5e7eb'
-        }}>
-          <div style={{ marginBottom: '1rem' }}>
-            <strong style={{ fontSize: '0.875rem', color: '#6b7280' }}>FROM:</strong>
-            <div style={{ fontFamily: 'monospace', marginTop: '0.25rem' }}>
-              noreply@autorestock.app
-            </div>
-          </div>
-
-          <div style={{ marginBottom: '1rem' }}>
-            <strong style={{ fontSize: '0.875rem', color: '#6b7280' }}>TO:</strong>
-            <div style={{ fontFamily: 'monospace', marginTop: '0.25rem', color: '#0ea5e9', fontWeight: '600' }}>
-              {fullAddress}
-            </div>
-          </div>
-
+        {hasMultipleAliases ? (
           <div>
-            <strong style={{ fontSize: '0.875rem', color: '#6b7280' }}>WILL ARRIVE IN:</strong>
-            <div style={{ fontFamily: 'monospace', marginTop: '0.25rem', color: '#22c55e', fontWeight: '600' }}>
-              {forwardingEmail}
+            <Alert variant="info" style={{ marginBottom: '1rem' }}>
+              <strong>Multiple Platforms Setup:</strong> You created separate email aliases for different platforms. 
+              We'll test the first one, but all are configured and ready to receive emails.
+            </Alert>
+            
+            {aliases.map((aliasItem: any, index: number) => {
+              const platformName = aliasItem.platformName || aliasItem.platform || `Platform ${index + 1}`;
+              const aliasEmail = `${aliasItem.alias}@in.autorestock.app`;
+              const forwardEmail = aliasItem.forwardTo || forwardingEmail;
+              
+              return (
+                <div 
+                  key={index}
+                  style={{
+                    padding: '1.25rem',
+                    backgroundColor: index === 0 ? '#f0f9ff' : '#f9fafb',
+                    borderRadius: '12px',
+                    border: index === 0 ? '2px solid #0ea5e9' : '1px solid #e5e7eb',
+                    marginBottom: '1rem'
+                  }}
+                >
+                  <div style={{ fontSize: '0.875rem', fontWeight: '600', marginBottom: '0.75rem', color: '#0c4a6e' }}>
+                    {platformName} {index === 0 && '(Testing this one)'}
+                  </div>
+                  
+                  <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.25rem' }}>
+                    AutoRestock Email:
+                  </div>
+                  <div style={{ fontFamily: 'monospace', marginBottom: '0.75rem', color: '#0ea5e9', fontWeight: '600' }}>
+                    {aliasEmail}
+                  </div>
+
+                  <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.25rem' }}>
+                    Forwards to:
+                  </div>
+                  <div style={{ fontFamily: 'monospace', color: '#22c55e', fontWeight: '600' }}>
+                    {forwardEmail}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div style={{
+            padding: '1.5rem',
+            backgroundColor: '#f9fafb',
+            borderRadius: '12px',
+            border: '1px solid #e5e7eb'
+          }}>
+            <div style={{ marginBottom: '1rem' }}>
+              <strong style={{ fontSize: '0.875rem', color: '#6b7280' }}>FROM:</strong>
+              <div style={{ fontFamily: 'monospace', marginTop: '0.25rem' }}>
+                noreply@autorestock.app
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <strong style={{ fontSize: '0.875rem', color: '#6b7280' }}>TO:</strong>
+              <div style={{ fontFamily: 'monospace', marginTop: '0.25rem', color: '#0ea5e9', fontWeight: '600' }}>
+                {fullAddress}
+              </div>
+            </div>
+
+            <div>
+              <strong style={{ fontSize: '0.875rem', color: '#6b7280' }}>WILL ARRIVE IN:</strong>
+              <div style={{ fontFamily: 'monospace', marginTop: '0.25rem', color: '#22c55e', fontWeight: '600' }}>
+                {forwardingEmail}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         <div style={{
           padding: '1.5rem',

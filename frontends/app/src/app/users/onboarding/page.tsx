@@ -376,8 +376,9 @@ export default function OnboardingPage() {
                 userId={createdUser.id}
                 apiBase={config.userApiBase}
                 authToken={config.authToken}
+                aliases={createdAliases}
                 onTestSuccess={handleEmailTestComplete}
-                onSkip={() => setCurrentStep(7)}
+                onSkip={() => setCurrentStep(6)}
               />
             </div>
           )}
