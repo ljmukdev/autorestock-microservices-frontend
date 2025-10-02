@@ -45,6 +45,10 @@ export interface EmailAlias {
   alias: string;
   isActive: boolean;
   createdAt: string;
+  forwardTo?: string;
+  needsVerification?: boolean;
+  verificationEmailSent?: boolean;
+  cloudflareRuleCreated?: boolean;
 }
 
 export interface CreateAliasRequest {
