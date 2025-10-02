@@ -160,6 +160,8 @@ export const MultiAliasCreator: React.FC<MultiAliasCreatorProps> = ({
 
       // Create aliases one by one
       const createdAliases = [];
+      const verificationNeeded = [];
+      
       for (const platform of enabledPlatforms) {
         const result = await createAlias({
           tenantId,
@@ -170,8 +172,23 @@ export const MultiAliasCreator: React.FC<MultiAliasCreatorProps> = ({
         createdAliases.push({
           ...result,
           platform: platform.platform,
-          platformName: platform.platformName
+          platformName: platform.platformName,
+          forwardTo: platform.forwardTo
         });
+        
+        // Track if verification is needed
+        if (result.needsVerification) {
+          verificationNeeded.push(platform.forwardTo);
+        }
+      }
+
+      // Show verification alert if needed
+      if (verificationNeeded.length > 0) {
+        const uniqueEmails = [...new Set(verificationNeeded)];
+        setError(
+          `✅ Aliases created! 📧 Verification emails sent to: ${uniqueEmails.join(', ')}. ` +
+          `Please check your inbox and click the verification links from Cloudflare before emails can be forwarded.`
+        );
       }
 
       onSuccess(createdAliases);
