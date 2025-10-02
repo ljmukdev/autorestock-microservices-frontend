@@ -339,6 +339,7 @@ export default function OnboardingPage() {
                   userId={createdUser.id}
                   user={createdUser}
                   defaultForwardingEmail={createdUser.forwardingEmail || createdUser.email || ''}
+                  platformEmailConfig={emailConfig?.platformEmails}
                   onSuccess={handleMultipleAliasesCreated}
                   onError={handleError}
                 />
