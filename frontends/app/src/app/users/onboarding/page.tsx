@@ -113,6 +113,43 @@ export default function OnboardingPage() {
             <li>
               <a href="/users/onboarding" className="nav-link active">User Onboarding</a>
             </li>
+            <li>
+              <button
+                onClick={() => {
+                  const secret = prompt('Enter admin secret:');
+                  if (!secret) return;
+                  if (!confirm('Clear ALL database data? This cannot be undone!')) return;
+                  
+                  fetch('https://autorestock-user-service-production.up.railway.app/api/v1/admin/clear-database', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ secret })
+                  })
+                  .then(r => r.json())
+                  .then(data => {
+                    if (data.success) {
+                      alert(`✅ Database cleared!\nDeleted: ${data.deleted.users} users, ${data.deleted.tenants} tenants, ${data.deleted.aliases} aliases`);
+                      window.location.reload();
+                    } else {
+                      alert(`❌ Error: ${data.message || data.error}`);
+                    }
+                  })
+                  .catch(err => alert(`❌ Failed: ${err.message}`));
+                }}
+                style={{
+                  background: '#ef4444',
+                  color: 'white',
+                  border: 'none',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  fontWeight: '500'
+                }}
+              >
+                🗑️ Clear DB
+              </button>
+            </li>
           </ul>
         </div>
       </nav>
