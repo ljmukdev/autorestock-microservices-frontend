@@ -42,12 +42,14 @@ export const EmailConfiguration: React.FC<EmailConfigurationProps> = ({
 
   // Initialize platform emails
   useEffect(() => {
-    const userDomain = user.email.includes('@') ? user.email.split('@')[1] : 'example.com';
+    // Default all platforms to the user's main email (which exists)
+    // Users can change these to different emails if they want
+    const defaultEmail = user.email || '';
     const initialPlatforms: PlatformEmail[] = PLATFORMS.map(p => ({
       platform: p.id,
       platformName: p.name,
       icon: p.icon,
-      email: `${p.id}@${userDomain}`
+      email: defaultEmail // Use user's actual email, not auto-generated
     }));
     setPlatformEmails(initialPlatforms);
     
