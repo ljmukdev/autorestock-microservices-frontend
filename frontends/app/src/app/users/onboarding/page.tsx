@@ -66,8 +66,10 @@ export default function OnboardingPage() {
   }
 
   const handlePlatformsConfigured = (platforms: string[]) => {
+    console.log('handlePlatformsConfigured called with:', platforms);
     setConfiguredPlatforms(platforms)
     setError(null)
+    console.log('Setting current step to 5');
     setCurrentStep(5)
   }
 
@@ -361,11 +363,11 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Step 6: Email Delivery Test */}
-          {currentStep >= 6 && createdUser && createdAliases.length > 0 && (
+          {/* Step 5: Email Delivery Test */}
+          {currentStep >= 5 && createdUser && createdAliases.length > 0 && (
             <div>
               <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1rem' }}>
-                Step 6: Test Email Delivery
+                Step 5: Test Email Delivery
               </h2>
               <EmailDeliveryTest
                 alias={createdAliases[0].alias}
