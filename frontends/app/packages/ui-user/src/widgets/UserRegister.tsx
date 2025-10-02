@@ -334,17 +334,6 @@ export const UserRegister: React.FC<UserRegisterProps> = ({
             )}
           </div>
 
-          <Input
-            label="Forwarding Email (Optional)"
-            type="email"
-            value={formData.forwardingEmail}
-            onChange={handleInputChange('forwardingEmail')}
-            error={validationErrors.forwardingEmail}
-            fullWidth
-            disabled={loading}
-            placeholder="forward@example.com"
-            helperText="Email address where notifications will be forwarded"
-          />
 
           <Button
             type="submit"
