@@ -17,7 +17,6 @@ export const UserRegister: React.FC<UserRegisterProps> = ({
     firstName: '',
     lastName: '',
     companyName: '',
-    forwardingEmail: '',
     isCompany: false,
     companyType: '',
     companyRegistrationNumber: '',
@@ -66,10 +65,6 @@ export const UserRegister: React.FC<UserRegisterProps> = ({
       }
     }
 
-    if (formData.forwardingEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.forwardingEmail)) {
-      errors.forwardingEmail = 'Please enter a valid forwarding email address';
-    }
-
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -88,7 +83,6 @@ export const UserRegister: React.FC<UserRegisterProps> = ({
         password: formData.password,
         firstName: formData.firstName,
         lastName: formData.lastName,
-        forwardingEmail: formData.forwardingEmail,
         isCompany: formData.isCompany,
       };
 
@@ -115,7 +109,6 @@ export const UserRegister: React.FC<UserRegisterProps> = ({
         firstName: '',
         lastName: '',
         companyName: '',
-        forwardingEmail: '',
         isCompany: false,
         companyType: '',
         companyRegistrationNumber: '',
