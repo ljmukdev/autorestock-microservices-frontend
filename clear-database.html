@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Clear AutoRestock Database - Testing Only</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f3f4f6;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #ef4444;
+      margin-bottom: 10px;
+    }
+    .warning {
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 8px;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border: 2px solid #d1d5db;
+      border-radius: 8px;
+      margin: 10px 0;
+    }
+    button {
+      background: #ef4444;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 10px;
+    }
+    button:hover {
+      background: #dc2626;
+    }
+    button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 8px;
+      background: #f0fdf4;
+      border-left: 4px solid #22c55e;
+    }
+    .error {
+      background: #fef2f2;
+      border-left-color: #ef4444;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🗑️ Clear Database</h1>
+    <p style="color: #6b7280;">Testing tool - clears all users, tenants, and aliases from MongoDB</p>
+
+    <div class="warning">
+      <strong>⚠️ Warning:</strong> This will permanently delete ALL data from the database. 
+      Only use this during testing phase!
+    </div>
+
+    <div>
+      <label style="font-weight: 600; display: block; margin-bottom: 5px;">
+        Admin Secret:
+      </label>
+      <input 
+        type="password" 
+        id="secret" 
+        placeholder="Enter admin secret"
+      />
+      <small style="color: #6b7280;">
+        Get this from Railway environment variables (ADMIN_SECRET)
+      </small>
+    </div>
+
+    <button onclick="clearDatabase()">
+      Clear Database (Delete All Data)
+    </button>
+
+    <div id="result"></div>
+  </div>
+
+  <script>
+    async function clearDatabase() {
+      const secret = document.getElementById('secret').value;
+      const resultDiv = document.getElementById('result');
+      
+      if (!secret) {
+        resultDiv.innerHTML = '<div class="result error">Please enter admin secret</div>';
+        return;
+      }
+
+      if (!confirm('Are you sure? This will delete ALL users, tenants, and aliases!')) {
+        return;
+      }
+
+      resultDiv.innerHTML = '<div class="result">Clearing database...</div>';
+
+      try {
+        const response = await fetch('https://autorestock-user-service-production.up.railway.app/api/v1/admin/clear-database', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ secret })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          resultDiv.innerHTML = `
+            <div class="result">
+              <strong>✅ Database Cleared Successfully!</strong><br><br>
+              <strong>Deleted:</strong><br>
+              • Users: ${result.deleted.users}<br>
+              • Tenants: ${result.deleted.tenants}<br>
+              • Aliases: ${result.deleted.aliases}<br>
+              <br>
+              <small>The database is now empty and ready for fresh testing.</small>
+            </div>
+          `;
+        } else {
+          resultDiv.innerHTML = `
+            <div class="result error">
+              <strong>❌ Error:</strong> ${result.message || result.error}
+            </div>
+          `;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <div class="result error">
+            <strong>❌ Request Failed:</strong> ${error.message}
+          </div>
+        `;
+      }
+    }
+  </script>
+</body>
+</html>
+
+

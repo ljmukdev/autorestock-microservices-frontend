@@ -163,3 +163,4 @@ export class Telemetry {
 
 // Default instance
 export const telemetry = new Telemetry();
+
