@@ -95,7 +95,7 @@ export default {
       console.log('Step 2: Sending full email to ingestion service...');
       
       ctx.waitUntil(
-        fetch(`${ingestionUrl}/inbound/process`, {
+        fetch(`${ingestionUrl}/inbound/inbound/process`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
