@@ -4,6 +4,14 @@ export * from './types';
 // Hooks
 export { useUserApi } from './hooks/useUserApi';
 
+// Components
+export { default as OnboardingWizard } from './components/OnboardingWizard';
+export { default as UserRegistration } from './components/UserRegistration';
+export { default as EbayOAuth } from './components/EbayOAuth';
+export { default as EmailSetup } from './components/EmailSetup';
+export { default as CsvImport } from './components/CsvImport';
+export { default as MarketplaceEmailConnection } from './components/MarketplaceEmailConnection';
+
 // Widgets
 export { UserRegister } from './widgets/UserRegister';
 export { ForwardingEmailSettings } from './widgets/ForwardingEmailSettings';
