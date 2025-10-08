@@ -36,8 +36,25 @@ export default function EbayOAuth({ onConnect, onDisconnect, onError }: EbayOAut
   }, []);
 
   useEffect(() => {
-    // Check if user is returning from eBay OAuth (handled by eBay service)
-    // No need to handle callback here since eBay service manages the flow
+    // Check if user is returning from eBay OAuth
+    const urlParams = new URLSearchParams(window.location.search);
+    const oauthSuccess = urlParams.get('oauth_success');
+    const oauthError = urlParams.get('oauth_error');
+    const oauthDesc = urlParams.get('oauth_desc');
+    
+    if (oauthSuccess === '1') {
+      // OAuth was successful, check connection status
+      checkConnectionStatus();
+      // Clean up URL parameters
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (oauthError) {
+      // OAuth failed
+      const errorMessage = oauthDesc ? `${oauthError}: ${oauthDesc}` : oauthError;
+      setError(`eBay authorization failed: ${errorMessage}`);
+      onError?.(errorMessage);
+      // Clean up URL parameters
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
   }, []);
 
   const checkConnectionStatus = async () => {
