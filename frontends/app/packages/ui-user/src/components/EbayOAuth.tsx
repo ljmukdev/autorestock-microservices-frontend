@@ -77,8 +77,11 @@ export default function EbayOAuth({ onConnect, onDisconnect, onError }: EbayOAut
       // Use the correct eBay service URL
       const ebayServiceUrl = process.env.NEXT_PUBLIC_EBAY_SERVICE_URL || 'https://delightful-liberation-production.up.railway.app';
       
-      // Redirect to eBay service OAuth login
-      window.location.href = `${ebayServiceUrl}/oauth/login`;
+      // Pass the redirect URI so eBay service knows where to send user back
+      const redirectUri = encodeURIComponent(window.location.origin + '/users/onboarding');
+      
+      // Redirect to eBay service OAuth login with redirect URI
+      window.location.href = `${ebayServiceUrl}/oauth/login?redirect_uri=${redirectUri}`;
     } catch (error) {
       console.error('eBay OAuth error:', error);
       setError('Failed to connect to eBay. Please try again.');
