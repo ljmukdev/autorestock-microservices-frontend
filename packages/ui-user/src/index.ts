@@ -12,4 +12,5 @@ export { OnboardingStatus } from './widgets/OnboardingStatus';
 
 // Components
 export { default as OnboardingWizard } from './components/OnboardingWizard';
+export { default as CsvImport } from './components/CsvImport';
 
