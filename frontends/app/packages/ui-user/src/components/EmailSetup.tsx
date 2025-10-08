@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@autorestock/ui-kit';
+import { Card } from '@autorestock/ui-kit';
 import { Button } from '@autorestock/ui-kit';
 import { Mail, Plus, Trash2, Copy, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 
@@ -169,23 +169,23 @@ export default function EmailSetup({ onAliasesChange }: EmailSetupProps) {
   if (isLoading) {
     return (
       <Card className="w-full max-w-4xl mx-auto">
-        <CardContent className="flex items-center justify-center py-8">
+        <div className="p-6 flex items-center justify-center py-8">
           <RefreshCw className="w-6 h-6 animate-spin mr-2" />
           <span>Loading email aliases...</span>
-        </CardContent>
+        </div>
       </Card>
     );
   }
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
+      <div className="p-6 border-b">
+        <div className="flex items-center space-x-2">
           <Mail className="w-5 h-5" />
           <span>Email Integration Setup</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
+        </div>
+      </div>
+      <div className="p-6 space-y-6">
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <div className="flex items-center space-x-2">
@@ -334,7 +334,7 @@ export default function EmailSetup({ onAliasesChange }: EmailSetupProps) {
             <p className="ml-4">You can generate up to 10 aliases per platform.</p>
           </div>
         </details>
-      </CardContent>
+      </div>
     </Card>
   );
 }

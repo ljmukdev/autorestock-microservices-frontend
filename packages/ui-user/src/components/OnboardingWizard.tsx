@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@autorestock/ui-kit';
+import { Card } from '@autorestock/ui-kit';
 import { Button } from '@autorestock/ui-kit';
 import { Progress } from '@autorestock/ui-kit';
 import { CheckCircle, ArrowRight, ArrowLeft, Mail, ShoppingCart, FileText, User, Settings } from 'lucide-react';
@@ -145,16 +145,16 @@ export default function OnboardingWizard() {
 
         {/* Current Step Content */}
         <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-3">
+          <div className="p-6 border-b">
+            <div className="flex items-center space-x-3">
               {currentStepConfig.icon}
               <div>
                 <h2 className="text-2xl font-bold">{currentStepConfig.title}</h2>
                 <p className="text-gray-600 font-normal">{currentStepConfig.description}</p>
               </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </div>
+          </div>
+          <div className="p-6">
             {currentStepConfig.component && (
               <currentStepConfig.component
                 onComplete={handleComplete}
@@ -163,7 +163,7 @@ export default function OnboardingWizard() {
                 data={stepData}
               />
             )}
-          </CardContent>
+          </div>
         </Card>
 
         {/* Navigation Buttons */}

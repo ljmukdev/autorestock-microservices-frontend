@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@autorestock/ui-kit';
+import { Card } from '@autorestock/ui-kit';
 import { Button } from '@autorestock/ui-kit';
 import { Mail, Eye, EyeOff, ChevronDown, ChevronUp, X, Plus, Lock, Shield } from 'lucide-react';
 import { EmailIngestionConfig, DEFAULT_EMAIL_INGESTION_CONFIG, PROVIDER_CONFIGS } from '../types/EmailIngestionConfig';
@@ -89,12 +89,12 @@ export default function MarketplaceEmailConnection({ value, onChange, errors = {
 
   return (
     <Card className="w-full">
-      <CardHeader>
+      <div className="p-6 border-b">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Mail className="w-5 h-5 text-blue-600" />
             <div>
-              <CardTitle className="text-lg">Marketplace Email Connection</CardTitle>
+              <div className="text-lg font-semibold">Marketplace Email Connection</div>
               <p className="text-sm text-gray-600 font-normal mt-1">
                 Optional: Connect your email to automatically import orders from eBay and Vinted
               </p>
@@ -124,10 +124,10 @@ export default function MarketplaceEmailConnection({ value, onChange, errors = {
             )}
           </div>
         </div>
-      </CardHeader>
+      </div>
 
       {isEnabled && isExpanded && (
-        <CardContent className="space-y-6">
+        <div className="p-6 space-y-6">
           {/* Information Banner */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-start space-x-2">
@@ -444,12 +444,12 @@ export default function MarketplaceEmailConnection({ value, onChange, errors = {
               </ol>
             </div>
           )}
-        </CardContent>
+        </div>
       )}
 
       {/* Collapsed State Summary */}
       {isEnabled && !isExpanded && (
-        <CardContent>
+        <div className="p-6">
           <div className="flex items-center justify-between text-sm">
             <div className="text-gray-600">
               <span className="font-medium">{config.provider === 'gmail' ? 'Gmail' : config.provider === 'privateemail' ? 'Namecheap' : 'Other'}</span>
@@ -467,7 +467,7 @@ export default function MarketplaceEmailConnection({ value, onChange, errors = {
               Edit
             </Button>
           </div>
-        </CardContent>
+        </div>
       )}
     </Card>
   );

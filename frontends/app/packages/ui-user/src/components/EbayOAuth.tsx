@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@autorestock/ui-kit';
+import { Card } from '@autorestock/ui-kit';
 import { Button } from '@autorestock/ui-kit';
 import { ShoppingCart, CheckCircle, AlertCircle, ExternalLink, RefreshCw } from 'lucide-react';
 
@@ -174,23 +174,23 @@ export default function EbayOAuth({ onConnect, onDisconnect, onError }: EbayOAut
   if (isLoading) {
     return (
       <Card className="w-full max-w-2xl mx-auto">
-        <CardContent className="flex items-center justify-center py-8">
+        <div className="p-6 flex items-center justify-center py-8">
           <RefreshCw className="w-6 h-6 animate-spin mr-2" />
           <span>Checking eBay connection status...</span>
-        </CardContent>
+        </div>
       </Card>
     );
   }
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
+      <div className="p-6 border-b">
+        <div className="flex items-center space-x-2">
           <ShoppingCart className="w-5 h-5" />
           <span>eBay Account Connection</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
+        </div>
+      </div>
+      <div className="p-6 space-y-6">
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <div className="flex items-center space-x-2">
@@ -338,7 +338,7 @@ export default function EbayOAuth({ onConnect, onDisconnect, onError }: EbayOAut
             </div>
           </details>
         </div>
-      </CardContent>
+      </div>
     </Card>
   );
 }

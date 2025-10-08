@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@autorestock/ui-kit';
+import { Card } from '@autorestock/ui-kit';
 import { Button } from '@autorestock/ui-kit';
 import { User, Mail, Phone, Building, MapPin } from 'lucide-react';
 import MarketplaceEmailConnection from './MarketplaceEmailConnection';
@@ -150,17 +150,17 @@ export default function UserRegistration({ onRegistrationComplete, onLoginRedire
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader className="text-center">
-        <CardTitle className="flex items-center justify-center space-x-2">
+      <div className="p-6 border-b text-center">
+        <div className="flex items-center justify-center space-x-2 mb-2">
           <User className="w-6 h-6" />
-          <span>Create Your Account</span>
-        </CardTitle>
+          <span className="text-xl font-semibold">Create Your Account</span>
+        </div>
         <p className="text-gray-600">
           Join thousands of resellers using AutoRestock to grow their business
         </p>
-      </CardHeader>
+      </div>
       
-      <CardContent>
+      <div className="p-6">
         {errors.general && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
             <p className="text-red-800">{errors.general}</p>
@@ -374,7 +374,7 @@ export default function UserRegistration({ onRegistrationComplete, onLoginRedire
             </p>
           </div>
         </form>
-      </CardContent>
+      </div>
     </Card>
   );
 }

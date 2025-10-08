@@ -4,9 +4,9 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@autorestock/ui-kit';
+import { Card } from '@autorestock/ui-kit';
 import { Button } from '@autorestock/ui-kit';
-import { Progress } from '@autorestock/ui-kit';
+
 import { CheckCircle, ArrowRight, ArrowLeft, Mail, ShoppingCart, FileText, User, Settings } from 'lucide-react';
 
 interface OnboardingStep {
@@ -14,7 +14,7 @@ interface OnboardingStep {
   title: string;
   description: string;
   icon: React.ReactNode;
-  component: React.ComponentType<OnboardingStepProps>;
+  component?: React.ComponentType<OnboardingStepProps>;
   completed: boolean;
 }
 
@@ -76,8 +76,8 @@ export default function OnboardingWizard() {
   const progress = ((currentStep + 1) / steps.length) * 100;
 
   const handleComplete = (data: any) => {
-    setStepData(prev => ({ ...prev, ...data }));
-    setCompletedSteps(prev => [...prev, currentStepConfig.id]);
+    setStepData((prev: any) => ({ ...prev, ...data }));
+    setCompletedSteps((prev: string[]) => [...prev, currentStepConfig.id]);
     
     // Mark step as completed
     steps[currentStep].completed = true;
@@ -117,7 +117,12 @@ export default function OnboardingWizard() {
               Step {currentStep + 1} of {steps.length}
             </div>
           </div>
-          <Progress value={progress} className="h-2" />
+          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-blue-600 transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
         </div>
 
         {/* Step Navigation */}
@@ -145,16 +150,16 @@ export default function OnboardingWizard() {
 
         {/* Current Step Content */}
         <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-3">
+          <div className="p-6 border-b">
+            <div className="flex items-center space-x-3">
               {currentStepConfig.icon}
               <div>
                 <h2 className="text-2xl font-bold">{currentStepConfig.title}</h2>
                 <p className="text-gray-600 font-normal">{currentStepConfig.description}</p>
               </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </div>
+          </div>
+          <div className="p-6">
             {currentStepConfig.component && (
               <currentStepConfig.component
                 onComplete={handleComplete}
@@ -163,7 +168,7 @@ export default function OnboardingWizard() {
                 data={stepData}
               />
             )}
-          </CardContent>
+          </div>
         </Card>
 
         {/* Navigation Buttons */}

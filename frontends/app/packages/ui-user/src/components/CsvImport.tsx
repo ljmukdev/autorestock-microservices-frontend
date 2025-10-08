@@ -4,9 +4,9 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@autorestock/ui-kit';
+import { Card } from '@autorestock/ui-kit';
 import { Button } from '@autorestock/ui-kit';
-import { Progress } from '@autorestock/ui-kit';
+
 import { FileText, Upload, CheckCircle, AlertCircle, Download } from 'lucide-react';
 
 interface ImportResult {
@@ -122,13 +122,13 @@ export default function CsvImport({ onImportComplete, onImportStart }: CsvImport
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
+      <div className="p-6 border-b">
+        <div className="flex items-center space-x-2">
           <FileText className="w-5 h-5" />
           <span>Import eBay Transactions</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
+        </div>
+      </div>
+      <div className="p-6 space-y-6">
         {/* Instructions */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <h4 className="font-semibold text-blue-900 mb-2">How to export from eBay:</h4>
@@ -181,9 +181,14 @@ export default function CsvImport({ onImportComplete, onImportStart }: CsvImport
 
             {isUploading && (
               <div className="mt-4 w-full max-w-xs mx-auto">
-                <Progress value={uploadProgress} className="h-2 mb-2" />
+                <div className="h-2 bg-gray-200 rounded-full overflow-hidden mb-2">
+                  <div 
+                    className="h-full bg-blue-600 transition-all duration-300"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
                 <p className="text-sm text-gray-600">
-                  {uploadProgress < 50 ? 'Uploading...' : 
+                  {uploadProgress < 50 ? 'Uploading...' :
                    uploadProgress < 90 ? 'Processing...' : 'Finalizing...'}
                 </p>
               </div>
@@ -263,7 +268,7 @@ export default function CsvImport({ onImportComplete, onImportStart }: CsvImport
             </Button>
           </div>
         </div>
-      </CardContent>
+      </div>
     </Card>
   );
 }

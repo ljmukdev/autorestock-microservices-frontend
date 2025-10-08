@@ -26,7 +26,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const alias = `${platform.toLowerCase()}-${randomSuffix}@in.autorestock.app`;
 
     // Get forwarding email from user profile or request
-    const userForwardTo = forwardTo || await getUserForwardingEmail(userId);
+    const userIdString = Array.isArray(userId) ? userId[0] : userId;
+    const userForwardTo = forwardTo || await getUserForwardingEmail(userIdString);
 
     if (!userForwardTo) {
       return res.status(400).json({ error: 'Forwarding email is required' });

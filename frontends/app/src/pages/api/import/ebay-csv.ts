@@ -8,6 +8,11 @@ import multer from 'multer';
 import csv from 'csv-parser';
 import { Readable } from 'stream';
 
+// Extend NextApiRequest to include multer file
+interface NextApiRequestWithFile extends NextApiRequest {
+  file?: Express.Multer.File;
+}
+
 // Configure multer for file upload
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -51,7 +56,7 @@ interface EbayTransaction {
   notes?: string;
 }
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req: NextApiRequestWithFile, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -69,7 +74,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Parse CSV file
     await new Promise((resolve, reject) => {
-      const stream = Readable.from(req.file.buffer);
+      const stream = Readable.from(req.file!.buffer);
       
       stream
         .pipe(csv())

@@ -23,8 +23,9 @@
     "test": "jest"
   },
   "dependencies": {
-    "@autorestock/ui-kit": "workspace:*",
     "@autorestock/shared": "workspace:*",
+    "@autorestock/ui-kit": "workspace:*",
+    "lucide-react": "^0.545.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

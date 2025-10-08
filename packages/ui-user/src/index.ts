@@ -9,6 +9,13 @@ export { UserRegister } from './widgets/UserRegister';
 export { ForwardingEmailSettings } from './widgets/ForwardingEmailSettings';
 export { AliasCreator } from './widgets/AliasCreator';
 export { OnboardingStatus } from './widgets/OnboardingStatus';
+export { EmailConfiguration } from './widgets/EmailConfiguration';
+export { MultiAliasCreator } from './widgets/MultiAliasCreator';
+export { PlatformConfiguration } from './widgets/PlatformConfiguration';
+export { EmailDeliveryTest } from './widgets/EmailDeliveryTest';
+export { OnboardingComplete } from './widgets/OnboardingComplete';
+export { EmailStrategySelector } from './widgets/EmailStrategySelector';
+export { EmailWhitelistInstructions } from './widgets/EmailWhitelistInstructions';
 
 // Components
 export { default as OnboardingWizard } from './components/OnboardingWizard';
