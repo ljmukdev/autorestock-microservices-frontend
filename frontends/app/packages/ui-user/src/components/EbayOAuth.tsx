@@ -95,10 +95,22 @@ export default function EbayOAuth({ onConnect, onDisconnect, onError }: EbayOAut
       const ebayServiceUrl = process.env.NEXT_PUBLIC_EBAY_SERVICE_URL || 'https://delightful-liberation-production.up.railway.app';
       
       // Pass the redirect URI so eBay service knows where to send user back
-      const redirectUri = encodeURIComponent(window.location.origin + '/users/onboarding');
+      const redirectUri = window.location.origin + '/users/onboarding';
+      const encodedRedirectUri = encodeURIComponent(redirectUri);
+      
+      // DEBUG: Log the URLs being constructed
+      console.log('=== EBAY OAUTH DEBUG ===');
+      console.log('Window location origin:', window.location.origin);
+      console.log('Redirect URI:', redirectUri);
+      console.log('Encoded redirect URI:', encodedRedirectUri);
+      console.log('eBay service URL:', ebayServiceUrl);
+      
+      const oauthUrl = `${ebayServiceUrl}/oauth/login?redirect_uri=${encodedRedirectUri}`;
+      console.log('Full OAuth URL:', oauthUrl);
+      console.log('=== END DEBUG ===');
       
       // Redirect to eBay service OAuth login with redirect URI
-      window.location.href = `${ebayServiceUrl}/oauth/login?redirect_uri=${redirectUri}`;
+      window.location.href = oauthUrl;
     } catch (error) {
       console.error('eBay OAuth error:', error);
       setError('Failed to connect to eBay. Please try again.');
