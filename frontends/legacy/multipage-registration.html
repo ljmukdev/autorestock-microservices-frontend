@@ -502,7 +502,7 @@
                 <div class="test-section">
                     <h3>🧪 Test eBay Connection</h3>
                     <p>Click the button below to verify your eBay API credentials are working correctly.</p>
-                    <button type="button" class="test-button" onclick="testEbayConnection()">Test eBay API</button>
+                    <button type="button" class="test-button" id="testEbayBtn">Test eBay API</button>
                     <div id="ebayTestResult" class="test-result hidden"></div>
                 </div>
             </div>
@@ -531,7 +531,7 @@
                 <div class="test-section">
                     <h3>🧪 Test Email Forwarding</h3>
                     <p>Send a test email to verify the forwarding is working correctly.</p>
-                    <button type="button" class="test-button" onclick="testEmailForwarding()">Send Test Email</button>
+                    <button type="button" class="test-button" id="testEmailBtn">Send Test Email</button>
                     <div id="emailTestResult" class="test-result hidden"></div>
                 </div>
 
@@ -542,7 +542,7 @@
 
                 <!-- Marketplace Email Connection Section -->
                 <div class="marketplace-email-section">
-                    <div class="toggle-header" onclick="toggleMarketplaceEmail()">
+                    <div class="toggle-header" id="marketplaceToggleHeader">
                         <h3>📬 Marketplace Email Connection (Optional)</h3>
                         <span class="toggle-icon" id="marketplaceToggleIcon">+</span>
                     </div>
@@ -552,7 +552,7 @@
                         
                         <div class="form-group">
                             <label for="emailProvider">Email Provider *</label>
-                            <select id="emailProvider" name="emailProvider" onchange="updateProviderSettings()">
+                            <select id="emailProvider" name="emailProvider">
                                 <option value="">Select Provider</option>
                                 <option value="gmail">Gmail</option>
                                 <option value="privateemail">Namecheap (PrivateEmail)</option>
@@ -586,7 +586,7 @@
                             <label for="appPassword">App Password *</label>
                             <div class="password-input">
                                 <input type="password" id="appPassword" name="appPassword" placeholder="Your app-specific password">
-                                <button type="button" class="toggle-password" onclick="togglePassword('appPassword')">👁️</button>
+                                <button type="button" class="toggle-password" id="togglePasswordBtn">👁️</button>
                             </div>
                             <small style="color: #666;">Use an app-specific password, not your regular email password</small>
                         </div>
@@ -640,8 +640,8 @@
 
             <!-- Navigation -->
             <div class="navigation">
-                <button type="button" class="btn btn-secondary" id="prevBtn" onclick="changePage(-1)">← Previous</button>
-                <button type="button" class="btn btn-primary" id="nextBtn" onclick="changePage(1)">Next →</button>
+                <button type="button" class="btn btn-secondary" id="prevBtn">← Previous</button>
+                <button type="button" class="btn btn-primary" id="nextBtn">Next →</button>
             </div>
         </div>
     </div>
@@ -657,6 +657,15 @@
             updateProgress();
             updateNavigation();
             checkServiceHealth();
+            
+            // Add event listeners for buttons
+            document.getElementById('prevBtn').addEventListener('click', () => changePage(-1));
+            document.getElementById('nextBtn').addEventListener('click', () => changePage(1));
+            document.getElementById('testEbayBtn').addEventListener('click', testEbayConnection);
+            document.getElementById('testEmailBtn').addEventListener('click', testEmailForwarding);
+            document.getElementById('marketplaceToggleHeader').addEventListener('click', toggleMarketplaceEmail);
+            document.getElementById('emailProvider').addEventListener('change', updateProviderSettings);
+            document.getElementById('togglePasswordBtn').addEventListener('click', () => togglePassword('appPassword'));
         });
 
         function checkServiceHealth() {
