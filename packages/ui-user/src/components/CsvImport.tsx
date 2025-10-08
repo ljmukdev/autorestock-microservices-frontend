@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import { Card } from '@autorestock/ui-kit';
+import { Card, CardContent, CardHeader, CardTitle } from '@autorestock/ui-kit';
 import { Button } from '@autorestock/ui-kit';
 import { Progress } from '@autorestock/ui-kit';
 import { FileText, Upload, CheckCircle, AlertCircle, Download } from 'lucide-react';
@@ -122,11 +122,13 @@ export default function CsvImport({ onImportComplete, onImportStart }: CsvImport
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
-      <div className="flex items-center space-x-2 mb-4">
-        <FileText className="w-5 h-5" />
-        <span className="font-semibold">Import eBay Transactions</span>
-      </div>
-      <div className="space-y-6">
+      <CardHeader>
+        <CardTitle className="flex items-center space-x-2">
+          <FileText className="w-5 h-5" />
+          <span>Import eBay Transactions</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
         {/* Instructions */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <h4 className="font-semibold text-blue-900 mb-2">How to export from eBay:</h4>
@@ -261,7 +263,7 @@ export default function CsvImport({ onImportComplete, onImportStart }: CsvImport
             </Button>
           </div>
         </div>
-      </div>
+      </CardContent>
     </Card>
   );
 }

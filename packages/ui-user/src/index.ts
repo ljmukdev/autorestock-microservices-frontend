@@ -13,4 +13,8 @@ export { OnboardingStatus } from './widgets/OnboardingStatus';
 // Components
 export { default as OnboardingWizard } from './components/OnboardingWizard';
 export { default as CsvImport } from './components/CsvImport';
+export { default as UserRegistration } from './components/UserRegistration';
+export { default as MarketplaceEmailConnection } from './components/MarketplaceEmailConnection';
+export { default as EmailSetup } from './components/EmailSetup';
+export { default as EbayOAuth } from './components/EbayOAuth';
 
