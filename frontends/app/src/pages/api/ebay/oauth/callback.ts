@@ -30,7 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       body: new URLSearchParams({
         grant_type: 'authorization_code',
         code,
-        redirect_uri: req.body.redirectUri || `${process.env.NEXT_PUBLIC_APP_URL}/onboarding`
+        redirect_uri: req.body.redirectUri || `${process.env.NEXT_PUBLIC_APP_URL}/users/onboarding`
       })
     });
 

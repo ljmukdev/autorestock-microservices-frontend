@@ -36,32 +36,31 @@ export default function EbayOAuth({ onConnect, onDisconnect, onError }: EbayOAut
   }, []);
 
   useEffect(() => {
-    // Check if user is returning from eBay OAuth
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    const state = urlParams.get('state');
-    const errorParam = urlParams.get('error');
-    
-    if (errorParam) {
-      setError('eBay authorization was cancelled or failed');
-      onError?.('eBay authorization was cancelled or failed');
-      return;
-    }
-    
-    if (code && state) {
-      handleEbayCallback(code, state);
-    }
+    // Check if user is returning from eBay OAuth (handled by eBay service)
+    // No need to handle callback here since eBay service manages the flow
   }, []);
 
   const checkConnectionStatus = async () => {
     try {
-      const response = await fetch('/api/ebay/status');
+      // Get eBay service URL from environment or use default
+      const ebayServiceUrl = process.env.NEXT_PUBLIC_EBAY_SERVICE_URL || 'https://autorestock-ebay-service-production.up.railway.app';
+      
+      const response = await fetch(`${ebayServiceUrl}/oauth/token-info`);
       const data = await response.json();
       
-      if (data.connected && data.account) {
+      if (data.hasTokens) {
         setIsConnected(true);
-        setEbayAccount(data.account);
-        onConnect?.(data.account);
+        // Create a mock account object from token info
+        const mockAccount = {
+          id: 'ebay-user',
+          username: 'eBay User',
+          email: 'user@ebay.com',
+          accountType: 'business' as const,
+          verified: true,
+          connectedAt: new Date().toISOString()
+        };
+        setEbayAccount(mockAccount);
+        onConnect?.(mockAccount);
       }
     } catch (error) {
       console.error('Failed to check eBay connection status:', error);
@@ -75,26 +74,11 @@ export default function EbayOAuth({ onConnect, onDisconnect, onError }: EbayOAut
     setError(null);
     
     try {
-      const response = await fetch('/api/ebay/oauth/initiate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          redirectUri: window.location.origin + '/onboarding',
-          scopes: ['https://api.ebay.com/oauth/api_scope/sell.account']
-        })
-      });
+      // Get eBay service URL from environment or use default
+      const ebayServiceUrl = process.env.NEXT_PUBLIC_EBAY_SERVICE_URL || 'https://autorestock-ebay-service-production.up.railway.app';
       
-      if (!response.ok) {
-        throw new Error('Failed to initiate eBay OAuth');
-      }
-      
-      const { authUrl, state } = await response.json();
-      
-      // Store state for verification
-      sessionStorage.setItem('ebay_oauth_state', state);
-      
-      // Redirect to eBay OAuth
-      window.location.href = authUrl;
+      // Redirect to eBay service OAuth login
+      window.location.href = `${ebayServiceUrl}/oauth/login`;
     } catch (error) {
       console.error('eBay OAuth error:', error);
       setError('Failed to connect to eBay. Please try again.');
@@ -103,40 +87,7 @@ export default function EbayOAuth({ onConnect, onDisconnect, onError }: EbayOAut
     }
   };
 
-  const handleEbayCallback = async (code: string, state: string) => {
-    try {
-      const storedState = sessionStorage.getItem('ebay_oauth_state');
-      if (state !== storedState) {
-        throw new Error('Invalid state parameter');
-      }
-
-      const response = await fetch('/api/ebay/oauth/callback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, state })
-      });
-      
-      const result = await response.json();
-      
-      if (result.success && result.account) {
-        setIsConnected(true);
-        setEbayAccount(result.account);
-        onConnect?.(result.account);
-        
-        // Clean up URL parameters
-        window.history.replaceState({}, document.title, window.location.pathname);
-        sessionStorage.removeItem('ebay_oauth_state');
-      } else {
-        throw new Error(result.error || 'Failed to connect eBay account');
-      }
-    } catch (error) {
-      console.error('eBay OAuth callback error:', error);
-      setError(error instanceof Error ? error.message : 'Failed to connect eBay account');
-      onError?.(error instanceof Error ? error.message : 'Failed to connect eBay account');
-    } finally {
-      setIsConnecting(false);
-    }
-  };
+  // OAuth callback is handled by eBay service
 
   const handleDisconnect = async () => {
     try {
