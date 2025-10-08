@@ -260,6 +260,73 @@
                 gap: 15px;
             }
         }
+
+        /* Marketplace Email Section Styles */
+        .marketplace-email-section {
+            margin-top: 30px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .toggle-header {
+            background: #f8f9fa;
+            padding: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s ease;
+            border-bottom: 1px solid #e1e5e9;
+        }
+
+        .toggle-header:hover {
+            background: #e9ecef;
+        }
+
+        .toggle-header h3 {
+            margin: 0;
+            color: #333;
+            font-size: 1.2em;
+        }
+
+        .toggle-icon {
+            font-size: 1.5em;
+            color: #667eea;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-content {
+            padding: 20px;
+            background: white;
+        }
+
+        .password-input {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .password-input input {
+            flex: 1;
+            padding-right: 50px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2em;
+            padding: 5px;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+
+        .toggle-password:hover {
+            background: #f8f9fa;
+        }
     </style>
 </head>
 <body>
@@ -471,6 +538,77 @@
                 <div class="form-group">
                     <label for="emailFilters">Email Filters (Optional)</label>
                     <textarea id="emailFilters" name="emailFilters" rows="3" placeholder="Keywords to filter important emails (e.g., 'order', 'payment', 'shipping')"></textarea>
+                </div>
+
+                <!-- Marketplace Email Connection Section -->
+                <div class="marketplace-email-section">
+                    <div class="toggle-header" onclick="toggleMarketplaceEmail()">
+                        <h3>📬 Marketplace Email Connection (Optional)</h3>
+                        <span class="toggle-icon" id="marketplaceToggleIcon">+</span>
+                    </div>
+                    
+                    <div class="toggle-content" id="marketplaceEmailContent" style="display: none;">
+                        <p style="color: #666; margin-bottom: 20px;">Connect your email to automatically import marketplace orders from eBay and Vinted</p>
+                        
+                        <div class="form-group">
+                            <label for="emailProvider">Email Provider *</label>
+                            <select id="emailProvider" name="emailProvider" onchange="updateProviderSettings()">
+                                <option value="">Select Provider</option>
+                                <option value="gmail">Gmail</option>
+                                <option value="privateemail">Namecheap (PrivateEmail)</option>
+                                <option value="other">Outlook/Other</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="imapHost">IMAP Host *</label>
+                            <input type="text" id="imapHost" name="imapHost" placeholder="imap.gmail.com">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="imapPort">IMAP Port</label>
+                            <input type="number" id="imapPort" name="imapPort" value="993" min="1" max="65535">
+                        </div>
+
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="imapSecure" name="imapSecure" checked>
+                                <label for="imapSecure">Use SSL/TLS (recommended)</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="emailUsername">Email Username *</label>
+                            <input type="email" id="emailUsername" name="emailUsername" placeholder="your-email@example.com">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="appPassword">App Password *</label>
+                            <div class="password-input">
+                                <input type="password" id="appPassword" name="appPassword" placeholder="Your app-specific password">
+                                <button type="button" class="toggle-password" onclick="togglePassword('appPassword')">👁️</button>
+                            </div>
+                            <small style="color: #666;">Use an app-specific password, not your regular email password</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="mailbox">Mailbox</label>
+                            <input type="text" id="mailbox" name="mailbox" value="INBOX" placeholder="INBOX">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="allowedSenders">Allowed Senders</label>
+                            <input type="text" id="allowedSenders" name="allowedSenders" value="*@ebay.co.uk, *@ebay.com, *@vinted.co.uk, *@vinted.com" placeholder="*@ebay.co.uk, *@ebay.com, *@vinted.co.uk, *@vinted.com">
+                            <small style="color: #666;">Comma-separated list of allowed sender patterns</small>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="gdprConsent" name="gdprConsent" required>
+                                <label for="gdprConsent">I consent to AutoRestock connecting via IMAP to retrieve only marketplace emails (eBay/Vinted). Other emails will not be accessed, processed, or stored. *</label>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -702,6 +840,29 @@
             // Save final page data
             saveCurrentPageData();
 
+            // Check if marketplace email is enabled and add to formData
+            const marketplaceEnabled = document.getElementById('marketplaceEmailContent').style.display !== 'none';
+            
+            if (marketplaceEnabled) {
+                const allowedSenders = document.getElementById('allowedSenders').value
+                    .split(',')
+                    .map(s => s.trim())
+                    .filter(s => s.length > 0);
+
+                formData.emailIngestion = {
+                    enabled: true,
+                    provider: document.getElementById('emailProvider').value,
+                    imapHost: document.getElementById('imapHost').value,
+                    imapPort: parseInt(document.getElementById('imapPort').value),
+                    secure: document.getElementById('imapSecure').checked,
+                    username: document.getElementById('emailUsername').value,
+                    appPassword: document.getElementById('appPassword').value,
+                    mailbox: document.getElementById('mailbox').value || 'INBOX',
+                    allowedSenders: allowedSenders,
+                    consentTs: new Date().toISOString()
+                };
+            }
+
             const resultDiv = document.getElementById('registrationResult');
             resultDiv.classList.remove('hidden');
             resultDiv.innerHTML = 'Processing registration...';
@@ -746,6 +907,97 @@
                 resultDiv.className = 'status-indicator status-error';
             }
         }
+
+        // Marketplace Email Connection Functions
+        function toggleMarketplaceEmail() {
+            const content = document.getElementById('marketplaceEmailContent');
+            const icon = document.getElementById('marketplaceToggleIcon');
+            
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                icon.textContent = '−';
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                content.style.display = 'none';
+                icon.textContent = '+';
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function updateProviderSettings() {
+            const provider = document.getElementById('emailProvider').value;
+            const hostInput = document.getElementById('imapHost');
+            const portInput = document.getElementById('imapPort');
+            const secureInput = document.getElementById('imapSecure');
+            
+            switch(provider) {
+                case 'gmail':
+                    hostInput.value = 'imap.gmail.com';
+                    portInput.value = '993';
+                    secureInput.checked = true;
+                    break;
+                case 'privateemail':
+                    hostInput.value = 'mail.privateemail.com';
+                    portInput.value = '993';
+                    secureInput.checked = true;
+                    break;
+                case 'other':
+                    hostInput.value = '';
+                    portInput.value = '993';
+                    secureInput.checked = true;
+                    break;
+                default:
+                    hostInput.value = '';
+                    portInput.value = '993';
+                    secureInput.checked = true;
+            }
+        }
+
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            const button = field.parentNode.querySelector('.toggle-password');
+            
+            if (field.type === 'password') {
+                field.type = 'text';
+                button.textContent = '🙈';
+            } else {
+                field.type = 'password';
+                button.textContent = '👁️';
+            }
+        }
+
+        // Enhanced form validation to include marketplace email fields
+        function validateForm() {
+            const requiredFields = [
+                'firstName', 'lastName', 'email', 'phone', 'businessName',
+                'businessType', 'businessAddress', 'forwardingEmail'
+            ];
+
+            // Check if marketplace email is enabled
+            const marketplaceEnabled = document.getElementById('marketplaceEmailContent').style.display !== 'none';
+            
+            if (marketplaceEnabled) {
+                const marketplaceRequiredFields = [
+                    'emailProvider', 'imapHost', 'emailUsername', 'appPassword', 'gdprConsent'
+                ];
+                requiredFields.push(...marketplaceRequiredFields);
+            }
+
+            for (const fieldId of requiredFields) {
+                const field = document.getElementById(fieldId);
+                if (!field || !field.value.trim()) {
+                    if (fieldId === 'gdprConsent' && marketplaceEnabled) {
+                        alert('Please accept the GDPR consent for marketplace email connection.');
+                    } else {
+                        alert(`Please fill in the ${field.name || fieldId} field.`);
+                    }
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
     </script>
 </body>
 </html>
