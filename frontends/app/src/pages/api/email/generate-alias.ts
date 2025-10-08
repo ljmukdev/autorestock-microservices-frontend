@@ -82,3 +82,4 @@ async function configureEmailForwarding(alias: string, forwardTo: string): Promi
   // Simulate configuration delay
   await new Promise(resolve => setTimeout(resolve, 100));
 }
+

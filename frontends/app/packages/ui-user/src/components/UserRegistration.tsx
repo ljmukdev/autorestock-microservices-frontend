@@ -7,6 +7,8 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@autorestock/ui-kit';
 import { Button } from '@autorestock/ui-kit';
 import { User, Mail, Phone, Building, MapPin } from 'lucide-react';
+import MarketplaceEmailConnection from './MarketplaceEmailConnection';
+import { EmailIngestionConfig } from '../types/EmailIngestionConfig';
 
 interface UserRegistrationProps {
   onRegistrationComplete?: (userData: any) => void;
@@ -38,6 +40,7 @@ export default function UserRegistration({ onRegistrationComplete, onLoginRedire
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [emailIngestion, setEmailIngestion] = useState<Partial<EmailIngestionConfig> | null>(null);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -70,6 +73,22 @@ export default function UserRegistration({ onRegistrationComplete, onLoginRedire
       newErrors.acceptTerms = 'You must accept the terms and conditions';
     }
 
+    // Validate email ingestion if enabled
+    if (emailIngestion) {
+      if (!emailIngestion.gdprConsent) {
+        newErrors.gdprConsent = 'You must consent to email access to enable this feature';
+      }
+      if (!emailIngestion.imapHost?.trim()) {
+        newErrors.imapHost = 'IMAP host is required';
+      }
+      if (!emailIngestion.username?.trim()) {
+        newErrors.username = 'Email address is required';
+      }
+      if (!emailIngestion.appPassword?.trim()) {
+        newErrors.appPassword = 'App password is required';
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -84,19 +103,26 @@ export default function UserRegistration({ onRegistrationComplete, onLoginRedire
     setIsSubmitting(true);
 
     try {
+      const payload: any = {
+        businessName: formData.businessName,
+        email: formData.email,
+        password: formData.password,
+        phone: formData.phone,
+        country: formData.country,
+        businessType: formData.businessType
+      };
+
+      // Only include emailIngestion if enabled
+      if (emailIngestion && emailIngestion.enabled) {
+        payload.emailIngestion = emailIngestion;
+      }
+
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          businessName: formData.businessName,
-          email: formData.email,
-          password: formData.password,
-          phone: formData.phone,
-          country: formData.country,
-          businessType: formData.businessType
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
@@ -292,6 +318,13 @@ export default function UserRegistration({ onRegistrationComplete, onLoginRedire
             </div>
           </div>
 
+          {/* Marketplace Email Connection (Optional) */}
+          <MarketplaceEmailConnection
+            value={emailIngestion || undefined}
+            onChange={setEmailIngestion}
+            errors={errors}
+          />
+
           {/* Terms and Conditions */}
           <div className="space-y-4">
             <div className="flex items-start space-x-3">
@@ -345,3 +378,4 @@ export default function UserRegistration({ onRegistrationComplete, onLoginRedire
     </Card>
   );
 }
+

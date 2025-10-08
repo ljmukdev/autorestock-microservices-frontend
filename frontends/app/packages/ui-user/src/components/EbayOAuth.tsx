@@ -342,3 +342,4 @@ export default function EbayOAuth({ onConnect, onDisconnect, onError }: EbayOAut
     </Card>
   );
 }
+
