@@ -1,69 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { Container, Stack, Alert, Card } from '@autorestock/ui-kit'
-import { 
-  OnboardingWizard,
-  UserRegistration,
-  EbayOAuth,
-  EmailSetup,
-  CsvImport,
-  MarketplaceEmailConnection
-} from '@autorestock/ui-user'
-import { useConfig } from '@/providers/ConfigProvider'
+import { OnboardingWizard } from '@autorestock/ui-user'
 
 export default function OnboardingPage() {
-  const config = useConfig()
-
-  const handleOnboardingComplete = (data: any) => {
-    console.log('Onboarding completed with data:', data)
-    // Redirect to main app or dashboard
-    window.location.href = '/'
-  }
-
-  const steps = [
-    {
-      id: 'user-registration',
-      title: 'User Registration',
-      description: 'Create your AutoRestock account',
-      icon: <span>👤</span>,
-      component: UserRegistration,
-      completed: false
-    },
-    {
-      id: 'ebay-oauth',
-      title: 'eBay Connection',
-      description: 'Connect your eBay account',
-      icon: <span>🛒</span>,
-      component: EbayOAuth,
-      completed: false
-    },
-    {
-      id: 'email-setup',
-      title: 'Email Setup',
-      description: 'Configure email forwarding',
-      icon: <span>📧</span>,
-      component: EmailSetup,
-      completed: false
-    },
-    {
-      id: 'csv-import',
-      title: 'Import History',
-      description: 'Import your transaction history',
-      icon: <span>📊</span>,
-      component: CsvImport,
-      completed: false
-    },
-    {
-      id: 'marketplace-email',
-      title: 'Marketplace Email',
-      description: 'Optional: Connect marketplace email',
-      icon: <span>🔗</span>,
-      component: MarketplaceEmailConnection,
-      completed: false
-    }
-  ]
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
@@ -93,12 +32,7 @@ export default function OnboardingPage() {
           </p>
         </div>
 
-        <OnboardingWizard
-          steps={steps}
-          onComplete={handleOnboardingComplete}
-          apiBase={config.userApiBase}
-          authToken={config.authToken}
-        />
+        <OnboardingWizard />
       </div>
     </div>
   )
