@@ -10,3 +10,6 @@ export { ForwardingEmailSettings } from './widgets/ForwardingEmailSettings';
 export { AliasCreator } from './widgets/AliasCreator';
 export { OnboardingStatus } from './widgets/OnboardingStatus';
 
+// Components
+export { default as OnboardingWizard } from './components/OnboardingWizard';
+
