@@ -42,26 +42,25 @@ export default function EbayOAuth({ onConnect, onDisconnect, onError }: EbayOAut
 
   const checkConnectionStatus = async () => {
     try {
-      // Get eBay service URL from environment or use default
-      const ebayServiceUrl = process.env.NEXT_PUBLIC_EBAY_SERVICE_URL || 'https://autorestock-ebay-service-production.up.railway.app';
+      // For now, assume not connected since eBay service isn't deployed
+      // TODO: Uncomment when eBay service is properly deployed
+      // const ebayServiceUrl = process.env.NEXT_PUBLIC_EBAY_SERVICE_URL || 'https://autorestock-ebay-service-production.up.railway.app';
+      // const response = await fetch(`${ebayServiceUrl}/oauth/token-info`);
+      // const data = await response.json();
       
-      const response = await fetch(`${ebayServiceUrl}/oauth/token-info`);
-      const data = await response.json();
-      
-      if (data.hasTokens) {
-        setIsConnected(true);
-        // Create a mock account object from token info
-        const mockAccount = {
-          id: 'ebay-user',
-          username: 'eBay User',
-          email: 'user@ebay.com',
-          accountType: 'business' as const,
-          verified: true,
-          connectedAt: new Date().toISOString()
-        };
-        setEbayAccount(mockAccount);
-        onConnect?.(mockAccount);
-      }
+      // if (data.hasTokens) {
+      //   setIsConnected(true);
+      //   const mockAccount = {
+      //     id: 'ebay-user',
+      //     username: 'eBay User',
+      //     email: 'user@ebay.com',
+      //     accountType: 'business' as const,
+      //     verified: true,
+      //     connectedAt: new Date().toISOString()
+      //   };
+      //   setEbayAccount(mockAccount);
+      //   onConnect?.(mockAccount);
+      // }
     } catch (error) {
       console.error('Failed to check eBay connection status:', error);
     } finally {
@@ -74,11 +73,15 @@ export default function EbayOAuth({ onConnect, onDisconnect, onError }: EbayOAut
     setError(null);
     
     try {
-      // Get eBay service URL from environment or use default
-      const ebayServiceUrl = process.env.NEXT_PUBLIC_EBAY_SERVICE_URL || 'https://autorestock-ebay-service-production.up.railway.app';
+      // For now, let's use a mock approach since eBay service might not be deployed
+      // This will show the user that eBay integration is coming soon
+      setError('eBay integration is currently being set up. This feature will be available soon.');
+      onError?.('eBay integration is currently being set up. This feature will be available soon.');
+      setIsConnecting(false);
       
-      // Redirect to eBay service OAuth login
-      window.location.href = `${ebayServiceUrl}/oauth/login`;
+      // TODO: Uncomment when eBay service is properly deployed
+      // const ebayServiceUrl = process.env.NEXT_PUBLIC_EBAY_SERVICE_URL || 'https://autorestock-ebay-service-production.up.railway.app';
+      // window.location.href = `${ebayServiceUrl}/oauth/login`;
     } catch (error) {
       console.error('eBay OAuth error:', error);
       setError('Failed to connect to eBay. Please try again.');
