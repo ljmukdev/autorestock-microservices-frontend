@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='UTF-8' />
+  <title>Reports Dashboard</title>
+  <style>
+    body {{ font-family: Arial; padding: 20px; }}
+    label {{ display: block; margin: 10px 0 5px; }}
+    input {{ margin-bottom: 10px; }}
+    .results {{ margin-top: 20px; }}
+  </style>
+</head>
+<body>
+  <h1>Reports Dashboard</h1>
+  <label>Start Date:</label>
+  <input type="date" id="startDate" />
+  <label>End Date:</label>
+  <input type="date" id="endDate" />
+  <button onclick="runReport()">Run Report</button>
+  <div class="results" id="results"></div>
+
+  <script>
+    async function runReport() {{
+      const start = document.getElementById('startDate').value;
+      const end = document.getElementById('endDate').value;
+      const res = await fetch(\http://localhost:3001/api/reports?start_date=\&end_date=\\);
+      const data = await res.json();
+      document.getElementById('results').innerHTML = 
+        <h2>Results:</h2>
+        <p><strong>Total Sales:</strong> \</p>
+        <p><strong>Total Revenue:</strong> £\</p>
+        <p><strong>Total Costs:</strong> £\</p>
+        <p><strong>Total Profit:</strong> £\</p>
+        <p><strong>Avg Profit per Sale:</strong> £\</p>
+      ;
+    }}
+  </script>
+</body>
+</html>

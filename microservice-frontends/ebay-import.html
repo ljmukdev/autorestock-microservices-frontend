@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eBay Data Import - AutoRestock</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect, createElement: e } = React;
+        const { createRoot } = ReactDOM;
+
+        // Simple icon components to replace Lucide
+        const Upload = ({ className }) => e('svg', { 
+            className, 
+            fill: 'none', 
+            stroke: 'currentColor', 
+            viewBox: '0 0 24 24' 
+        }, e('path', { 
+            strokeLinecap: 'round', 
+            strokeLinejoin: 'round', 
+            strokeWidth: 2, 
+            d: 'M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12' 
+        }));
+
+        const Download = ({ className }) => e('svg', { 
+            className, 
+            fill: 'none', 
+            stroke: 'currentColor', 
+            viewBox: '0 0 24 24' 
+        }, e('path', { 
+            strokeLinecap: 'round', 
+            strokeLinejoin: 'round', 
+            strokeWidth: 2, 
+            d: 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4' 
+        }));
+
+        const RotateCw = ({ className }) => e('svg', { 
+            className, 
+            fill: 'none', 
+            stroke: 'currentColor', 
+            viewBox: '0 0 24 24' 
+        }, e('path', { 
+            strokeLinecap: 'round', 
+            strokeLinejoin: 'round', 
+            strokeWidth: 2, 
+            d: 'M1 4v6h6M23 20v-6h-6' 
+        }), e('path', { 
+            strokeLinecap: 'round', 
+            strokeLinejoin: 'round', 
+            strokeWidth: 2, 
+            d: 'm20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15' 
+        }));
+
+        const CheckCircle = ({ className }) => e('svg', { 
+            className, 
+            fill: 'none', 
+            stroke: 'currentColor', 
+            viewBox: '0 0 24 24' 
+        }, e('path', { 
+            strokeLinecap: 'round', 
+            strokeLinejoin: 'round', 
+            strokeWidth: 2, 
+            d: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' 
+        }));
+
+        const AlertCircle = ({ className }) => e('svg', { 
+            className, 
+            fill: 'none', 
+            stroke: 'currentColor', 
+            viewBox: '0 0 24 24' 
+        }, e('circle', { cx: '12', cy: '12', r: '10' }), e('line', { x1: '12', y1: '8', x2: '12', y2: '12' }), e('line', { x1: '12', y1: '16', x2: '12.01', y2: '16' }));
+
+        const Clock = ({ className }) => e('svg', { 
+            className, 
+            fill: 'none', 
+            stroke: 'currentColor', 
+            viewBox: '0 0 24 24' 
+        }, e('circle', { cx: '12', cy: '12', r: '10' }), e('polyline', { points: '12,6 12,12 16,14' }));
+
+        const BarChart3 = ({ className }) => e('svg', { 
+            className, 
+            fill: 'none', 
+            stroke: 'currentColor', 
+            viewBox: '0 0 24 24' 
+        }, e('line', { x1: '12', y1: '20', x2: '12', y2: '10' }), e('line', { x1: '18', y1: '20', x2: '18', y2: '4' }), e('line', { x1: '6', y1: '20', x2: '6', y2: '16' }));
+
+        const EbayDataImport = ({ userId = 1 }) => {
+          const [activeTab, setActiveTab] = useState('import');
+          const [uploadFile, setUploadFile] = useState(null);
+          const [validation, setValidation] = useState(null);
+          const [importing, setImporting] = useState(false);
+          const [syncing, setSyncing] = useState(false);
+          const [importResults, setImportResults] = useState(null);
+          const [syncResults, setSyncResults] = useState(null);
+          const [syncStatus, setSyncStatus] = useState(null);
+          const [instructions, setInstructions] = useState(null);
+
+          useEffect(() => {
+            fetchInstructions();
+            fetchSyncStatus();
+          }, []);
+
+          const fetchInstructions = async () => {
+            try {
+              const response = await fetch('/api/ebay-data/import-instructions');
+              const data = await response.json();
+              setInstructions(data);
+            } catch (error) {
+              console.error('Error fetching instructions:', error);
+              setInstructions({
+                title: 'eBay Historical Data Import Instructions',
+                steps: [
+                  { step: 1, title: 'Access eBay', description: 'Log into your eBay account' },
+                  { step: 2, title: 'Go to Purchase History', description: 'Navigate to My eBay > Purchase history' },
+                  { step: 3, title: 'Download CSV', description: 'Look for Export/Download option' },
+                  { step: 4, title: 'Upload Here', description: 'Use the Import CSV tab to upload your file' }
+                ]
+              });
+            }
+          };
+
+          const fetchSyncStatus = async () => {
+            try {
+              const response = await fetch(`/api/ebay-data/sync-status?userId=${userId}`);
+              if (response.ok) {
+                const data = await response.json();
+                setSyncStatus(data);
+              }
+            } catch (error) {
+              console.log('Sync status not available:', error);
+              setSyncStatus({
+                totalPurchases: 0,
+                hasEbayToken: false,
+                apiUsage: { apiCallCount: 0, dailyLimit: 5000 }
+              });
+            }
+          };
+
+          const handleFileSelect = (event) => {
+            const file = event.target.files[0];
+            setUploadFile(file);
+            setValidation(null);
+            setImportResults(null);
+          };
+
+          const validateFile = async () => {
+            if (!uploadFile) return;
+
+            const formData = new FormData();
+            formData.append('csvFile', uploadFile);
+
+            try {
+              const response = await fetch('/api/ebay-data/validate-csv', {
+                method: 'POST',
+                body: formData
+              });
+
+              const data = await response.json();
+              setValidation(data);
+            } catch (error) {
+              console.error('Error validating file:', error);
+              setValidation({ valid: false, error: 'Failed to validate file' });
+            }
+          };
+
+          const importFile = async () => {
+            if (!uploadFile) return;
+
+            setImporting(true);
+            const formData = new FormData();
+            formData.append('csvFile', uploadFile);
+            formData.append('userId', userId);
+
+            try {
+              const response = await fetch('/api/ebay-data/import-csv', {
+                method: 'POST',
+                body: formData
+              });
+
+              const data = await response.json();
+              setImportResults(data);
+              
+              if (data.success) {
+                fetchSyncStatus();
+              }
+            } catch (error) {
+              console.error('Error importing file:', error);
+              setImportResults({ success: false, error: 'Failed to import file' });
+            }
+            setImporting(false);
+          };
+
+          const syncFromAPI = async () => {
+            setSyncing(true);
+            try {
+              const response = await fetch('/api/ebay-data/manual-sync', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, dateRange: { days: 30 } })
+              });
+
+              const data = await response.json();
+              setSyncResults(data);
+              
+              if (data.success) {
+                fetchSyncStatus();
+              }
+            } catch (error) {
+              console.error('Error syncing from API:', error);
+              setSyncResults({ success: false, error: 'Failed to sync from eBay API' });
+            }
+            setSyncing(false);
+          };
+
+          return e('div', { className: 'max-w-4xl mx-auto p-6' },
+            e('div', { className: 'mb-8' },
+              e('h1', { className: 'text-3xl font-bold text-gray-900 mb-2' }, 'eBay Data Integration'),
+              e('p', { className: 'text-gray-600' }, 'Import your historical eBay data and set up automatic syncing for future transactions.')
+            ),
+
+            e('div', { className: 'border-b border-gray-200 mb-6' },
+              e('nav', { className: '-mb-px flex space-x-8' },
+                [
+                  { id: 'instructions', label: 'Instructions', icon: Download },
+                  { id: 'import', label: 'Import CSV', icon: Upload },
+                  { id: 'sync', label: 'API Sync', icon: RotateCw }
+                ].map(({ id, label, icon: Icon }) =>
+                  e('button', {
+                    key: id,
+                    onClick: () => setActiveTab(id),
+                    className: `py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
+                      activeTab === id
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`
+                  },
+                    e(Icon, { className: 'h-4 w-4' }),
+                    e('span', {}, label)
+                  )
+                )
+              )
+            ),
+
+            e('div', { className: 'bg-white' },
+              activeTab === 'instructions' && e('div', { className: 'space-y-6' },
+                e('div', { className: 'bg-blue-50 border border-blue-200 rounded-lg p-6' },
+                  e('h3', { className: 'text-lg font-semibold text-blue-900 mb-4' }, 'How to Download Your eBay Purchase History'),
+                  instructions?.steps && e('div', { className: 'space-y-4' },
+                    instructions.steps.map((step, index) =>
+                      e('div', { key: index, className: 'flex items-start space-x-3' },
+                        e('div', { className: 'flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-medium' }, step.step),
+                        e('div', {},
+                          e('h4', { className: 'font-medium text-gray-900' }, step.title),
+                          e('p', { className: 'text-gray-600 text-sm' }, step.description)
+                        )
+                      )
+                    )
+                  )
+                ),
+                e('div', { className: 'bg-gray-50 border border-gray-200 rounded-lg p-6' },
+                  e('h4', { className: 'font-semibold text-gray-900 mb-3' }, 'CSV Format Requirements'),
+                  e('p', { className: 'text-sm text-gray-600 mb-2' }, 'Your CSV should include columns like:'),
+                  e('ul', { className: 'text-sm text-gray-600 list-disc list-inside space-y-1' },
+                    e('li', {}, 'Item Title or Name'),
+                    e('li', {}, 'Purchase Date or Sale Date'),
+                    e('li', {}, 'Total Price or Sale Price'),
+                    e('li', {}, 'Seller Name or Buyer Username'),
+                    e('li', {}, 'Order Number or Transaction ID')
+                  )
+                ),
+                e('div', { className: 'bg-yellow-50 border border-yellow-200 rounded-lg p-4' },
+                  e('h4', { className: 'font-semibold text-yellow-800 mb-2' }, 'Note'),
+                  e('p', { className: 'text-sm text-yellow-700' }, 'Both purchase history and sales reports are supported. The system will automatically detect the format.')
+                )
+              ),
+
+              activeTab === 'import' && e('div', { className: 'space-y-6' },
+                e('div', { className: 'border-2 border-dashed border-gray-300 rounded-lg p-8 text-center' },
+                  e(Upload, { className: 'mx-auto h-12 w-12 text-gray-400' }),
+                  e('div', { className: 'mt-4' },
+                    e('label', { htmlFor: 'csv-upload', className: 'cursor-pointer' },
+                      e('span', { className: 'mt-2 block text-sm font-medium text-gray-900' }, 'Upload your eBay CSV file'),
+                      e('input', {
+                        id: 'csv-upload',
+                        type: 'file',
+                        accept: '.csv',
+                        onChange: handleFileSelect,
+                        className: 'hidden'
+                      })
+                    ),
+                    e('p', { className: 'mt-2 text-sm text-gray-500' }, 'CSV files up to 10MB')
+                  )
+                ),
+
+                uploadFile && e('div', { className: 'bg-white border rounded-lg p-4' },
+                  e('div', { className: 'flex items-center justify-between mb-4' },
+                    e('div', {},
+                      e('p', { className: 'font-medium' }, uploadFile.name),
+                      e('p', { className: 'text-sm text-gray-500' }, `${(uploadFile.size / 1024 / 1024).toFixed(2)} MB`)
+                    ),
+                    e('button', {
+                      onClick: validateFile,
+                      className: 'px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700'
+                    }, 'Validate File')
+                  )
+                ),
+
+                validation && e('div', { 
+                  className: `border rounded-lg p-4 ${validation.valid ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`
+                },
+                  e('div', { className: 'flex items-center space-x-2 mb-3' },
+                    validation.valid ? 
+                      e(CheckCircle, { className: 'h-5 w-5 text-green-600' }) :
+                      e(AlertCircle, { className: 'h-5 w-5 text-red-600' }),
+                    e('h4', { 
+                      className: `font-medium ${validation.valid ? 'text-green-900' : 'text-red-900'}`
+                    }, validation.valid ? 'File Valid' : 'Validation Issues')
+                  ),
+                  
+                  validation.valid && e('div', { className: 'mb-4' },
+                    e('p', { className: 'text-green-700 mb-2' }, `Found ${validation.recordCount} records`),
+                    e('p', { className: 'text-sm text-green-600' }, `Headers: ${validation.headers.join(', ')}`)
+                  ),
+                  
+                  !validation.valid && e('div', { className: 'mb-4' },
+                    e('p', { className: 'text-red-700 mb-2' }, validation.error || 'Please check your CSV file format'),
+                    validation.warnings && validation.warnings.map((warning, index) =>
+                      e('p', { key: index, className: 'text-red-600 text-sm' }, `• ${warning}`)
+                    )
+                  ),
+                  
+                  validation.sample && validation.sample.length > 0 && e('div', { className: 'mb-4' },
+                    e('h5', { className: 'font-medium text-gray-900 mb-2' }, 'Sample Data Preview'),
+                    e('div', { className: 'overflow-x-auto' },
+                      e('table', { className: 'min-w-full text-sm' },
+                        e('thead', {},
+                          e('tr', { className: 'border-b border-gray-200' },
+                            validation.headers.slice(0, 4).map(header =>
+                              e('th', { key: header, className: 'text-left p-2 text-gray-700' }, header)
+                            )
+                          )
+                        ),
+                        e('tbody', {},
+                          validation.sample.slice(0, 3).map((row, index) =>
+                            e('tr', { key: index, className: 'border-b border-gray-100' },
+                              validation.headers.slice(0, 4).map(header =>
+                                e('td', { key: header, className: 'p-2 text-gray-600' }, row[header] || '')
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                  ),
+                  
+                  validation.valid && e('button', {
+                    onClick: importFile,
+                    disabled: importing,
+                    className: 'px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50'
+                  }, importing ? 'Importing...' : 'Import Data')
+                ),
+
+                importResults && e('div', {
+                  className: `border rounded-lg p-4 ${importResults.success ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`
+                },
+                  e('h4', {
+                    className: `font-medium mb-3 ${importResults.success ? 'text-green-900' : 'text-red-900'}`
+                  }, 'Import Results'),
+                  
+                  importResults.success && importResults.results && e('div', { className: 'grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4' },
+                    e('div', { className: 'text-center' },
+                      e('div', { className: 'text-2xl font-bold text-blue-600' }, importResults.results.total || 0),
+                      e('div', { className: 'text-gray-600' }, 'Total')
+                    ),
+                    e('div', { className: 'text-center' },
+                      e('div', { className: 'text-2xl font-bold text-green-600' }, importResults.results.successful || 0),
+                      e('div', { className: 'text-gray-600' }, 'Successful')
+                    ),
+                    e('div', { className: 'text-center' },
+                      e('div', { className: 'text-2xl font-bold text-yellow-600' }, importResults.results.duplicates || 0),
+                      e('div', { className: 'text-gray-600' }, 'Duplicates')
+                    ),
+                    e('div', { className: 'text-center' },
+                      e('div', { className: 'text-2xl font-bold text-red-600' }, importResults.results.failed || 0),
+                      e('div', { className: 'text-gray-600' }, 'Failed')
+                    )
+                  ),
+                  
+                  importResults.message && e('p', { 
+                    className: `text-sm ${importResults.success ? 'text-green-700' : 'text-red-700'}`
+                  }, importResults.message),
+                  
+                  !importResults.success && e('p', { className: 'text-red-700 text-sm' }, 
+                    importResults.details || importResults.error || 'Import failed'
+                  )
+                )
+              ),
+
+              activeTab === 'sync' && e('div', { className: 'space-y-6' },
+                syncStatus && e('div', { className: 'bg-white border rounded-lg p-6' },
+                  e('h3', { className: 'text-lg font-semibold mb-4' }, 'Current Status'),
+                  e('div', { className: 'grid grid-cols-1 md:grid-cols-3 gap-4' },
+                    e('div', { className: 'text-center' },
+                      e('div', { className: 'text-2xl font-bold text-blue-600' }, syncStatus.totalPurchases || 0),
+                      e('div', { className: 'text-sm text-gray-600' }, 'Total Purchases')
+                    ),
+                    e('div', { className: 'text-center' },
+                      e('div', { className: 'text-sm text-gray-600' }, 'Date Range'),
+                      e('div', { className: 'font-medium' }, 
+                        syncStatus.dateRange?.earliest_purchase && syncStatus.dateRange?.latest_purchase
+                          ? `${syncStatus.dateRange.earliest_purchase} to ${syncStatus.dateRange.latest_purchase}`
+                          : 'No data'
+                      )
+                    ),
+                    e('div', { className: 'text-center' },
+                      e('div', { className: 'text-sm text-gray-600' }, 'Last Sync'),
+                      e('div', { className: 'font-medium' }, 
+                        syncStatus.lastSync ? new Date(syncStatus.lastSync).toLocaleDateString() : 'Never'
+                      )
+                    )
+                  )
+                ),
+
+                e('div', { className: 'bg-blue-50 border border-blue-200 rounded-lg p-6' },
+                  e('h3', { className: 'text-lg font-semibold text-blue-900 mb-3' }, 'Manual Sync'),
+                  e('p', { className: 'text-blue-700 mb-4' }, 'Sync your recent eBay transactions manually. This will attempt to fetch recent data from eBay\'s API.'),
+                  e('button', {
+                    onClick: syncFromAPI,
+                    disabled: syncing,
+                    className: 'px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 flex items-center space-x-2'
+                  },
+                    e(RotateCw, { className: `h-4 w-4 ${syncing ? 'animate-spin' : ''}` }),
+                    e('span', {}, syncing ? 'Syncing...' : 'Sync Now')
+                  )
+                ),
+
+                syncResults && e('div', {
+                  className: `border rounded-lg p-4 ${syncResults.success ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`
+                },
+                  e('h4', {
+                    className: `font-medium mb-3 ${syncResults.success ? 'text-green-900' : 'text-red-900'}`
+                  }, 'Sync Results'),
+                  syncResults.success && syncResults.results && e('div', { className: 'text-sm' },
+                    e('p', { className: 'text-green-700' }, syncResults.message || 'Sync completed successfully')
+                  ),
+                  !syncResults.success && e('div', { className: 'text-sm' },
+                    e('p', { className: 'text-red-700' }, syncResults.details || syncResults.error || 'Sync failed')
+                  )
+                ),
+
+                e('div', { className: 'bg-gray-50 border border-gray-200 rounded-lg p-6' },
+                  e('h3', { className: 'text-lg font-semibold text-gray-900 mb-3' }, 'Quick Actions'),
+                  e('div', { className: 'space-y-3' },
+                    e('button', {
+                      onClick: () => window.open('/api/ebay-data/purchases', '_blank'),
+                      className: 'w-full text-left px-4 py-2 bg-white border border-gray-300 rounded hover:bg-gray-50'
+                    }, 'View All Purchases'),
+                    e('button', {
+                      onClick: () => window.open('/api/ebay-data/summary', '_blank'),
+                      className: 'w-full text-left px-4 py-2 bg-white border border-gray-300 rounded hover:bg-gray-50'
+                    }, 'View Purchase Summary'),
+                    e('button', {
+                      onClick: fetchSyncStatus,
+                      className: 'w-full text-left px-4 py-2 bg-white border border-gray-300 rounded hover:bg-gray-50'
+                    }, 'Refresh Status')
+                  )
+                )
+              )
+            )
+          );
+        };
+
+        // Use React 18 createRoot API
+        const container = document.getElementById('root');
+        const root = createRoot(container);
+        root.render(e(EbayDataImport, { userId: 1 }));
+    </script>
+</body>
+</html>

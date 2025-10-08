@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoRestock - Complete Registration (v2.0)</title>
+    <!-- Cache buster: 2024-10-08-16:35 -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .progress-bar {
+            background: rgba(255,255,255,0.2);
+            height: 6px;
+            margin-top: 20px;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: white;
+            height: 100%;
+            width: 25%;
+            transition: width 0.3s ease;
+        }
+
+        .form-container {
+            padding: 40px;
+        }
+
+        .form-page {
+            display: none;
+        }
+
+        .form-page.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+
+        .platform-checkboxes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .platform-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .platform-checkbox:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .platform-checkbox input[type="checkbox"] {
+            width: auto;
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #6c757d;
+            border: 2px solid #e1e5e9;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .status-indicator {
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .test-section {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border: 2px solid #e1e5e9;
+        }
+
+        .test-button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .test-button:hover {
+            background: #218838;
+        }
+
+        .test-result {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .platform-checkboxes {
+                grid-template-columns: 1fr;
+            }
+            
+            .navigation {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+
+        /* Marketplace Email Section Styles */
+        .marketplace-email-section {
+            margin-top: 30px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .toggle-header {
+            background: #f8f9fa;
+            padding: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s ease;
+            border-bottom: 1px solid #e1e5e9;
+        }
+
+        .toggle-header:hover {
+            background: #e9ecef;
+        }
+
+        .toggle-header h3 {
+            margin: 0;
+            color: #333;
+            font-size: 1.2em;
+        }
+
+        .toggle-icon {
+            font-size: 1.5em;
+            color: #667eea;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-content {
+            padding: 20px;
+            background: white;
+        }
+
+        .password-input {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .password-input input {
+            flex: 1;
+            padding-right: 50px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2em;
+            padding: 5px;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+
+        .toggle-password:hover {
+            background: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 AutoRestock Registration</h1>
+            <p>Complete your setup in just a few steps</p>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <div class="form-container">
+            <!-- Page 1: Personal Details -->
+            <div class="form-page active" id="page1">
+                <h2>👤 Personal Information</h2>
+                <p style="color: #666; margin-bottom: 30px;">Let's start with your basic information</p>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="firstName">First Name *</label>
+                        <input type="text" id="firstName" name="firstName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="lastName">Last Name *</label>
+                        <input type="text" id="lastName" name="lastName" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address *</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input type="tel" id="phone" name="phone">
+                </div>
+
+                <div class="form-group">
+                    <label for="address">Address</label>
+                    <textarea id="address" name="address" rows="3" placeholder="Street address, city, state, postal code"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="dateOfBirth">Date of Birth</label>
+                    <input type="date" id="dateOfBirth" name="dateOfBirth">
+                </div>
+            </div>
+
+            <!-- Page 2: Business Details -->
+            <div class="form-page" id="page2">
+                <h2>🏢 Business Information</h2>
+                <p style="color: #666; margin-bottom: 30px;">Tell us about your business</p>
+
+                <div class="form-group">
+                    <label for="businessName">Business Name *</label>
+                    <input type="text" id="businessName" name="businessName" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="businessType">Business Type *</label>
+                        <select id="businessType" name="businessType" required>
+                            <option value="">Select business type</option>
+                            <option value="sole-proprietorship">Sole Proprietorship</option>
+                            <option value="partnership">Partnership</option>
+                            <option value="llc">Limited Liability Company (LLC)</option>
+                            <option value="corporation">Corporation</option>
+                            <option value="s-corp">S-Corporation</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="industry">Industry</label>
+                        <select id="industry" name="industry">
+                            <option value="">Select industry</option>
+                            <option value="electronics">Electronics</option>
+                            <option value="clothing">Clothing & Fashion</option>
+                            <option value="home-garden">Home & Garden</option>
+                            <option value="automotive">Automotive</option>
+                            <option value="sports">Sports & Recreation</option>
+                            <option value="books-media">Books & Media</option>
+                            <option value="health-beauty">Health & Beauty</option>
+                            <option value="toys-games">Toys & Games</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="website">Business Website</label>
+                    <input type="url" id="website" name="website" placeholder="https://yourwebsite.com">
+                </div>
+
+                <div class="form-group">
+                    <label>Which platforms do you sell on? *</label>
+                    <div class="platform-checkboxes">
+                        <div class="platform-checkbox">
+                            <input type="checkbox" id="platform-ebay" name="platforms" value="ebay">
+                            <label for="platform-ebay">eBay</label>
+                        </div>
+                        <div class="platform-checkbox">
+                            <input type="checkbox" id="platform-amazon" name="platforms" value="amazon">
+                            <label for="platform-amazon">Amazon</label>
+                        </div>
+                        <div class="platform-checkbox">
+                            <input type="checkbox" id="platform-shopify" name="platforms" value="shopify">
+                            <label for="platform-shopify">Shopify</label>
+                        </div>
+                        <div class="platform-checkbox">
+                            <input type="checkbox" id="platform-etsy" name="platforms" value="etsy">
+                            <label for="platform-etsy">Etsy</label>
+                        </div>
+                        <div class="platform-checkbox">
+                            <input type="checkbox" id="platform-facebook" name="platforms" value="facebook">
+                            <label for="platform-facebook">Facebook Marketplace</label>
+                        </div>
+                        <div class="platform-checkbox">
+                            <input type="checkbox" id="platform-other" name="platforms" value="other">
+                            <label for="platform-other">Other</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="otherPlatforms">Other Platforms (if applicable)</label>
+                    <textarea id="otherPlatforms" name="otherPlatforms" rows="2" placeholder="List any other platforms you sell on"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="inventorySize">Approximate Inventory Size</label>
+                    <select id="inventorySize" name="inventorySize">
+                        <option value="">Select size</option>
+                        <option value="small">Small (1-100 items)</option>
+                        <option value="medium">Medium (100-1,000 items)</option>
+                        <option value="large">Large (1,000-10,000 items)</option>
+                        <option value="enterprise">Enterprise (10,000+ items)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Page 3: eBay API Setup -->
+            <div class="form-page" id="page3">
+                <h2>🔗 eBay API Configuration</h2>
+                <p style="color: #666; margin-bottom: 30px;">Connect your eBay account for automated inventory management</p>
+
+                <div class="status-info">
+                    <strong>📋 Setup Instructions:</strong><br>
+                    1. Go to <a href="https://developer.ebay.com/" target="_blank">eBay Developer Portal</a><br>
+                    2. Create a new application<br>
+                    3. Copy your App ID and Client Secret below
+                </div>
+
+                <div class="form-group">
+                    <label for="ebayAppId">eBay App ID *</label>
+                    <input type="text" id="ebayAppId" name="ebayAppId" placeholder="Your eBay App ID">
+                </div>
+
+                <div class="form-group">
+                    <label for="ebayClientSecret">eBay Client Secret *</label>
+                    <input type="password" id="ebayClientSecret" name="ebayClientSecret" placeholder="Your eBay Client Secret">
+                </div>
+
+                <div class="form-group">
+                    <label for="ebayEnvironment">eBay Environment</label>
+                    <select id="ebayEnvironment" name="ebayEnvironment">
+                        <option value="sandbox">Sandbox (Testing)</option>
+                        <option value="production">Production (Live)</option>
+                    </select>
+                </div>
+
+                <div class="test-section">
+                    <h3>🧪 Test eBay Connection</h3>
+                    <p>Click the button below to verify your eBay API credentials are working correctly.</p>
+                    <button type="button" class="test-button" id="testEbayBtn">Test eBay API</button>
+                    <div id="ebayTestResult" class="test-result hidden"></div>
+                </div>
+            </div>
+
+            <!-- Page 4: Email Ingress Setup -->
+            <div class="form-page" id="page4">
+                <h2>📧 Email Ingress Configuration</h2>
+                <p style="color: #666; margin-bottom: 30px;">Set up email forwarding for automated order processing</p>
+
+                <div class="status-info">
+                    <strong>📋 Important:</strong> You'll need to update your email address on your selling platforms to forward emails to our system.
+                </div>
+
+                <div class="form-group">
+                    <label for="forwardingEmail">Forwarding Email Address *</label>
+                    <input type="email" id="forwardingEmail" name="forwardingEmail" placeholder="your-forwarding@autorestock.app" required>
+                    <small style="color: #666;">This is where platform emails will be forwarded</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="originalEmail">Original Platform Email</label>
+                    <input type="email" id="originalEmail" name="originalEmail" placeholder="your-original@example.com">
+                    <small style="color: #666;">The email address currently used on your platforms</small>
+                </div>
+
+                <div class="test-section">
+                    <h3>🧪 Test Email Forwarding</h3>
+                    <p>Send a test email to verify the forwarding is working correctly.</p>
+                    <button type="button" class="test-button" id="testEmailBtn">Send Test Email</button>
+                    <div id="emailTestResult" class="test-result hidden"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="emailFilters">Email Filters (Optional)</label>
+                    <textarea id="emailFilters" name="emailFilters" rows="3" placeholder="Keywords to filter important emails (e.g., 'order', 'payment', 'shipping')"></textarea>
+                </div>
+
+                <!-- Marketplace Email Connection Section -->
+                <div class="marketplace-email-section">
+                    <div class="toggle-header" id="marketplaceToggleHeader">
+                        <h3>📬 Marketplace Email Connection (Optional)</h3>
+                        <span class="toggle-icon" id="marketplaceToggleIcon">+</span>
+                    </div>
+                    
+                    <div class="toggle-content" id="marketplaceEmailContent" style="display: none;">
+                        <p style="color: #666; margin-bottom: 20px;">Connect your email to automatically import marketplace orders from eBay and Vinted</p>
+                        
+                        <div class="form-group">
+                            <label for="emailProvider">Email Provider *</label>
+                            <select id="emailProvider" name="emailProvider">
+                                <option value="">Select Provider</option>
+                                <option value="gmail">Gmail</option>
+                                <option value="privateemail">Namecheap (PrivateEmail)</option>
+                                <option value="other">Outlook/Other</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="imapHost">IMAP Host *</label>
+                            <input type="text" id="imapHost" name="imapHost" placeholder="imap.gmail.com">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="imapPort">IMAP Port</label>
+                            <input type="number" id="imapPort" name="imapPort" value="993" min="1" max="65535">
+                        </div>
+
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="imapSecure" name="imapSecure" checked>
+                                <label for="imapSecure">Use SSL/TLS (recommended)</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="emailUsername">Email Username *</label>
+                            <input type="email" id="emailUsername" name="emailUsername" placeholder="your-email@example.com">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="appPassword">App Password *</label>
+                            <div class="password-input">
+                                <input type="password" id="appPassword" name="appPassword" placeholder="Your app-specific password">
+                                <button type="button" class="toggle-password" id="togglePasswordBtn">👁️</button>
+                            </div>
+                            <small style="color: #666;">Use an app-specific password, not your regular email password</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="mailbox">Mailbox</label>
+                            <input type="text" id="mailbox" name="mailbox" value="INBOX" placeholder="INBOX">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="allowedSenders">Allowed Senders</label>
+                            <input type="text" id="allowedSenders" name="allowedSenders" value="*@ebay.co.uk, *@ebay.com, *@vinted.co.uk, *@vinted.com" placeholder="*@ebay.co.uk, *@ebay.com, *@vinted.co.uk, *@vinted.com">
+                            <small style="color: #666;">Comma-separated list of allowed sender patterns</small>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="gdprConsent" name="gdprConsent" required>
+                                <label for="gdprConsent">I consent to AutoRestock connecting via IMAP to retrieve only marketplace emails (eBay/Vinted). Other emails will not be accessed, processed, or stored. *</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page 5: Review & Submit -->
+            <div class="form-page" id="page5">
+                <h2>✅ Review & Complete</h2>
+                <p style="color: #666; margin-bottom: 30px;">Review your information and complete your registration</p>
+
+                <div id="reviewContent">
+                    <!-- Review content will be populated by JavaScript -->
+                </div>
+
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="terms" name="terms" required>
+                        <label for="terms">I agree to the <a href="#" target="_blank">Terms of Service</a> and <a href="#" target="_blank">Privacy Policy</a> *</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="marketing" name="marketing">
+                        <label for="marketing">I'd like to receive updates and marketing communications</label>
+                    </div>
+                </div>
+
+                <div id="registrationResult" class="status-indicator hidden"></div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="navigation">
+                <button type="button" class="btn btn-secondary" id="prevBtn">← Previous</button>
+                <button type="button" class="btn btn-primary" id="nextBtn">Next →</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const userServiceUrl = 'https://autorestock-user-service-production.up.railway.app';
+        let currentPage = 1;
+        const totalPages = 5;
+        let formData = {};
+
+        // Initialize form
+        document.addEventListener('DOMContentLoaded', () => {
+            updateProgress();
+            updateNavigation();
+            checkServiceHealth();
+            
+            // Add event listeners for buttons
+            document.getElementById('prevBtn').addEventListener('click', () => changePage(-1));
+            document.getElementById('nextBtn').addEventListener('click', () => changePage(1));
+            document.getElementById('testEbayBtn').addEventListener('click', testEbayConnection);
+            document.getElementById('testEmailBtn').addEventListener('click', testEmailForwarding);
+            document.getElementById('marketplaceToggleHeader').addEventListener('click', toggleMarketplaceEmail);
+            document.getElementById('emailProvider').addEventListener('change', updateProviderSettings);
+            document.getElementById('togglePasswordBtn').addEventListener('click', () => togglePassword('appPassword'));
+        });
+
+        function checkServiceHealth() {
+            fetch(${userServiceUrl}/health)
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Service health:', data);
+                })
+                .catch(error => {
+                    console.error('Health check failed:', error);
+                });
+        }
+
+        function updateProgress() {
+            const progress = (currentPage / totalPages) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        function updateNavigation() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+
+            prevBtn.style.display = currentPage === 1 ? 'none' : 'block';
+            
+            if (currentPage === totalPages) {
+                nextBtn.textContent = 'Complete Registration';
+                nextBtn.onclick = submitRegistration;
+            } else {
+                nextBtn.textContent = 'Next →';
+                nextBtn.onclick = () => changePage(1);
+            }
+        }
+
+        function changePage(direction) {
+            if (direction === 1 && !validateCurrentPage()) {
+                return;
+            }
+
+            // Save current page data
+            saveCurrentPageData();
+
+            // Hide current page
+            document.getElementById(page).classList.remove('active');
+
+            // Show next page
+            currentPage += direction;
+            document.getElementById(page).classList.add('active');
+
+            // Update UI
+            updateProgress();
+            updateNavigation();
+
+            // Special handling for review page
+            if (currentPage === totalPages) {
+                populateReview();
+            }
+        }
+
+        function validateCurrentPage() {
+            const currentPageElement = document.getElementById(page);
+            const requiredFields = currentPageElement.querySelectorAll('[required]');
+            
+            for (let field of requiredFields) {
+                if (!field.value.trim()) {
+                    field.focus();
+                    alert('Please fill in the required field: ' + field.name);
+                    return false;
+                }
+            }
+
+            // Special validation for platforms
+            if (currentPage === 2) {
+                const platforms = document.querySelectorAll('input[name="platforms"]:checked');
+                if (platforms.length === 0) {
+                    alert('Please select at least one platform you sell on.');
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        function saveCurrentPageData() {
+            const currentPageElement = document.getElementById(page);
+            const inputs = currentPageElement.querySelectorAll('input, select, textarea');
+            
+            inputs.forEach(input => {
+                if (input.type === 'checkbox') {
+                    if (input.name === 'platforms') {
+                        if (!formData.platforms) formData.platforms = [];
+                        if (input.checked) formData.platforms.push(input.value);
+                    } else {
+                        formData[input.name] = input.checked;
+                    }
+                } else {
+                    formData[input.name] = input.value;
+                }
+            });
+        }
+
+        function populateReview() {
+            const reviewContent = document.getElementById('reviewContent');
+            
+            reviewContent.innerHTML = 
+                <div style="background: #f8f9ff; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                    <h3>👤 Personal Information</h3>
+                    <p><strong>Name:</strong>  </p>
+                    <p><strong>Email:</strong> </p>
+                    <p><strong>Phone:</strong> </p>
+                    <p><strong>Address:</strong> </p>
+                </div>
+
+                <div style="background: #f8f9ff; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                    <h3>🏢 Business Information</h3>
+                    <p><strong>Business Name:</strong> </p>
+                    <p><strong>Business Type:</strong> </p>
+                    <p><strong>Industry:</strong> </p>
+                    <p><strong>Website:</strong> </p>
+                    <p><strong>Platforms:</strong> </p>
+                    <p><strong>Inventory Size:</strong> </p>
+                </div>
+
+                <div style="background: #f8f9ff; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                    <h3>🔗 eBay API Configuration</h3>
+                    <p><strong>App ID:</strong> </p>
+                    <p><strong>Environment:</strong> </p>
+                </div>
+
+                <div style="background: #f8f9ff; padding: 20px; border-radius: 8px;">
+                    <h3>📧 Email Configuration</h3>
+                    <p><strong>Forwarding Email:</strong> </p>
+                    <p><strong>Original Email:</strong> </p>
+                </div>
+            ;
+        }
+
+        function testEbayConnection() {
+            const resultDiv = document.getElementById('ebayTestResult');
+            resultDiv.classList.remove('hidden');
+            resultDiv.innerHTML = 'Testing eBay API connection...';
+            resultDiv.style.background = '#fff3cd';
+            resultDiv.style.color = '#856404';
+
+            // Simulate API test (replace with actual eBay API test)
+            setTimeout(() => {
+                resultDiv.innerHTML = 
+                    <strong>✅ eBay API Test Successful!</strong><br>
+                    Connection established successfully.<br>
+                    <small>Note: This is a simulated test. Real implementation would validate actual eBay credentials.</small>
+                ;
+                resultDiv.style.background = '#d4edda';
+                resultDiv.style.color = '#155724';
+            }, 2000);
+        }
+
+        function testEmailForwarding() {
+            const resultDiv = document.getElementById('emailTestResult');
+            resultDiv.classList.remove('hidden');
+            resultDiv.innerHTML = 'Sending test email...';
+            resultDiv.style.background = '#fff3cd';
+            resultDiv.style.color = '#856404';
+
+            // Simulate email test
+            setTimeout(() => {
+                resultDiv.innerHTML = 
+                    <strong>✅ Test Email Sent!</strong><br>
+                    Check your forwarding email address for the test message.<br>
+                    <small>Note: This is a simulated test. Real implementation would send actual test emails.</small>
+                ;
+                resultDiv.style.background = '#d4edda';
+                resultDiv.style.color = '#155724';
+            }, 2000);
+        }
+
+        async function submitRegistration() {
+            if (!document.getElementById('terms').checked) {
+                alert('Please accept the Terms of Service to continue.');
+                return;
+            }
+
+            // Save final page data
+            saveCurrentPageData();
+
+            // Check if marketplace email is enabled and add to formData
+            const marketplaceEnabled = document.getElementById('marketplaceEmailContent').style.display !== 'none';
+            
+            if (marketplaceEnabled) {
+                const allowedSenders = document.getElementById('allowedSenders').value
+                    .split(',')
+                    .map(s => s.trim())
+                    .filter(s => s.length > 0);
+
+                formData.emailIngestion = {
+                    enabled: true,
+                    provider: document.getElementById('emailProvider').value,
+                    imapHost: document.getElementById('imapHost').value,
+                    imapPort: parseInt(document.getElementById('imapPort').value),
+                    secure: document.getElementById('imapSecure').checked,
+                    username: document.getElementById('emailUsername').value,
+                    appPassword: document.getElementById('appPassword').value,
+                    mailbox: document.getElementById('mailbox').value || 'INBOX',
+                    allowedSenders: allowedSenders,
+                    consentTs: new Date().toISOString()
+                };
+            }
+
+            const resultDiv = document.getElementById('registrationResult');
+            resultDiv.classList.remove('hidden');
+            resultDiv.innerHTML = 'Processing registration...';
+            resultDiv.className = 'status-indicator status-info';
+
+            // Add timestamp to email for testing
+            const timestamp = new Date().getTime();
+            formData.email = formData.email.replace('@', `+${timestamp}@`);
+
+            try {
+                const response = await fetch(`${userServiceUrl}/api/v1/users/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData),
+                });
+
+                const responseData = await response.json();
+
+                if (response.ok) {
+                    resultDiv.innerHTML = 
+                        <strong>🎉 Registration Successful!</strong><br>
+                        Welcome to AutoRestock! Your account has been created successfully.<br>
+                        <strong>User ID:</strong> <br>
+                        <strong>JWT Token:</strong> ...
+                    ;
+                    resultDiv.className = 'status-indicator status-success';
+                } else {
+                    resultDiv.innerHTML = 
+                        <strong>❌ Registration Failed</strong><br>
+                        
+                    ;
+                    resultDiv.className = 'status-indicator status-error';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = 
+                    <strong>❌ Network Error</strong><br>
+                    <br>
+                    Please check your internet connection and try again.
+                ;
+                resultDiv.className = 'status-indicator status-error';
+            }
+        }
+
+        // Marketplace Email Connection Functions
+        function toggleMarketplaceEmail() {
+            const content = document.getElementById('marketplaceEmailContent');
+            const icon = document.getElementById('marketplaceToggleIcon');
+            
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                icon.textContent = '−';
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                content.style.display = 'none';
+                icon.textContent = '+';
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function updateProviderSettings() {
+            const provider = document.getElementById('emailProvider').value;
+            const hostInput = document.getElementById('imapHost');
+            const portInput = document.getElementById('imapPort');
+            const secureInput = document.getElementById('imapSecure');
+            
+            switch(provider) {
+                case 'gmail':
+                    hostInput.value = 'imap.gmail.com';
+                    portInput.value = '993';
+                    secureInput.checked = true;
+                    break;
+                case 'privateemail':
+                    hostInput.value = 'mail.privateemail.com';
+                    portInput.value = '993';
+                    secureInput.checked = true;
+                    break;
+                case 'other':
+                    hostInput.value = '';
+                    portInput.value = '993';
+                    secureInput.checked = true;
+                    break;
+                default:
+                    hostInput.value = '';
+                    portInput.value = '993';
+                    secureInput.checked = true;
+            }
+        }
+
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            const button = field.parentNode.querySelector('.toggle-password');
+            
+            if (field.type === 'password') {
+                field.type = 'text';
+                button.textContent = '🙈';
+            } else {
+                field.type = 'password';
+                button.textContent = '👁️';
+            }
+        }
+
+        // Enhanced form validation to include marketplace email fields
+        function validateForm() {
+            const requiredFields = [
+                'firstName', 'lastName', 'email', 'phone', 'businessName',
+                'businessType', 'businessAddress', 'forwardingEmail'
+            ];
+
+            // Check if marketplace email is enabled
+            const marketplaceEnabled = document.getElementById('marketplaceEmailContent').style.display !== 'none';
+            
+            if (marketplaceEnabled) {
+                const marketplaceRequiredFields = [
+                    'emailProvider', 'imapHost', 'emailUsername', 'appPassword', 'gdprConsent'
+                ];
+                requiredFields.push(...marketplaceRequiredFields);
+            }
+
+            for (const fieldId of requiredFields) {
+                const field = document.getElementById(fieldId);
+                if (!field || !field.value.trim()) {
+                    if (fieldId === 'gdprConsent' && marketplaceEnabled) {
+                        alert('Please accept the GDPR consent for marketplace email connection.');
+                    } else {
+                        alert(`Please fill in the ${field.name || fieldId} field.`);
+                    }
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+    </script>
+</body>
+</html>

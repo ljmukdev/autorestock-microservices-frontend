@@ -1,0 +1,127 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Manual Purchase Entry</title>
+</head>
+<body>
+  <h2>Enter a New Purchase</h2>
+  <form id="purchaseForm">
+    <label>Platform: <input name="platform" required /></label><br />
+    <label>Seller Username: <input name="seller_username" /></label><br />
+    <label>Manual Collection: <input type="checkbox" name="manual_collection" /></label><br />
+    <label>Category: <input name="category" required /></label><br />
+    <label>Brand: <input name="brand" required /></label><br />
+    <label>Model: <input name="model" required /></label><br />
+    <label>Generation: <input name="generation" /></label><br />
+    <label>Listing Title: <input name="listing_title" /></label><br />
+    <label>Purchase Price: <input type="number" name="purchase_price" step="0.01" required /></label><br />
+    <label>Fees: <input type="number" name="fees" step="0.01" value="0" /></label><br />
+    <label>Shipping Cost: <input type="number" name="shipping_cost" step="0.01" /></label><br />
+    <label>Total Paid: <input type="number" name="total_paid" step="0.01" /></label><br />
+    <label>Currency: <input name="currency" value="GBP" /></label><br />
+    <label>Order ID: <input name="order_id" /></label><br />
+    <label>Tracking Number: <input name="tracking_number" /></label><br />
+    <label>Courier: <input name="courier" /></label><br />
+    <label>Dispatch Date: <input type="date" name="dispatch_date" /></label><br />
+    <label>Delivery Date: <input type="date" name="delivery_date" /></label><br />
+    <label>Delivery Status: <input name="delivery_status" /></label><br />
+    <label>Listing URL: <input name="listing_url" /></label><br />
+    <label>Invoice URL: <input name="invoice_url" /></label><br />
+    <label>Will Be Parted Out: <input type="checkbox" name="will_be_parted_out" /></label><br />
+    <label>Number of Parts: <input type="number" name="number_of_parts" /></label><br />
+    <label>Notes: <textarea name="notes"></textarea></label><br />
+    <label>Tags: <input name="tags" /></label><br /><br />
+    <button type="submit" id="saveBtn">
+      <span id="saveIcon">💾</span> <span id="saveText">Submit Purchase</span>
+    </button>
+  </form>
+
+  <script>
+    document.getElementById('purchaseForm').addEventListener('submit', async function(event) {
+      event.preventDefault();
+      const form = event.target;
+      const saveBtn = document.getElementById('saveBtn');
+      const saveIcon = document.getElementById('saveIcon');
+      const saveText = document.getElementById('saveText');
+      
+      // Show loading state
+      saveIcon.textContent = '⏳';
+      saveText.textContent = 'Saving...';
+      saveBtn.disabled = true;
+      const data = Object.fromEntries(new FormData(form).entries());
+      
+      // Map frontend fields to backend model fields
+      const mappedData = {
+        category: data.category,
+        brand: data.brand,
+        model: data.model,
+        generation: data.generation,
+        seller_username: data.seller_username,
+        order_id: data.order_id,
+        price_paid: parseFloat(data.purchase_price) || 0,
+        shipping_cost: parseFloat(data.shipping_cost) || 0,
+        fees: parseFloat(data.fees) || 0,
+        tracking_ref: data.tracking_number,
+        notes: data.notes,
+        supplier: data.platform,
+        source: data.platform === 'Vinted' ? 'Vinted' : 'Other',
+        dateOfPurchase: data.dispatch_date ? new Date(data.dispatch_date) : new Date(),
+        status: 'Purchased',
+        createdBy: 'manual-entry'
+      };
+      
+      // Add optional fields if they exist
+      if (data.listing_title) mappedData.identifier = data.listing_title;
+      if (data.currency) mappedData.currency = data.currency;
+      if (data.delivery_date) mappedData.deliveryDate = new Date(data.delivery_date);
+      if (data.delivery_status) mappedData.deliveryStatus = data.delivery_status;
+      if (data.courier) mappedData.courier = data.courier;
+      if (data.listing_url) mappedData.listingUrl = data.listing_url;
+      if (data.invoice_url) mappedData.invoiceUrl = data.invoice_url;
+
+      try {
+        console.log('Sending purchase data:', mappedData);
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+        
+        const res = await fetch('http://localhost:3001/api/purchases', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(mappedData),
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        console.log('Response status:', res.status);
+        console.log('Response headers:', res.headers);
+        
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error('API Error:', errorText);
+          throw new Error(`HTTP ${res.status}: ${errorText}`);
+        }
+        
+        const result = await res.json();
+        console.log('Purchase result:', result);
+        alert('Purchase saved with ID: ' + (result.purchase?._id || result.id || 'unknown'));
+        form.reset();
+      } catch (err) {
+        console.error('Purchase save error:', err);
+        if (err.name === 'AbortError') {
+          alert('Request timed out after 30 seconds. Please check if the server is running.');
+        } else {
+          alert('Failed to save purchase: ' + err.message);
+        }
+      } finally {
+        // Reset button state
+        saveBtn.disabled = false;
+        saveIcon.textContent = '💾';
+        saveText.textContent = 'Submit Purchase';
+      }
+    });
+  </script>
+</body>
+</html>
