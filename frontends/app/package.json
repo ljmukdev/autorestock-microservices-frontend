@@ -11,9 +11,11 @@
     "clean": "rm -rf .next out"
   },
   "dependencies": {
+    "@autorestock/shared": "workspace:*",
     "@autorestock/ui-kit": "workspace:*",
     "@autorestock/ui-user": "workspace:*",
-    "@autorestock/shared": "workspace:*",
+    "csv-parser": "^3.2.0",
+    "multer": "^2.0.2",
     "next": "^14.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
