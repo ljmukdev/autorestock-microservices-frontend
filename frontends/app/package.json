@@ -4,7 +4,7 @@
   "description": "AutoRestock Master Frontend Application",
   "private": true,
   "scripts": {
-    "prebuild": "echo 'Build timestamp: 2024-10-08-16:15' && echo 'Force rebuild'",
+    "prebuild": "echo 'Build timestamp: 2024-10-08-16:25' && echo 'Force rebuild - cache clear'",
     "dev": "next dev -p 3000",
     "build": "next build",
     "start": "node server.js",
