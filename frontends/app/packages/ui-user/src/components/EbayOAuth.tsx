@@ -36,25 +36,33 @@ export default function EbayOAuth({ onConnect, onDisconnect, onError }: EbayOAut
   }, []);
 
   useEffect(() => {
-    // Check if user is returning from eBay OAuth
+    // Check if user is returning from eBay OAuth (new self-contained approach)
     const urlParams = new URLSearchParams(window.location.search);
-    const oauthSuccess = urlParams.get('oauth_success');
-    const oauthError = urlParams.get('oauth_error');
-    const oauthDesc = urlParams.get('oauth_desc');
+    const ebayConnected = urlParams.get('ebay_connected');
+    const userId = urlParams.get('user_id');
+    const ebayError = urlParams.get('ebay_error');
     
-    if (oauthSuccess === '1') {
+    console.log('=== EBAY OAUTH RETURN CHECK ===');
+    console.log('ebay_connected:', ebayConnected);
+    console.log('user_id:', userId);
+    console.log('ebay_error:', ebayError);
+    
+    if (ebayConnected === 'true') {
       // OAuth was successful, check connection status
+      console.log('eBay OAuth successful, checking status...');
       checkConnectionStatus();
       // Clean up URL parameters
       window.history.replaceState({}, document.title, window.location.pathname);
-    } else if (oauthError) {
+    } else if (ebayError) {
       // OAuth failed
-      const errorMessage = oauthDesc ? `${oauthError}: ${oauthDesc}` : oauthError;
-      setError(`eBay authorization failed: ${errorMessage}`);
-      onError?.(errorMessage);
+      console.log('eBay OAuth failed:', ebayError);
+      setError(`eBay authorization failed: ${ebayError}`);
+      onError?.(ebayError);
       // Clean up URL parameters
       window.history.replaceState({}, document.title, window.location.pathname);
     }
+    
+    console.log('=== END OAUTH RETURN CHECK ===');
   }, []);
 
   const checkConnectionStatus = async () => {
@@ -94,22 +102,20 @@ export default function EbayOAuth({ onConnect, onDisconnect, onError }: EbayOAut
       // Use the correct eBay service URL
       const ebayServiceUrl = process.env.NEXT_PUBLIC_EBAY_SERVICE_URL || 'https://delightful-liberation-production.up.railway.app';
       
-      // Pass the redirect URI so eBay service knows where to send user back
-      const redirectUri = window.location.origin + '/users/onboarding';
-      const encodedRedirectUri = encodeURIComponent(redirectUri);
+      // Generate a user ID for this session (could be from auth system)
+      const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
       // DEBUG: Log the URLs being constructed
       console.log('=== EBAY OAUTH DEBUG ===');
-      console.log('Window location origin:', window.location.origin);
-      console.log('Redirect URI:', redirectUri);
-      console.log('Encoded redirect URI:', encodedRedirectUri);
+      console.log('User ID:', userId);
       console.log('eBay service URL:', ebayServiceUrl);
       
-      const oauthUrl = `${ebayServiceUrl}/oauth/login?redirect_uri=${encodedRedirectUri}`;
+      // Self-contained approach: eBay service handles everything
+      const oauthUrl = `${ebayServiceUrl}/oauth/login?user_id=${userId}`;
       console.log('Full OAuth URL:', oauthUrl);
       console.log('=== END DEBUG ===');
       
-      // Redirect to eBay service OAuth login with redirect URI
+      // Redirect to eBay service OAuth login (callback goes to eBay service)
       window.location.href = oauthUrl;
     } catch (error) {
       console.error('eBay OAuth error:', error);
