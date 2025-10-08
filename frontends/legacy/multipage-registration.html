@@ -722,7 +722,7 @@
             for (let field of requiredFields) {
                 if (!field.value.trim()) {
                     field.focus();
-                    alert(Please fill in the required field: );
+                    alert('Please fill in the required field: ' + field.name);
                     return false;
                 }
             }
