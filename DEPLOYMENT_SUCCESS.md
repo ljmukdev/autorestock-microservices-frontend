@@ -232,3 +232,4 @@ https://your-frontend-url.up.railway.app/onboarding
    - View `order_items` collection
 
 **The system is live and ready! 🎉**
+

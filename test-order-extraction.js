@@ -25,7 +25,7 @@ async function testOrderExtraction() {
   
   const testData = {
     alias: 'ebay-test',
-    forwardTo: 'test@example.com',
+    forwardTo: 'ebay@ljmuk.co.uk',
     userId: '507f1f77bcf86cd799439011', // Valid ObjectId string
     tenantId: '507f1f77bcf86cd799439012', // Valid ObjectId string
     headers: {},
