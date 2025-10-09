@@ -67,25 +67,40 @@ export default function EbayOAuth({ onConnect, onDisconnect, onError }: EbayOAut
 
   const checkConnectionStatus = async () => {
     try {
-      // Use the correct eBay service URL
+      // Use environment variable or default to the working eBay service URL
       const ebayServiceUrl = process.env.NEXT_PUBLIC_EBAY_SERVICE_URL || 'https://delightful-liberation-production.up.railway.app';
       
-      const response = await fetch(`${ebayServiceUrl}/oauth/token-info`);
-      const data = await response.json();
+      console.log('Checking eBay connection status at:', `${ebayServiceUrl}/oauth/status`);
       
-      if (data.hasTokens) {
+      const response = await fetch(`${ebayServiceUrl}/oauth/status`, {
+        credentials: 'include', // Important: Include cookies for session
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        console.log('Status check failed:', response.status);
+        setIsLoading(false);
+        return;
+      }
+      
+      const data = await response.json();
+      console.log('eBay connection status:', data);
+      
+      if (data.connected || data.hasTokens) {
         setIsConnected(true);
-        // Create a mock account object from token info
-        const mockAccount = {
-          id: 'ebay-user',
-          username: 'eBay User',
-          email: 'user@ebay.com',
+        // Create account object from status data
+        const account = {
+          id: data.userId || 'ebay-user',
+          username: data.username || 'eBay User',
+          email: data.email || 'user@ebay.com',
           accountType: 'business' as const,
           verified: true,
-          connectedAt: new Date().toISOString()
+          connectedAt: data.connectedAt || new Date().toISOString()
         };
-        setEbayAccount(mockAccount);
-        onConnect?.(mockAccount);
+        setEbayAccount(account);
+        onConnect?.(account);
       }
     } catch (error) {
       console.error('Failed to check eBay connection status:', error);
@@ -99,23 +114,20 @@ export default function EbayOAuth({ onConnect, onDisconnect, onError }: EbayOAut
     setError(null);
     
     try {
-      // Use the correct eBay service URL
+      // Use environment variable or default to the working eBay service URL
       const ebayServiceUrl = process.env.NEXT_PUBLIC_EBAY_SERVICE_URL || 'https://delightful-liberation-production.up.railway.app';
       
-      // Generate a user ID for this session (could be from auth system)
-      const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
-      // DEBUG: Log the URLs being constructed
-      console.log('=== EBAY OAUTH DEBUG ===');
-      console.log('User ID:', userId);
+      console.log('=== INITIATING EBAY OAUTH ===');
       console.log('eBay service URL:', ebayServiceUrl);
       
-      // Self-contained approach: eBay service handles everything
-      const oauthUrl = `${ebayServiceUrl}/oauth/login?user_id=${userId}`;
-      console.log('Full OAuth URL:', oauthUrl);
+      // Simply redirect to the eBay service's OAuth login endpoint
+      // The service will handle session management, eBay OAuth, and redirect back to the frontend
+      const oauthUrl = `${ebayServiceUrl}/oauth/login`;
+      console.log('Redirecting to:', oauthUrl);
       console.log('=== END DEBUG ===');
       
-      // Redirect to eBay service OAuth login (callback goes to eBay service)
+      // Redirect to eBay service OAuth login
+      // The service will automatically redirect back to this page after OAuth completes
       window.location.href = oauthUrl;
     } catch (error) {
       console.error('eBay OAuth error:', error);
@@ -129,9 +141,15 @@ export default function EbayOAuth({ onConnect, onDisconnect, onError }: EbayOAut
 
   const handleDisconnect = async () => {
     try {
-      const response = await fetch('/api/ebay/disconnect', {
+      const ebayServiceUrl = process.env.NEXT_PUBLIC_EBAY_SERVICE_URL || 'https://delightful-liberation-production.up.railway.app';
+      
+      const response = await fetch(`${ebayServiceUrl}/oauth/disconnect`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        credentials: 'include', // Include cookies for session
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
       });
       
       if (response.ok) {
@@ -149,12 +167,8 @@ export default function EbayOAuth({ onConnect, onDisconnect, onError }: EbayOAut
 
   const refreshAccountInfo = async () => {
     try {
-      const response = await fetch('/api/ebay/refresh');
-      const data = await response.json();
-      
-      if (data.success && data.account) {
-        setEbayAccount(data.account);
-      }
+      // Simply re-check the connection status to refresh the display
+      await checkConnectionStatus();
     } catch (error) {
       console.error('Failed to refresh eBay account info:', error);
     }
