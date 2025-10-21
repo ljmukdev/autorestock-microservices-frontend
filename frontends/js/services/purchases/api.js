@@ -5,6 +5,7 @@
 
 import { getJSON, postJSON, putJSON, withRetry, withTimeout, handleHttpError } from '../../core/http.js';
 import { API_ENDPOINTS, EBAY_SERVICE_BASE, debugLog } from '../../core/config.js';
+import { oauthService } from '../auth/oauth.js';
 
 /**
  * Get purchases from eBay service
@@ -24,37 +25,33 @@ export async function getPurchases(params = {}) {
   debugLog('Fetching purchases', queryParams);
   
   try {
-    // Log the actual URL being requested for debugging
-    const testUrl = new URL(API_ENDPOINTS.PURCHASES);
-    Object.entries(queryParams).forEach(([key, value]) => {
-      if (value !== null && value !== undefined) {
-        testUrl.searchParams.set(key, value);
-      }
-    });
-    debugLog('Request URL:', testUrl.toString());
+    // Use authenticated request from OAuth service
+    const url = `${EBAY_SERVICE_BASE}/purchases?${new URLSearchParams(queryParams)}`;
+    debugLog('Request URL:', url);
     
-    const response = await withRetry(
-      () => withTimeout(
-        getJSON(API_ENDPOINTS.PURCHASES, queryParams),
-        15000 // 15 second timeout
-      ),
-      2, // 2 retries
-      1000 // 1 second delay
-    );
+    const response = await oauthService.authenticatedRequest(url, {
+      method: 'GET'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
     
     // Expose raw payload for debugging
     if (typeof window !== 'undefined') {
-      window.__ebayRaw = response?.data;
+      window.__ebayRaw = data?.data;
     }
     
     debugLog('Purchases fetched successfully', {
-      success: response.success,
-      dataKeys: response.data ? Object.keys(response.data) : [],
-      ordersCount: response.data?.orders?.length || 0,
-      recentPurchasesCount: response.data?.recentPurchases?.length || 0
+      success: data.success,
+      dataKeys: data.data ? Object.keys(data.data) : [],
+      ordersCount: data.data?.orders?.length || 0,
+      recentPurchasesCount: data.data?.recentPurchases?.length || 0
     });
     
-    return response;
+    return data;
   } catch (error) {
     debugLog('Error fetching purchases', error);
     throw error;
@@ -162,17 +159,20 @@ export async function syncPurchases(params = {}) {
   debugLog('Syncing purchases from eBay', params);
   
   try {
-    const response = await withRetry(
-      () => withTimeout(
-        getJSON(`${EBAY_SERVICE_BASE}/sync/purchases`, params),
-        30000 // 30 second timeout for sync
-      ),
-      1, // 1 retry for sync
-      2000 // 2 second delay
-    );
+    const url = `${EBAY_SERVICE_BASE}/sync/purchases?${new URLSearchParams(params)}`;
+    debugLog('Sync URL:', url);
     
-    debugLog('Purchases synced successfully', response);
-    return response;
+    const response = await oauthService.authenticatedRequest(url, {
+      method: 'GET'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    debugLog('Purchases synced successfully', data);
+    return data;
   } catch (error) {
     debugLog('Error syncing purchases', error);
     throw error;

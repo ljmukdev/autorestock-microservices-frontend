@@ -4,6 +4,7 @@
  */
 
 import { purchasesService } from '../services/purchases/index.js';
+import { oauthService } from '../services/auth/oauth.js';
 import { router } from '../core/router.js';
 import { $, $all, showModal } from '../core/utils.js';
 import { debugLog } from '../core/config.js';
@@ -25,10 +26,10 @@ class PurchasesView {
     debugLog('Initializing purchases view');
 
     try {
-      // Check OAuth status first
-      const oauthStatus = await this.checkOAuthStatus();
+      // Check OAuth status using centralized service
+      const authStatus = oauthService.getAuthStatus();
       
-      if (!oauthStatus.authenticated) {
+      if (!authStatus.authenticated) {
         this.showOAuthPrompt();
         return;
       }
@@ -42,6 +43,9 @@ class PurchasesView {
       // Bind events
       this.bindEvents();
       
+      // Register for auth changes
+      oauthService.onAuthChange(this.handleAuthChange.bind(this));
+      
       this.isInitialized = true;
       debugLog('Purchases view initialized');
     } catch (error) {
@@ -51,39 +55,18 @@ class PurchasesView {
   }
 
   /**
-   * Check OAuth status
-   * @returns {Promise<Object>} OAuth status
+   * Handle authentication status changes
+   * @param {Object} authStatus - Authentication status
    */
-  async checkOAuthStatus() {
-    try {
-      const response = await fetch('https://delightful-liberation-production.up.railway.app/oauth/status', {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        return {
-          authenticated: data.authenticated || false,
-          userId: data.userId || null,
-          message: data.message || 'OAuth status checked'
-        };
-      } else {
-        return {
-          authenticated: false,
-          userId: null,
-          message: 'OAuth service unavailable'
-        };
-      }
-    } catch (error) {
-      debugLog('Error checking OAuth status', error);
-      return {
-        authenticated: false,
-        userId: null,
-        message: 'Failed to check OAuth status'
-      };
+  handleAuthChange(authStatus) {
+    debugLog('Auth status changed in purchases view', authStatus);
+    
+    if (authStatus.authenticated && !this.isInitialized) {
+      // User just authenticated, initialize the view
+      this.init(this.container);
+    } else if (!authStatus.authenticated && this.isInitialized) {
+      // User logged out, show OAuth prompt
+      this.showOAuthPrompt();
     }
   }
 
@@ -126,23 +109,13 @@ class PurchasesView {
   bindOAuthEvents() {
     // Connect eBay button
     $('#connect-ebay')?.addEventListener('click', () => {
-      this.initiateEbayOAuth();
+      oauthService.initiateLogin('ebay');
     });
     
     // Use sample data button
     $('#use-sample-data')?.addEventListener('click', () => {
       this.useSampleData();
     });
-  }
-
-  /**
-   * Initiate eBay OAuth
-   */
-  initiateEbayOAuth() {
-    debugLog('Initiating eBay OAuth');
-    
-    // Redirect to eBay OAuth service
-    window.location.href = 'https://delightful-liberation-production.up.railway.app/oauth/login';
   }
 
   /**

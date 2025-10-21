@@ -1,311 +1,293 @@
 /**
- * AutoRestock OAuth Service with Auto-Redirect
+ * AutoRestock Centralized OAuth Service
+ * Manages authentication state across all microservices
  */
 
-import { API_ENDPOINTS, debugLog } from '../../core/config.js';
-import { setOAuthRedirectHandler } from '../../core/http.js';
+import { debugLog } from '../core/config.js';
 
 class OAuthService {
   constructor() {
-    this.isAuthenticating = false;
-    this.authWindow = null;
-    this.authPromise = null;
-    
-    // Register this service as the OAuth redirect handler
-    setOAuthRedirectHandler((failedUrl) => this.handleAuthFailure(failedUrl));
+    this.isAuthenticated = false;
+    this.userId = null;
+    this.lastChecked = null;
+    this.checkInterval = null;
+    this.authCallbacks = new Set();
   }
 
   /**
-   * Check if user is authenticated by testing actual data response
+   * Initialize OAuth service
+   */
+  async init() {
+    debugLog('Initializing OAuth service');
+    
+    // Check initial auth status
+    await this.checkAuthStatus();
+    
+    // Set up periodic auth checks
+    this.startPeriodicCheck();
+    
+    // Check for OAuth callback parameters
+    this.handleOAuthCallback();
+  }
+
+  /**
+   * Check authentication status
+   * @returns {Promise<Object>} Auth status
    */
   async checkAuthStatus() {
     try {
-      debugLog('Checking eBay OAuth authentication status...');
-      
-      const response = await fetch(`${API_ENDPOINTS.PURCHASES}?limit=1`);
-      
-      if (!response.ok) {
-        debugLog('Auth status check - HTTP error', { status: response.status });
-        return false;
-      }
-      
-      const data = await response.json();
-      debugLog('Auth check response data:', data);
-      
-      // Check if we have actual purchase orders or if it's an auth issue
-      const hasOrders = data.data && (data.data.orders?.length > 0 || data.data.recentPurchases?.length > 0);
-      const hasValidResponse = data.success === true;
-      
-      // If no orders but response is successful, check if it's due to no purchases vs auth failure
-      if (!hasOrders && hasValidResponse) {
-        // Look for indicators that suggest auth is working but no purchases exist
-        const hasValidUserData = data.data && (
-          data.data.summary || 
-          data.data.user || 
-          data.data.orderSummary ||
-          Object.keys(data.data).length > 2
-        );
-        
-        if (!hasValidUserData) {
-          debugLog('No valid user data found - likely auth issue');
-          return false;
+      const response = await fetch('https://delightful-liberation-production.up.railway.app/oauth/status', {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
         }
-      }
-      
-      const isAuthenticated = hasValidResponse;
-      debugLog('Auth status determined', { 
-        authenticated: isAuthenticated,
-        hasOrders,
-        hasValidResponse,
-        dataKeys: data.data ? Object.keys(data.data) : []
       });
       
-      return isAuthenticated;
-    } catch (error) {
-      debugLog('Auth status check failed', error);
-      return false;
-    }
-  }
-
-  /**
-   * Handle authentication failure - automatically redirect to OAuth (silent)
-   */
-  async handleAuthFailure(failedUrl) {
-    if (this.isAuthenticating) {
-      debugLog('Already authenticating, waiting for current process');
-      return this.authPromise;
-    }
-
-    debugLog('Handling auth failure, starting direct OAuth redirect', { failedUrl });
-    
-    // Use direct redirect instead of popup to avoid blocking
-    const oauthUrl = API_ENDPOINTS.AUTH;
-    const returnUrl = window.location.href;
-    const fullOAuthUrl = `${oauthUrl}?return_url=${encodeURIComponent(returnUrl)}&force_reauth=1&user_id=ljmukdev`;
-    
-    debugLog('Redirecting to OAuth URL', { url: fullOAuthUrl });
-    window.location.href = fullOAuthUrl;
-    
-    return false; // Will redirect, so return false
-  }
-
-  /**
-   * Start OAuth authentication flow (popup window)
-   */
-  async startOAuthFlow() {
-    if (this.isAuthenticating) {
-      return this.authPromise;
-    }
-
-    this.isAuthenticating = true;
-    
-    this.authPromise = new Promise((resolve, reject) => {
-      try {
-        debugLog('Starting OAuth flow with popup window');
+      if (response.ok) {
+        const data = await response.json();
+        const wasAuthenticated = this.isAuthenticated;
         
-        // Build OAuth URL - force fresh authentication
-        const oauthUrl = API_ENDPOINTS.AUTH;
-        const returnUrl = window.location.href;
-        const fullOAuthUrl = `${oauthUrl}?return_url=${encodeURIComponent(returnUrl)}&force_reauth=1&user_id=ljmukdev`;
+        this.isAuthenticated = data.authenticated || false;
+        this.userId = data.userId || null;
+        this.lastChecked = new Date();
         
-        debugLog('Opening OAuth in popup window', { url: fullOAuthUrl });
-        
-        // Open OAuth in popup window
-        const authWindow = window.open(
-          fullOAuthUrl, 
-          'ebay_oauth', 
-          'width=600,height=700,scrollbars=yes,resizable=yes,status=yes,toolbar=no,menubar=no,location=no'
-        );
-        
-        if (!authWindow) {
-          this.isAuthenticating = false;
-          debugLog('Failed to open OAuth popup - popup blocked, trying direct redirect');
-          // Instead of rejecting, try direct redirect
-          window.location.href = fullOAuthUrl;
-          reject(new Error('Popup blocked. Redirecting to OAuth page.'));
-          return;
+        // Notify callbacks if auth status changed
+        if (wasAuthenticated !== this.isAuthenticated) {
+          this.notifyAuthCallbacks();
         }
         
-        this.authWindow = authWindow;
-
-        // Monitor for OAuth completion
-        const messageHandler = (event) => {
-          if (event.origin !== window.location.origin) return;
-          
-          if (event.data.type === 'oauth_complete') {
-            debugLog('OAuth completed via postMessage', event.data);
-            cleanup();
-            
-            if (event.data.success) {
-              debugLog('OAuth completed successfully');
-              resolve(true);
-              // Refresh the page to reload with new auth
-              setTimeout(() => window.location.reload(), 500);
-            } else {
-              debugLog('OAuth failed');
-              resolve(false);
-            }
-          }
+        debugLog('OAuth status checked', { 
+          authenticated: this.isAuthenticated, 
+          userId: this.userId 
+        });
+        
+        return {
+          authenticated: this.isAuthenticated,
+          userId: this.userId,
+          message: data.message || 'OAuth status checked'
         };
-
-        window.addEventListener('message', messageHandler);
-
-        const cleanup = () => {
-          this.isAuthenticating = false;
-          window.removeEventListener('message', messageHandler);
-          if (authWindow && !authWindow.closed) {
-            authWindow.close();
-          }
+      } else {
+        this.isAuthenticated = false;
+        this.userId = null;
+        return {
+          authenticated: false,
+          userId: null,
+          message: 'OAuth service unavailable'
         };
+      }
+    } catch (error) {
+      debugLog('Error checking OAuth status', error);
+      this.isAuthenticated = false;
+      this.userId = null;
+      return {
+        authenticated: false,
+        userId: null,
+        message: 'Failed to check OAuth status'
+      };
+    }
+  }
 
-        // Monitor window close
-        const checkClosed = setInterval(() => {
-          if (authWindow.closed) {
-            clearInterval(checkClosed);
-            cleanup();
-            debugLog('OAuth window closed by user');
-            resolve(false);
-          }
-        }, 1000);
+  /**
+   * Start periodic authentication checks
+   */
+  startPeriodicCheck() {
+    // Check every 5 minutes
+    this.checkInterval = setInterval(() => {
+      this.checkAuthStatus();
+    }, 5 * 60 * 1000);
+  }
 
-        // Fallback: check auth status periodically
-        let checkCount = 0;
-        const maxChecks = 60; // 60 seconds
-        const checkInterval = setInterval(async () => {
-          checkCount++;
-          
-          if (checkCount >= maxChecks) {
-            clearInterval(checkInterval);
-            clearInterval(checkClosed);
-            cleanup();
-            debugLog('OAuth timeout');
-            resolve(false);
-            return;
-          }
+  /**
+   * Stop periodic authentication checks
+   */
+  stopPeriodicCheck() {
+    if (this.checkInterval) {
+      clearInterval(this.checkInterval);
+      this.checkInterval = null;
+    }
+  }
 
-          const isAuth = await this.checkAuthStatus();
-          if (isAuth) {
-            clearInterval(checkInterval);
-            clearInterval(checkClosed);
-            cleanup();
-            debugLog('OAuth completed successfully (fallback check)');
-            resolve(true);
-            setTimeout(() => window.location.reload(), 500);
-          }
-        }, 1000);
+  /**
+   * Handle OAuth callback from URL parameters
+   */
+  handleOAuthCallback() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const ebayConnected = urlParams.get('ebay_connected');
+    const ebayError = urlParams.get('ebay_error');
+    const userId = urlParams.get('user_id');
+    
+    if (ebayConnected === 'true') {
+      debugLog('OAuth callback detected - eBay connected', { userId });
+      this.isAuthenticated = true;
+      this.userId = userId;
+      this.notifyAuthCallbacks();
+      
+      // Clean up URL
+      this.cleanupUrl();
+    } else if (ebayError) {
+      debugLog('OAuth callback detected - eBay error', { error: ebayError });
+      this.isAuthenticated = false;
+      this.userId = null;
+      this.notifyAuthCallbacks();
+      
+      // Clean up URL
+      this.cleanupUrl();
+    }
+  }
 
-        // Timeout after 2 minutes
-        setTimeout(() => {
-          clearInterval(checkInterval);
-          clearInterval(checkClosed);
-          cleanup();
-          debugLog('OAuth timeout');
-          resolve(false);
-        }, 120000);
+  /**
+   * Clean up URL parameters after OAuth callback
+   */
+  cleanupUrl() {
+    const url = new URL(window.location);
+    url.searchParams.delete('ebay_connected');
+    url.searchParams.delete('ebay_error');
+    url.searchParams.delete('user_id');
+    
+    // Update URL without page reload
+    window.history.replaceState({}, '', url);
+  }
 
+  /**
+   * Initiate OAuth login
+   * @param {string} service - Service name (e.g., 'ebay')
+   * @returns {Promise<void>}
+   */
+  async initiateLogin(service = 'ebay') {
+    debugLog(`Initiating OAuth login for ${service}`);
+    
+    const loginUrls = {
+      ebay: 'https://delightful-liberation-production.up.railway.app/oauth/login'
+    };
+    
+    const loginUrl = loginUrls[service];
+    if (!loginUrl) {
+      throw new Error(`No OAuth URL configured for service: ${service}`);
+    }
+    
+    // Redirect to OAuth service
+    window.location.href = loginUrl;
+  }
+
+  /**
+   * Logout from OAuth service
+   * @param {string} service - Service name (e.g., 'ebay')
+   * @returns {Promise<void>}
+   */
+  async logout(service = 'ebay') {
+    debugLog(`Logging out from ${service}`);
+    
+    try {
+      const response = await fetch('https://delightful-liberation-production.up.railway.app/oauth/disconnect', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        this.isAuthenticated = false;
+        this.userId = null;
+        this.notifyAuthCallbacks();
+        debugLog('Logout successful');
+      } else {
+        throw new Error('Logout failed');
+      }
+    } catch (error) {
+      debugLog('Error during logout', error);
+      // Force local logout even if server call fails
+      this.isAuthenticated = false;
+      this.userId = null;
+      this.notifyAuthCallbacks();
+    }
+  }
+
+  /**
+   * Register callback for auth status changes
+   * @param {Function} callback - Callback function
+   */
+  onAuthChange(callback) {
+    this.authCallbacks.add(callback);
+  }
+
+  /**
+   * Unregister callback for auth status changes
+   * @param {Function} callback - Callback function
+   */
+  offAuthChange(callback) {
+    this.authCallbacks.delete(callback);
+  }
+
+  /**
+   * Notify all registered callbacks of auth status change
+   */
+  notifyAuthCallbacks() {
+    this.authCallbacks.forEach(callback => {
+      try {
+        callback({
+          authenticated: this.isAuthenticated,
+          userId: this.userId,
+          lastChecked: this.lastChecked
+        });
       } catch (error) {
-        this.isAuthenticating = false;
-        debugLog('OAuth error', error);
-        reject(error);
+        debugLog('Error in auth callback', error);
       }
     });
-
-    return this.authPromise;
   }
 
   /**
-   * Manually trigger OAuth flow - forces new token
+   * Get current authentication status
+   * @returns {Object} Current auth status
    */
-  async authenticate() {
-    debugLog('Manual authentication triggered - forcing new token');
-    
-    // Use direct redirect instead of popup to avoid blocking issues
-    const oauthUrl = API_ENDPOINTS.AUTH;
-    const returnUrl = window.location.href;
-    const fullOAuthUrl = `${oauthUrl}?return_url=${encodeURIComponent(returnUrl)}&force_reauth=1&user_id=ljmukdev`;
-    
-    debugLog('Redirecting to OAuth URL', { url: fullOAuthUrl });
-    window.location.href = fullOAuthUrl;
-    
-    return false; // Will redirect, so return false
+  getAuthStatus() {
+    return {
+      authenticated: this.isAuthenticated,
+      userId: this.userId,
+      lastChecked: this.lastChecked
+    };
   }
 
   /**
-   * Show authentication message to user
+   * Check if user is authenticated
+   * @returns {boolean} Authentication status
    */
-  showAuthMessage(message) {
-    const existingMessage = document.getElementById('oauth-message');
-    if (existingMessage) {
-      existingMessage.remove();
+  isUserAuthenticated() {
+    return this.isAuthenticated;
+  }
+
+  /**
+   * Get current user ID
+   * @returns {string|null} User ID
+   */
+  getCurrentUserId() {
+    return this.userId;
+  }
+
+  /**
+   * Make authenticated API request
+   * @param {string} url - API URL
+   * @param {Object} options - Fetch options
+   * @returns {Promise<Response>} Fetch response
+   */
+  async authenticatedRequest(url, options = {}) {
+    if (!this.isAuthenticated) {
+      throw new Error('User not authenticated');
     }
-
-    const messageDiv = document.createElement('div');
-    messageDiv.id = 'oauth-message';
-    messageDiv.style.cssText = `
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      z-index: 10000;
-      text-align: center;
-      border-left: 4px solid #3b82f6;
-    `;
     
-    messageDiv.innerHTML = `
-      <div style="margin-bottom: 10px; font-size: 16px; color: #1a365d;">
-        🔐 eBay Authentication
-      </div>
-      <div style="color: #4a5568;">
-        ${message}
-      </div>
-    `;
-
-    document.body.appendChild(messageDiv);
-  }
-
-  /**
-   * Hide authentication message
-   */
-  hideAuthMessage() {
-    const existingMessage = document.getElementById('oauth-message');
-    if (existingMessage) {
-      existingMessage.remove();
-    }
-  }
-
-  /**
-   * Test what the eBay service actually returns (for debugging)
-   */
-  async testEbayResponse() {
-    try {
-      const response = await fetch(`${API_ENDPOINTS.PURCHASES}?limit=1`);
-      const data = await response.json();
-      
-      console.log('=== EBAY SERVICE RAW RESPONSE ===');
-      console.log('Status:', response.status);
-      console.log('Data:', data);
-      console.log('Data keys:', data.data ? Object.keys(data.data) : 'No data object');
-      console.log('================================');
-      
-      return data;
-    } catch (error) {
-      console.error('eBay test failed:', error);
-    }
-  }
-
-  /**
-   * Get authentication status
-   */
-  isAuthenticated() {
-    return this.checkAuthStatus();
+    const defaultOptions = {
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+      }
+    };
+    
+    return fetch(url, { ...defaultOptions, ...options });
   }
 }
 
-// Create and export service instance
+// Create and export singleton instance
 export const oauthService = new OAuthService();
 
 // Export class for testing
