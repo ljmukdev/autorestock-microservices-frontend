@@ -1,623 +1,158 @@
 /**
  * AutoRestock Purchases View
- * Coordinates purchases service with UI
+ * Handles OAuth completion and purchase loading
  */
 
-import { purchasesService } from '../services/purchases/index.js';
-import { oauthService } from '../services/auth/oauth.js';
-import { router } from '../core/router.js';
-import { $, $all, showModal } from '../core/utils.js';
-import { debugLog } from '../core/config.js';
-import { showSuccess, showError, showInfo } from '../components/toasts.js';
-import { renderPurchaseDetailsModal } from '../services/purchases/ui.js';
+import oauthService from '../services/auth/oauth.js';
+import purchaseService from '../services/purchases/index.js';
 
 class PurchasesView {
   constructor() {
-    this.isInitialized = false;
-    this.container = null;
+    this.purchaseService = purchaseService;
+    this.oauthService = oauthService;
+    this.container = document.getElementById('purchases-container');
+    window.addEventListener('oauth-completed', this.handleOAuthComplete.bind(this));
+    this.init();
   }
 
-  /**
-   * Initialize purchases view
-   * @param {Element} container - Container element
-   */
-  async init(container) {
-    this.container = container;
-    debugLog('Initializing purchases view');
-
-    try {
-      // Check OAuth status using centralized service
-      debugLog('Checking OAuth status for purchases view');
-      const authStatus = oauthService.getAuthStatus();
-      debugLog('OAuth status:', authStatus);
-      
-      if (!authStatus.authenticated) {
-        debugLog('User not authenticated, showing OAuth prompt');
-        this.showOAuthPrompt();
-        return;
-      }
-      
-      debugLog('User is authenticated, loading purchases');
-      // Load purchases data
-      await purchasesService.loadPurchases({ limit: 100 });
-      
-      // Render UI
-      this.render();
-      
-      // Bind events
-      this.bindEvents();
-      
-      // Register for auth changes
-      oauthService.onAuthChange(this.handleAuthChange.bind(this));
-      
-      this.isInitialized = true;
-      debugLog('Purchases view initialized');
-    } catch (error) {
-      debugLog('Error initializing purchases view', error);
-      this.showError(error.message);
-    }
-  }
-
-  /**
-   * Handle authentication status changes
-   * @param {Object} authStatus - Authentication status
-   */
-  handleAuthChange(authStatus) {
-    debugLog('Auth status changed in purchases view', authStatus);
-    
-    if (authStatus.authenticated && !this.isInitialized) {
-      // User just authenticated, initialize the view
-      this.init(this.container);
-    } else if (!authStatus.authenticated && this.isInitialized) {
-      // User logged out, show OAuth prompt
-      this.showOAuthPrompt();
-    }
-  }
-
-  /**
-   * Show OAuth prompt
-   */
-  showOAuthPrompt() {
-    debugLog('Showing OAuth prompt');
-    if (!this.container) {
-      debugLog('No container for OAuth prompt');
-      return;
-    }
-    
-    debugLog('Rendering OAuth prompt HTML');
-    this.container.innerHTML = `
-      <div class="oauth-prompt">
-        <div class="oauth-prompt-content">
-          <div class="oauth-icon">🔐</div>
-          <h3>eBay Authentication Required</h3>
-          <p>To view your eBay purchases, you need to connect your eBay account.</p>
-          <div class="oauth-actions">
-            <button id="connect-ebay" class="btn btn-primary">
-              <span class="btn-icon">🛒</span>
-              Connect eBay Account
-            </button>
-            <button id="use-sample-data" class="btn btn-secondary">
-              <span class="btn-icon">🧪</span>
-              Use Sample Data
-            </button>
-          </div>
-          <div class="oauth-info">
-            <p><small>Connecting your eBay account allows us to sync your purchase history automatically.</small></p>
-          </div>
-        </div>
-      </div>
-    `;
-    
-    // Bind OAuth events
-    this.bindOAuthEvents();
-  }
-
-  /**
-   * Bind OAuth events
-   */
-  bindOAuthEvents() {
-    // Connect eBay button
-    $('#connect-ebay')?.addEventListener('click', async () => {
-      try {
-        // Show loading state
-        this.showOAuthLoading();
-        
-        // Initiate OAuth (will redirect to eBay)
-        await oauthService.initiateLogin('ebay');
-        
-        // This won't be reached since we're redirecting
-      } catch (error) {
-        debugLog('OAuth failed:', error);
-        showError(`Failed to connect eBay account: ${error.message}`);
-        this.showOAuthPrompt(); // Show prompt again
-      }
-    });
-    
-    // Use sample data button
-    $('#use-sample-data')?.addEventListener('click', () => {
-      this.useSampleData();
-    });
-  }
-
-  /**
-   * Show OAuth loading state
-   */
-  showOAuthLoading() {
-    if (!this.container) return;
-    
-    this.container.innerHTML = `
-      <div class="oauth-prompt">
-        <div class="oauth-prompt-content">
-          <div class="oauth-icon">⏳</div>
-          <h3>Redirecting to eBay...</h3>
-          <p>You will be redirected to eBay to complete authentication.</p>
-          <div class="oauth-loading">
-            <div class="spinner"></div>
-            <p>Redirecting to eBay login...</p>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  /**
-   * Refresh data after successful OAuth
-   */
-  async refreshAfterOAuth() {
-    try {
-      debugLog('Refreshing purchases after OAuth success');
-      
-      // Load purchases with live data
-      await purchasesService.loadPurchases({ limit: 100 });
-      
-      // Re-render the UI
-      this.render();
-      
-      // Bind events again
-      this.bindEvents();
-      
-      this.isInitialized = true;
-      debugLog('Purchases view refreshed after OAuth');
-    } catch (error) {
-      debugLog('Error refreshing after OAuth:', error);
-      showError(`Failed to load purchases: ${error.message}`);
-      this.showOAuthPrompt();
-    }
-  }
-
-  /**
-   * Use sample data
-   */
-  async useSampleData() {
-    debugLog('Using sample data');
-    
-    try {
-      // Load sample purchases
-      await purchasesService.loadPurchases({ limit: 100, useSample: true });
-      
-      // Render UI
-      this.render();
-      
-      // Bind events
-      this.bindEvents();
-      
-      this.isInitialized = true;
-      debugLog('Purchases view initialized with sample data');
-    } catch (error) {
-      debugLog('Error using sample data', error);
-      this.showError(error.message);
-    }
-  }
-
-  /**
-   * Render purchases view
-   */
-  render() {
-    if (!this.container) {
-      debugLog('No container for purchases view');
-      return;
-    }
-
-    purchasesService.renderPurchases(this.container, {
-      showStatusBar: true,
-      showHistory: true,
-      showActions: true
-    });
-
-    debugLog('Purchases view rendered');
-  }
-
-  /**
-   * Bind event listeners
-   */
-  bindEvents() {
-    if (!this.container) return;
-
-    // Refresh button
-    const refreshBtn = this.container.querySelector('#btn-refresh');
-    if (refreshBtn) {
-      refreshBtn.addEventListener('click', () => this.handleRefresh());
-    }
-
-    // eBay login button
-    const ebayLoginBtn = this.container.querySelector("#btn-ebay-login");
-    if (ebayLoginBtn) {
-      ebayLoginBtn.addEventListener("click", () => this.handleEbayLogin());
-    }
-
-    // OAuth login button (legacy)
-    const oauthBtn = this.container.querySelector("#oauth-login-btn");
-    if (oauthBtn) {
-      oauthBtn.addEventListener("click", () => this.handleOAuthLogin());
-    }
-
-    // Add purchase button
-    const addBtn = this.container.querySelector('#btn-add-purchase');
-    if (addBtn) {
-      addBtn.addEventListener('click', () => this.handleAddPurchase());
-    }
-
-    // eBay sync button
-    const syncBtn = this.container.querySelector('#btn-ebay-sync');
-    if (syncBtn) {
-      syncBtn.addEventListener('click', () => this.handleEbaySync());
-    }
-
-    // Purchase actions (both cards and list)
-    this.container.addEventListener('click', (e) => {
-      // Handle checkbox clicks
-      if (e.target.type === 'checkbox' && e.target.classList.contains('purchase-checkbox')) {
-        e.stopPropagation(); // Prevent row click when clicking checkbox
-        
-        if (e.target.id === 'select-all-purchases') {
-          this.handleSelectAllChange(e.target);
-        } else {
-          this.handleCheckboxChange(e.target);
-        }
-        return;
-      }
-
-      const actionBtn = e.target.closest('button[data-action]');
-      if (actionBtn) {
-        const action = actionBtn.getAttribute('data-action');
-        const purchaseId = actionBtn.getAttribute('data-id');
-        this.handlePurchaseAction(action, purchaseId);
-        return;
-      }
-
-      // Purchase card/row click (but not if clicking checkbox)
-      const purchaseCard = e.target.closest('.purchase-card, .purchase-list-row');
-      if (purchaseCard && !e.target.closest('.purchase-checkbox-cell')) {
-        const purchaseId = purchaseCard.getAttribute('data-id');
-        this.handlePurchaseClick(purchaseId);
-      }
-    });
-
-    debugLog('Purchases view events bound');
-  }
-
-  /**
-   * Handle eBay login action (silent)
-   */
-  async handleEbayLogin() {
-    debugLog('Handling eBay login');
-    
-    try {
-      // Show subtle loading state on the button
-      const btn = this.container.querySelector('#btn-ebay-login');
-      if (btn) {
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '⏳ Authenticating...';
-        btn.disabled = true;
-        
-        const { oauthService } = await import("../services/auth/oauth.js");
-        await oauthService.authenticate();
-        
-        // Restore button state
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-      }
-    } catch (error) {
-      debugLog('eBay login error', error);
-      
-      // Restore button state on error
-      const btn = this.container.querySelector('#btn-ebay-login');
-      if (btn) {
-        btn.innerHTML = '🔐 eBay Login';
-        btn.disabled = false;
-      }
-      
-      // Only show error if it's not a silent failure
-      if (error.message && !error.message.includes('timeout')) {
-        showError(`eBay authentication failed: ${error.message}`);
-      }
-    }
-  }
-
-  async handleRefresh() {
-    debugLog('Handling refresh');
-    
-    try {
-      showInfo('Refreshing purchases...');
-      await purchasesService.loadPurchases({ limit: 100 });
-      this.render();
-      showSuccess('Purchases refreshed successfully');
-    } catch (error) {
-      debugLog('Error refreshing purchases', error);
-      showError(`Failed to refresh: ${error.message}`);
-    }
-  }
-
-  /**
-   * Handle add purchase action
-   */
-  handleAddPurchase() {
-    debugLog('Handling add purchase');
-    showInfo('Add purchase functionality coming soon...');
-    // TODO: Implement add purchase modal
-  }
-
-  /**
-   * Handle eBay sync action
-   */
-  async handleEbaySync() {
-    debugLog('Handling eBay sync');
-    
-    try {
-      showInfo('Syncing with eBay...');
-      await purchasesService.syncPurchases();
-      this.render();
-      showSuccess('eBay sync completed successfully');
-    } catch (error) {
-      debugLog('Error syncing with eBay', error);
-      showError(`Sync failed: ${error.message}`);
-    }
-  }
-
-  /**
-   * Handle purchase action
-   * @param {string} action - Action type
-   * @param {string} purchaseId - Purchase ID
-   */
-  handlePurchaseAction(action, purchaseId) {
-    debugLog(`Handling purchase action: ${action}`, { purchaseId });
-
-    switch (action) {
-      case 'stage':
-        this.handleStagePurchase(purchaseId);
-        break;
-      case 'split':
-        this.handleSplitPurchase(purchaseId);
-        break;
-      case 'inventory':
-        this.handleMoveToInventory(purchaseId);
-        break;
-      case 'delete':
-        this.handleDeletePurchase(purchaseId);
-        break;
-      default:
-        debugLog(`Unknown purchase action: ${action}`);
-    }
-  }
-
-  /**
-   * Handle stage purchase
-   * @param {string} purchaseId - Purchase ID
-   */
-  handleStagePurchase(purchaseId) {
-    debugLog(`Staging purchase: ${purchaseId}`);
-    showInfo('Staging purchase...');
-    // TODO: Implement staging logic
-  }
-
-  /**
-   * Handle split purchase
-   * @param {string} purchaseId - Purchase ID
-   */
-  handleSplitPurchase(purchaseId) {
-    debugLog(`Splitting purchase: ${purchaseId}`);
-    showInfo('Splitting purchase...');
-    // TODO: Implement split logic
-  }
-
-  /**
-   * Handle move to inventory
-   * @param {string} purchaseId - Purchase ID
-   */
-  handleMoveToInventory(purchaseId) {
-    debugLog(`Moving to inventory: ${purchaseId}`);
-    showSuccess('Added to inventory');
-    // TODO: Implement inventory move logic
-  }
-
-  /**
-   * Handle delete purchase
-   * @param {string} purchaseId - Purchase ID
-   */
-  handleDeletePurchase(purchaseId) {
-    debugLog(`Deleting purchase: ${purchaseId}`);
-    
-    if (confirm('Are you sure you want to delete this purchase?')) {
-      showInfo('Deleting purchase...');
-      // TODO: Implement delete logic
-      showSuccess('Purchase deleted');
-      this.render();
-    }
-  }
-
-  /**
-   * Handle purchase card click
-   * @param {string} purchaseId - Purchase ID
-   */
-  handlePurchaseClick(purchaseId) {
-    debugLog(`Purchase clicked: ${purchaseId}`);
-    
-    // Find the purchase data
-    const purchase = purchasesService.getCurrentPurchases().find(p => 
-      (p._id || p.id) === purchaseId
-    );
-    
-    if (!purchase) {
-      showError('Purchase not found');
-      return;
-    }
-    
-    // Generate modal content
-    const productName = purchase.product_name || purchase.items?.[0]?.productName || 'Unknown Item';
-    const brand = purchase.brand || purchase.supplier || 'Unknown';
-    const modalTitle = `${brand} ${productName}`;
-    const modalContent = renderPurchaseDetailsModal(purchase);
-    
-    // Show modal
-    showModal({
-      title: modalTitle,
-      content: modalContent,
-      size: 'large',
-      onClose: () => {
-        debugLog('Purchase details modal closed');
-      }
-    });
-  }
-
-  /**
-   * Handle select all checkbox change
-   * @param {HTMLInputElement} selectAllCheckbox - Select all checkbox element
-   */
-  handleSelectAllChange(selectAllCheckbox) {
-    const isChecked = selectAllCheckbox.checked;
-    const allCheckboxes = this.container.querySelectorAll('.purchase-checkbox:not(#select-all-purchases)');
-    
-    debugLog(`Select all changed: ${isChecked}`);
-    
-    // Update all individual checkboxes
-    allCheckboxes.forEach(checkbox => {
-      checkbox.checked = isChecked;
-    });
-    
-    // Update selected count display
-    this.updateSelectedCount();
-  }
-
-  /**
-   * Handle checkbox change
-   * @param {HTMLInputElement} checkbox - Checkbox element
-   */
-  handleCheckboxChange(checkbox) {
-    const purchaseId = checkbox.getAttribute('data-purchase-id');
-    const isChecked = checkbox.checked;
-    
-    debugLog(`Checkbox changed for purchase ${purchaseId}: ${isChecked}`);
-    
-    // Update select all checkbox state
-    this.updateSelectAllState();
-    
-    // Update selected count display
-    this.updateSelectedCount();
-  }
-
-  /**
-   * Update select all checkbox state
-   */
-  updateSelectAllState() {
-    const selectAllCheckbox = this.container.querySelector('#select-all-purchases');
-    if (!selectAllCheckbox) return;
-
-    const allCheckboxes = this.container.querySelectorAll('.purchase-checkbox:not(#select-all-purchases)');
-    const checkedCheckboxes = this.container.querySelectorAll('.purchase-checkbox:not(#select-all-purchases):checked');
-    
-    if (checkedCheckboxes.length === 0) {
-      selectAllCheckbox.indeterminate = false;
-      selectAllCheckbox.checked = false;
-    } else if (checkedCheckboxes.length === allCheckboxes.length) {
-      selectAllCheckbox.indeterminate = false;
-      selectAllCheckbox.checked = true;
+  async init() {
+    console.log('[PurchasesView] Initializing...');
+    const isConnected = await this.oauthService.checkConnection();
+    if (isConnected) {
+      await this.loadPurchases();
     } else {
-      selectAllCheckbox.indeterminate = true;
-      selectAllCheckbox.checked = false;
+      this.showConnectPrompt();
     }
   }
 
-  /**
-   * Update selected count display
-   */
-  updateSelectedCount() {
-    const checkedCheckboxes = this.container.querySelectorAll('.purchase-checkbox:not(#select-all-purchases):checked');
-    const count = checkedCheckboxes.length;
-    
-    // Update status bar or add selected count display
-    debugLog(`${count} purchases selected`);
-    
-    // You can add a selected count display here if needed
-    if (count > 0) {
-      showInfo(`${count} purchase${count > 1 ? 's' : ''} selected`);
-    }
+  async handleOAuthComplete(event) {
+    console.log('[PurchasesView] OAuth completed, loading purchases...');
+    setTimeout(async () => {
+      await this.loadPurchases();
+    }, 1000);
   }
 
-  /**
-   * Get selected purchase IDs
-   * @returns {Array} Array of selected purchase IDs
-   */
-  getSelectedPurchases() {
-    const checkedCheckboxes = this.container.querySelectorAll('.purchase-checkbox:not(#select-all-purchases):checked');
-    return Array.from(checkedCheckboxes).map(cb => cb.getAttribute('data-purchase-id'));
-  }
-
-  /**
-   * Show error state
-   * @param {string} message - Error message
-   */
-  showError(message) {
-    if (!this.container) return;
-    
-    purchasesService.showError(this.container, message, () => this.handleRefresh());
-  }
-
-  /**
-   * Show loading state
-   * @param {string} message - Loading message
-   */
-  showLoading(message = 'Loading purchases...') {
-    if (!this.container) return;
-    
-    purchasesService.showLoading(this.container, message);
-  }
-
-  /**
-   * Refresh view
-   */
-  async handleOAuthLogin() {
-    console.log("Manual OAuth login triggered");
+  async loadPurchases() {
     try {
-      const { oauthService } = await import("../services/auth/oauth.js");
-      await oauthService.authenticate();
+      this.showLoadingState();
+      const response = await this.purchaseService.getPurchases({ limit: 100 });
+      if (response.success && response.purchases && response.purchases.length > 0) {
+        this.renderPurchases(response.purchases);
+      } else {
+        this.showEmptyState();
+      }
     } catch (error) {
-      console.error("OAuth login error", error);
+      console.error('[PurchasesView] Error loading purchases:', error);
+      if (error.message && error.message.includes('No access token')) {
+        this.showConnectPrompt();
+      } else {
+        this.showErrorState(error.message || 'Failed to load purchases');
+      }
     }
   }
 
-  async refresh() {
-    if (!this.isInitialized) return;
-    
-    debugLog('Refreshing purchases view');
-    await this.handleRefresh();
+  showConnectPrompt() {
+    if (!this.container) return;
+    this.container.innerHTML = `
+      <div class="empty-state" style="text-align:center;padding:60px 20px;">
+        <div class="empty-icon" style="font-size:80px;margin-bottom:24px;">🛒</div>
+        <h2 style="font-size:28px;font-weight:bold;color:#1e3a5f;margin-bottom:16px;">Connect Your eBay Account</h2>
+        <p style="font-size:16px;color:#6b7280;margin-bottom:32px;max-width:500px;margin-left:auto;margin-right:auto;">Connect your eBay account to automatically sync and track your purchase history</p>
+        <button id="connect-ebay-btn" class="btn btn-primary" style="background:#3b82f6;color:white;padding:12px 32px;border-radius:8px;border:none;font-size:16px;font-weight:600;cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+          Connect eBay Account
+        </button>
+      </div>
+    `;
+    const connectBtn = document.getElementById('connect-ebay-btn');
+    if (connectBtn) {
+      connectBtn.addEventListener('click', () => {
+        console.log('[PurchasesView] Starting OAuth flow...');
+        this.oauthService.startOAuthFlow();
+      });
+    }
   }
 
-  /**
-   * Destroy view
-   */
-  destroy() {
-    if (this.container) {
-      // Remove event listeners
-      this.container.innerHTML = '';
+  showLoadingState() {
+    if (!this.container) return;
+    this.container.innerHTML = `
+      <div class="loading-state" style="text-align:center;padding:60px 20px;">
+        <div class="spinner" style="width:48px;height:48px;border:4px solid #e5e7eb;border-top-color:#3b82f6;border-radius:50%;margin:0 auto 24px;animation:spin 1s linear infinite;"></div>
+        <p style="font-size:16px;color:#6b7280;">Loading your eBay purchases...</p>
+      </div>
+      <style>
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+      </style>
+    `;
+  }
+
+  showEmptyState() {
+    if (!this.container) return;
+    this.container.innerHTML = `
+      <div class="empty-state" style="text-align:center;padding:60px 20px;">
+        <div class="empty-icon" style="font-size:80px;margin-bottom:24px;">📦</div>
+        <h2 style="font-size:28px;font-weight:bold;color:#1e3a5f;margin-bottom:16px;">No Purchases Found</h2>
+        <p style="font-size:16px;color:#6b7280;margin-bottom:32px;">No eBay purchases found in the last 90 days</p>
+        <button id="sync-now-btn" class="btn btn-secondary" style="background:#10b981;color:white;padding:12px 32px;border-radius:8px;border:none;font-size:16px;font-weight:600;cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+          Sync Now
+        </button>
+      </div>
+    `;
+    const syncBtn = document.getElementById('sync-now-btn');
+    if (syncBtn) {
+      syncBtn.addEventListener('click', () => this.syncPurchases());
     }
-    
-    this.isInitialized = false;
-    debugLog('Purchases view destroyed');
+  }
+
+  showErrorState(message) {
+    if (!this.container) return;
+    this.container.innerHTML = `
+      <div class="error-state" style="text-align:center;padding:60px 20px;">
+        <div class="error-icon" style="font-size:80px;margin-bottom:24px;">⚠️</div>
+        <h2 style="font-size:28px;font-weight:bold;color:#ef4444;margin-bottom:16px;">Error Loading Purchases</h2>
+        <p style="font-size:16px;color:#6b7280;margin-bottom:32px;">${message}</p>
+        <button id="retry-btn" class="btn btn-primary" style="background:#3b82f6;color:white;padding:12px 32px;border-radius:8px;border:none;font-size:16px;font-weight:600;cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+          Retry
+        </button>
+      </div>
+    `;
+    const retryBtn = document.getElementById('retry-btn');
+    if (retryBtn) {
+      retryBtn.addEventListener('click', () => this.loadPurchases());
+    }
+  }
+
+  async syncPurchases() {
+    try {
+      this.showLoadingState();
+      await this.purchaseService.syncPurchases({ days: 7, limit: 100 });
+      setTimeout(() => this.loadPurchases(), 2000);
+    } catch (error) {
+      console.error('[PurchasesView] Sync error:', error);
+      this.showErrorState(error.message || 'Failed to sync purchases');
+    }
+  }
+
+  renderPurchases(purchases) {
+    console.log('[PurchasesView] Rendering', purchases.length, 'purchases');
+    if (!this.container) return;
+    this.container.innerHTML = `
+      <div class="purchases-header" style="margin-bottom:24px;">
+        <h2 style="font-size:24px;font-weight:bold;color:#1e3a5f;">eBay Purchases</h2>
+        <p style="color:#6b7280;">Showing ${purchases.length} purchases</p>
+      </div>
+      <div class="purchases-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;">
+        ${purchases.map(p => `
+          <div class="purchase-card" style="background:white;border-radius:8px;padding:20px;box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+            <h3 style="font-size:16px;font-weight:600;margin-bottom:8px;color:#1e3a5f;">${p.title}</h3>
+            <p style="font-size:14px;color:#6b7280;margin-bottom:4px;">Seller: ${p.sellerUserID}</p>
+            <p style="font-size:14px;color:#6b7280;margin-bottom:4px;">Price: £${p.price}</p>
+            <p style="font-size:14px;color:#6b7280;margin-bottom:4px;">Date: ${new Date(p.transactionDate).toLocaleDateString()}</p>
+            <span style="display:inline-block;padding:4px 12px;border-radius:12px;background:#10b981;color:white;font-size:12px;font-weight:600;margin-top:8px;">${p.itemStatus}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
   }
 }
 
-// Create and export view instance
-export const purchasesView = new PurchasesView();
-
-// Export class for testing
-export { PurchasesView };
+export default PurchasesView;
