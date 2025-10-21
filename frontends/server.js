@@ -47,17 +47,23 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Serve main pages
+// Serve main SPA application
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(__dirname, 'app.html'));
 });
 
+// Serve legacy pages for backward compatibility
 app.get('/registration', (req, res) => {
   res.sendFile(path.join(__dirname, 'multipage-registration.html'));
 });
 
 app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'dashboard.html'));
+});
+
+// SPA fallback - serve app.html for any route that doesn't match static files
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'app.html'));
 });
 
 // Start server

@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <!-- CSP: allow eBay OAuth service + Railway apps -->
+  <meta http-equiv="Content-Security-Policy" content="connect-src 'self' https://*.up.railway.app https://stockpilot-ebay-oauth-production.up.railway.app">
+  <title>AutoRestock - Modular SPA</title>
+  <link rel="stylesheet" href="css/autorestock-global.css">
+  <style>
+    /* SPA-specific styles */
+    .spa-container { 
+      max-width: 1200px; 
+      margin: 0 auto; 
+      background: rgba(255,255,255,0.95); 
+      border-radius: 15px; 
+      box-shadow: 0 20px 40px rgba(26,54,93,0.15); 
+      overflow: hidden; 
+      min-height: 100vh;
+    }
+    
+    .spa-header { 
+      display: flex; 
+      align-items: center; 
+      margin-bottom: 0; 
+      background: rgba(255,255,255,0.95); 
+      padding: 30px 25px 24px 25px; 
+      position: relative; 
+    }
+    
+    .spa-header-logo { 
+      height: 80px; 
+      position: absolute; 
+      left: 25px; 
+    }
+    
+    .spa-header-text { 
+      flex: 1; 
+      text-align: center; 
+    }
+    
+    .spa-header h1 { 
+      color: #1a365d; 
+      margin: 0; 
+      font-size: 1.8em; 
+    }
+    
+    .spa-header p { 
+      margin: 0; 
+      font-size: 0.9em; 
+      color: #1a365d; 
+    }
+
+    .spa-nav-tabs-container { 
+      background: rgba(255,255,255,0.95); 
+      padding: 12px 25px 0; 
+      position: relative; 
+    }
+    
+    .spa-nav-tabs-container::after { 
+      content: ''; 
+      position: absolute; 
+      bottom: 0; 
+      left: 0; 
+      right: 0; 
+      height: 3px; 
+      background: #1a365d; 
+      z-index: 1; 
+    }
+    
+    .spa-nav-tabs { 
+      display: flex; 
+      gap: 2px; 
+      background: transparent; 
+      padding: 0; 
+      margin: 0; 
+      list-style: none; 
+      flex-wrap: nowrap; 
+      overflow-x: auto; 
+    }
+    
+    .spa-nav-tab { 
+      background: linear-gradient(135deg,#F5F7FA,#E2E8F0); 
+      border: none; 
+      padding: 10px 8px; 
+      cursor: pointer; 
+      transition: all .3s ease; 
+      text-decoration: none; 
+      color: #2D3748; 
+      font-weight: 500; 
+      font-size: 11px; 
+      border-radius: 12px 12px 0 0; 
+      position: relative; 
+      text-align: center; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      gap: 3px; 
+      flex: 1; 
+      min-width: 0; 
+      white-space: nowrap; 
+    }
+    
+    .spa-nav-tab:hover { 
+      text-decoration: none; 
+      color: white; 
+      transform: translateY(-2px); 
+      box-shadow: 0 6px 15px rgba(26,54,93,.2); 
+    }
+    
+    .spa-nav-tab.active { 
+      transform: translateY(0); 
+      box-shadow: 0 0 0 3px rgba(255,255,255,.8); 
+    }
+    
+    .spa-nav-tab.home { 
+      background: linear-gradient(135deg,#1a365d,#2c5282); 
+      color: white; 
+    }
+    
+    .spa-nav-tab.purchases { 
+      background: linear-gradient(135deg,#67B292,#5A9B7F); 
+      color: white; 
+    }
+    
+    .spa-nav-tab.inventory { 
+      background: linear-gradient(135deg,#3182CE,#2C5282); 
+      color: white; 
+    }
+    
+    .spa-nav-tab.consumables { 
+      background: linear-gradient(135deg,#38A169,#2F855A); 
+      color: white; 
+    }
+    
+    .spa-nav-tab.log-sale { 
+      background: linear-gradient(135deg,#48BB78,#38A169); 
+      color: white; 
+    }
+    
+    .spa-nav-tab.sales { 
+      background: linear-gradient(135deg,#805AD5,#6B46C1); 
+      color: white; 
+    }
+    
+    .spa-nav-tab.email-import { 
+      background: linear-gradient(135deg,#3182CE,#2B6CB0); 
+      color: white; 
+    }
+    
+    .spa-nav-tab.reports { 
+      background: linear-gradient(135deg,#667EEA,#5A67D8); 
+      color: white; 
+    }
+    
+    .spa-nav-tab.settings { 
+      background: linear-gradient(135deg,#2D3748,#1A202C); 
+      color: white; 
+    }
+
+    .spa-content-area { 
+      padding: 8px 25px 25px 25px; 
+      background: #F8FAFC; 
+      min-height: 60vh;
+    }
+
+    .spa-tab-section { 
+      display: none; 
+    }
+    
+    .spa-tab-section.active { 
+      display: block; 
+    }
+
+    .spa-status-bar { 
+      background: white; 
+      color: #1a365d; 
+      padding: 16px 20px; 
+      border-radius: 12px; 
+      margin: 5px 0; 
+      border: 2px solid #1a365d; 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between; 
+      flex-wrap: wrap; 
+      gap: 15px; 
+      box-shadow: 0 2px 8px rgba(26,54,93,.1); 
+    }
+    
+    .spa-status-item { 
+      display: flex; 
+      align-items: center; 
+      gap: 8px; 
+      font-size: 13px; 
+      font-weight: 500; 
+    }
+    
+    .spa-status-badge { 
+      background: rgba(26,54,93,.1); 
+      color: #1a365d; 
+      padding: 4px 8px; 
+      border-radius: 12px; 
+      font-size: 11px; 
+      font-weight: 600; 
+      margin-left: 4px; 
+    }
+
+    .spa-loading { 
+      text-align: center; 
+      padding: 40px; 
+      color: #1a365d; 
+    }
+    
+    .spa-spinner { 
+      width: 20px; 
+      height: 20px; 
+      border: 3px solid #f3f4f6; 
+      border-top: 3px solid #1a365d; 
+      border-radius: 50%; 
+      animation: spin 1s linear infinite; 
+      margin: 20px auto; 
+    }
+    
+    @keyframes spin { 
+      0% { transform: rotate(0) } 
+      100% { transform: rotate(360deg) } 
+    }
+
+    .spa-error { 
+      text-align: center; 
+      padding: 40px 20px; 
+      color: #dc2626; 
+      background: rgba(239,68,68,.1); 
+      border-radius: 12px; 
+      margin: 20px 0; 
+    }
+
+    @media (max-width: 768px) {
+      .spa-status-bar { 
+        flex-direction: column; 
+        gap: 10px; 
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="spa-container">
+    <!-- Header -->
+    <div class="spa-header">
+      <img src="frontend/images/autorestock-logo.png" alt="AutoRestock Logo" class="spa-header-logo">
+      <div class="spa-header-text">
+        <h1>🛒 AutoRestock - Modular SPA</h1>
+        <p>Microservices-aligned frontend for purchase management, inventory, and sales</p>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="spa-nav-tabs-container">
+      <div class="spa-nav-tabs">
+        <button class="spa-nav-tab home" data-tab="home" aria-selected="false">🏠 Home</button>
+        <button class="spa-nav-tab purchases active" data-tab="purchases" aria-selected="true">🛒 Purchases</button>
+        <button class="spa-nav-tab inventory" data-tab="inventory" aria-selected="false">📦 Inventory</button>
+        <button class="spa-nav-tab consumables" data-tab="consumables" aria-selected="false">🧰 Consumables</button>
+        <button class="spa-nav-tab log-sale" data-tab="log-sale" aria-selected="false">💰 Log Sale</button>
+        <button class="spa-nav-tab sales" data-tab="sales" aria-selected="false">📊 View Sales</button>
+        <button class="spa-nav-tab email-import" data-tab="email-import" aria-selected="false">📧 Email Import</button>
+        <button class="spa-nav-tab reports" data-tab="reports" aria-selected="false">📈 Reports</button>
+        <button class="spa-nav-tab settings" data-tab="settings" aria-selected="false">⚙️ Settings</button>
+      </div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="spa-content-area">
+      <!-- Status Bar -->
+      <div class="spa-status-bar" id="spa-status-bar">
+        <div class="spa-status-item">
+          <span>🔄</span>
+          <span>Loading AutoRestock SPA...</span>
+        </div>
+      </div>
+
+      <!-- Tab Sections -->
+      <div id="tab-home" class="spa-tab-section">
+        <div class="spa-loading">
+          <div class="spa-spinner"></div>
+          <p>Loading home dashboard...</p>
+        </div>
+      </div>
+
+      <div id="tab-purchases" class="spa-tab-section active">
+        <div class="spa-loading">
+          <div class="spa-spinner"></div>
+          <p>Loading purchases module...</p>
+        </div>
+      </div>
+
+      <div id="tab-inventory" class="spa-tab-section">
+        <div class="spa-loading">
+          <div class="spa-spinner"></div>
+          <p>Loading inventory module...</p>
+        </div>
+      </div>
+
+      <div id="tab-consumables" class="spa-tab-section">
+        <div class="spa-loading">
+          <div class="spa-spinner"></div>
+          <p>Loading consumables module...</p>
+        </div>
+      </div>
+
+      <div id="tab-log-sale" class="spa-tab-section">
+        <div class="spa-loading">
+          <div class="spa-spinner"></div>
+          <p>Loading log sale module...</p>
+        </div>
+      </div>
+
+      <div id="tab-sales" class="spa-tab-section">
+        <div class="spa-loading">
+          <div class="spa-spinner"></div>
+          <p>Loading sales module...</p>
+        </div>
+      </div>
+
+      <div id="tab-email-import" class="spa-tab-section">
+        <div class="spa-loading">
+          <div class="spa-spinner"></div>
+          <p>Loading email import module...</p>
+        </div>
+      </div>
+
+      <div id="tab-reports" class="spa-tab-section">
+        <div class="spa-loading">
+          <div class="spa-spinner"></div>
+          <p>Loading reports module...</p>
+        </div>
+      </div>
+
+      <div id="tab-settings" class="spa-tab-section">
+        <div class="spa-loading">
+          <div class="spa-spinner"></div>
+          <p>Loading settings module...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Single module entry point -->
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
