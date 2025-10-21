@@ -3,7 +3,7 @@
  * Manages authentication state across all microservices
  */
 
-import { debugLog } from '../core/config.js';
+import { debugLog } from '../../core/config.js';
 
 class OAuthService {
   constructor() {
