@@ -117,14 +117,76 @@ class PurchasesView {
    */
   bindOAuthEvents() {
     // Connect eBay button
-    $('#connect-ebay')?.addEventListener('click', () => {
-      oauthService.initiateLogin('ebay');
+    $('#connect-ebay')?.addEventListener('click', async () => {
+      try {
+        // Show loading state
+        this.showOAuthLoading();
+        
+        // Initiate OAuth with popup
+        const success = await oauthService.initiateLogin('ebay');
+        
+        if (success) {
+          showSuccess('eBay account connected successfully!');
+          // Automatically refresh data and re-render
+          await this.refreshAfterOAuth();
+        }
+      } catch (error) {
+        debugLog('OAuth failed:', error);
+        showError(`Failed to connect eBay account: ${error.message}`);
+        this.showOAuthPrompt(); // Show prompt again
+      }
     });
     
     // Use sample data button
     $('#use-sample-data')?.addEventListener('click', () => {
       this.useSampleData();
     });
+  }
+
+  /**
+   * Show OAuth loading state
+   */
+  showOAuthLoading() {
+    if (!this.container) return;
+    
+    this.container.innerHTML = `
+      <div class="oauth-prompt">
+        <div class="oauth-prompt-content">
+          <div class="oauth-icon">⏳</div>
+          <h3>Connecting to eBay...</h3>
+          <p>Please complete the authentication in the popup window.</p>
+          <div class="oauth-loading">
+            <div class="spinner"></div>
+            <p>Waiting for authentication...</p>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Refresh data after successful OAuth
+   */
+  async refreshAfterOAuth() {
+    try {
+      debugLog('Refreshing purchases after OAuth success');
+      
+      // Load purchases with live data
+      await purchasesService.loadPurchases({ limit: 100 });
+      
+      // Re-render the UI
+      this.render();
+      
+      // Bind events again
+      this.bindEvents();
+      
+      this.isInitialized = true;
+      debugLog('Purchases view refreshed after OAuth');
+    } catch (error) {
+      debugLog('Error refreshing after OAuth:', error);
+      showError(`Failed to load purchases: ${error.message}`);
+      this.showOAuthPrompt();
+    }
   }
 
   /**

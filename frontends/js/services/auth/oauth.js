@@ -165,8 +165,98 @@ class OAuthService {
       throw new Error(`No OAuth URL configured for service: ${service}`);
     }
     
-    // Redirect to OAuth service
-    window.location.href = loginUrl;
+    // Use popup window instead of redirect
+    return this.openOAuthPopup(loginUrl, service);
+  }
+
+  /**
+   * Open OAuth popup window and handle the flow
+   * @param {string} loginUrl - OAuth login URL
+   * @param {string} service - Service name
+   * @returns {Promise<boolean>} Success status
+   */
+  openOAuthPopup(loginUrl, service) {
+    return new Promise((resolve, reject) => {
+      // Calculate popup position (center on screen)
+      const width = 600;
+      const height = 700;
+      const left = (screen.width - width) / 2;
+      const top = (screen.height - height) / 2;
+      
+      // Open popup window
+      const popup = window.open(
+        loginUrl,
+        'oauth-popup',
+        `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
+      );
+      
+      if (!popup) {
+        reject(new Error('Popup blocked. Please allow popups for this site.'));
+        return;
+      }
+      
+      // Focus the popup
+      popup.focus();
+      
+      // Poll for popup closure or completion
+      const pollTimer = setInterval(() => {
+        try {
+          // Check if popup is closed
+          if (popup.closed) {
+            clearInterval(pollTimer);
+            debugLog('OAuth popup closed');
+            
+            // Check auth status after popup closes
+            this.checkAuthStatus().then(() => {
+              resolve(this.isAuthenticated);
+            }).catch(reject);
+            return;
+          }
+          
+          // Check if we can access the popup's location (means it's still on our domain)
+          try {
+            const popupUrl = popup.location.href;
+            
+            // If popup is on our domain, check for callback parameters
+            if (popupUrl.includes(window.location.origin)) {
+              const urlParams = new URLSearchParams(popup.location.search);
+              const ebayConnected = urlParams.get('ebay_connected');
+              const ebayError = urlParams.get('ebay_error');
+              
+              if (ebayConnected === 'true' || ebayError) {
+                clearInterval(pollTimer);
+                popup.close();
+                
+                if (ebayConnected === 'true') {
+                  debugLog('OAuth completed successfully');
+                  this.isAuthenticated = true;
+                  this.userId = urlParams.get('user_id');
+                  this.notifyAuthCallbacks();
+                  resolve(true);
+                } else {
+                  debugLog('OAuth failed:', ebayError);
+                  reject(new Error(`OAuth failed: ${ebayError}`));
+                }
+              }
+            }
+          } catch (e) {
+            // Cross-origin access blocked, continue polling
+            // This is normal when the popup is on the OAuth provider's domain
+          }
+        } catch (error) {
+          debugLog('Error polling popup:', error);
+        }
+      }, 1000);
+      
+      // Timeout after 5 minutes
+      setTimeout(() => {
+        if (!popup.closed) {
+          clearInterval(pollTimer);
+          popup.close();
+          reject(new Error('OAuth timeout - please try again'));
+        }
+      }, 5 * 60 * 1000);
+    });
   }
 
   /**
