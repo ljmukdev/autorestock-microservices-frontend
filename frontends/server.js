@@ -53,17 +53,27 @@ app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'dashboard.html'));
 });
 
-// Serve static files (JS, CSS, images, etc.)
-app.use(express.static(path.join(__dirname)));
+// Serve static files (JS, CSS, images, etc.) - be explicit about extensions
+app.use('/js', express.static(path.join(__dirname, 'js')));
+app.use('/css', express.static(path.join(__dirname, 'css')));
+app.use('/images', express.static(path.join(__dirname, 'images')));
+app.use(express.static(path.join(__dirname), {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript');
+    } else if (path.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css');
+    }
+  }
+}));
 
 // Serve main SPA application
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'app.html'));
 });
 
-// SPA fallback - serve app.html for any route that doesn't match static files
-// This should be LAST to avoid catching static file requests
-app.get('*', (req, res) => {
+// SPA fallback - serve app.html for HTML routes only
+app.get('*.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'app.html'));
 });
 
