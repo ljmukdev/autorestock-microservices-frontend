@@ -206,10 +206,32 @@ class OAuthService {
             clearInterval(pollTimer);
             debugLog('OAuth popup closed');
             
-            // Check auth status after popup closes
-            this.checkAuthStatus().then(() => {
-              resolve(this.isAuthenticated);
-            }).catch(reject);
+            // Check for callback parameters in the main window URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const ebayConnected = urlParams.get('ebay_connected');
+            const ebayError = urlParams.get('ebay_error');
+            const userId = urlParams.get('user_id');
+            
+            if (ebayConnected === 'true') {
+              debugLog('OAuth completed successfully via URL params');
+              this.isAuthenticated = true;
+              this.userId = userId;
+              this.notifyAuthCallbacks();
+              
+              // Clean up URL parameters
+              this.cleanupUrlParams();
+              
+              resolve(true);
+            } else if (ebayError) {
+              debugLog('OAuth failed via URL params:', ebayError);
+              this.cleanupUrlParams();
+              reject(new Error(`OAuth failed: ${ebayError}`));
+            } else {
+              // Popup closed without clear result, check auth status
+              this.checkAuthStatus().then(() => {
+                resolve(this.isAuthenticated);
+              }).catch(reject);
+            }
             return;
           }
           
@@ -228,13 +250,13 @@ class OAuthService {
                 popup.close();
                 
                 if (ebayConnected === 'true') {
-                  debugLog('OAuth completed successfully');
+                  debugLog('OAuth completed successfully via popup URL');
                   this.isAuthenticated = true;
                   this.userId = urlParams.get('user_id');
                   this.notifyAuthCallbacks();
                   resolve(true);
                 } else {
-                  debugLog('OAuth failed:', ebayError);
+                  debugLog('OAuth failed via popup URL:', ebayError);
                   reject(new Error(`OAuth failed: ${ebayError}`));
                 }
               }
@@ -257,6 +279,19 @@ class OAuthService {
         }
       }, 5 * 60 * 1000);
     });
+  }
+
+  /**
+   * Clean up URL parameters after OAuth callback
+   */
+  cleanupUrlParams() {
+    const url = new URL(window.location);
+    url.searchParams.delete('ebay_connected');
+    url.searchParams.delete('ebay_error');
+    url.searchParams.delete('user_id');
+    
+    // Update URL without reloading page
+    window.history.replaceState({}, document.title, url.toString());
   }
 
   /**
