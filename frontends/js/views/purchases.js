@@ -27,13 +27,17 @@ class PurchasesView {
 
     try {
       // Check OAuth status using centralized service
+      debugLog('Checking OAuth status for purchases view');
       const authStatus = oauthService.getAuthStatus();
+      debugLog('OAuth status:', authStatus);
       
       if (!authStatus.authenticated) {
+        debugLog('User not authenticated, showing OAuth prompt');
         this.showOAuthPrompt();
         return;
       }
       
+      debugLog('User is authenticated, loading purchases');
       // Load purchases data
       await purchasesService.loadPurchases({ limit: 100 });
       
@@ -74,8 +78,13 @@ class PurchasesView {
    * Show OAuth prompt
    */
   showOAuthPrompt() {
-    if (!this.container) return;
+    debugLog('Showing OAuth prompt');
+    if (!this.container) {
+      debugLog('No container for OAuth prompt');
+      return;
+    }
     
+    debugLog('Rendering OAuth prompt HTML');
     this.container.innerHTML = `
       <div class="oauth-prompt">
         <div class="oauth-prompt-content">

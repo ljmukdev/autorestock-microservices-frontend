@@ -35,14 +35,14 @@ class AutoRestockApp {
         console.warn('Configuration validation failed, continuing with warnings');
       }
 
+      // Initialize OAuth first
+      await this.initializeOAuth();
+      
       // Initialize views
       await this.initializeViews();
       
       // Setup routing
       this.setupRouting();
-      
-      // Initialize OAuth
-      await this.initializeOAuth();
       
       this.isInitialized = true;
       debugLog('AutoRestock SPA initialized successfully');
@@ -213,8 +213,12 @@ class AutoRestockApp {
     try {
       debugLog('Initializing OAuth service');
       
+      // Initialize OAuth service
+      await oauthService.init();
+      
       // Check if user is already authenticated
-      const isAuthenticated = await oauthService.checkAuthStatus();
+      const authStatus = oauthService.getAuthStatus();
+      const isAuthenticated = authStatus.authenticated;
       
       if (!isAuthenticated) {
         debugLog('User not authenticated, OAuth modal may be shown when needed');
