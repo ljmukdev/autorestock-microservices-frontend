@@ -53,16 +53,26 @@ app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'dashboard.html'));
 });
 
-// Serve static files (JS, CSS, images, etc.) - be explicit about extensions
-app.use('/js', express.static(path.join(__dirname, 'js')));
-app.use('/css', express.static(path.join(__dirname, 'css')));
-app.use('/images', express.static(path.join(__dirname, 'images')));
+// Specific route for config.js to ensure it's served correctly
+app.get('/js/core/config.js', (req, res) => {
+  console.log('Serving config.js with explicit route');
+  res.setHeader('Content-Type', 'application/javascript');
+  res.sendFile(path.join(__dirname, 'js/core/config.js'));
+});
+
+// Serve static files with explicit MIME type handling
 app.use(express.static(path.join(__dirname), {
   setHeaders: (res, path) => {
+    console.log(`Serving static file: ${path}`);
     if (path.endsWith('.js')) {
       res.setHeader('Content-Type', 'application/javascript');
+      console.log(`Set Content-Type: application/javascript for ${path}`);
     } else if (path.endsWith('.css')) {
       res.setHeader('Content-Type', 'text/css');
+    } else if (path.endsWith('.png')) {
+      res.setHeader('Content-Type', 'image/png');
+    } else if (path.endsWith('.jpg') || path.endsWith('.jpeg')) {
+      res.setHeader('Content-Type', 'image/jpeg');
     }
   }
 }));
