@@ -198,6 +198,30 @@ class OAuthService {
       // Focus the popup
       popup.focus();
       
+      // Add message listener for popup communication
+      const messageHandler = (event) => {
+        if (event.origin !== window.location.origin) return;
+        
+        if (event.data && event.data.type === 'oauth-complete') {
+          debugLog('Received OAuth completion message from popup');
+          clearInterval(pollTimer);
+          popup.close();
+          
+          if (event.data.success) {
+            this.isAuthenticated = true;
+            this.userId = event.data.userId;
+            this.notifyAuthCallbacks();
+            resolve(true);
+          } else {
+            reject(new Error(event.data.error || 'OAuth failed'));
+          }
+          
+          window.removeEventListener('message', messageHandler);
+        }
+      };
+      
+      window.addEventListener('message', messageHandler);
+      
       // Poll for popup closure or completion
       const pollTimer = setInterval(() => {
         try {
@@ -211,6 +235,8 @@ class OAuthService {
             const ebayConnected = urlParams.get('ebay_connected');
             const ebayError = urlParams.get('ebay_error');
             const userId = urlParams.get('user_id');
+            
+            debugLog('Popup closed, checking URL params:', { ebayConnected, ebayError, userId });
             
             if (ebayConnected === 'true') {
               debugLog('OAuth completed successfully via URL params');
@@ -228,7 +254,9 @@ class OAuthService {
               reject(new Error(`OAuth failed: ${ebayError}`));
             } else {
               // Popup closed without clear result, check auth status
+              debugLog('No URL params found, checking auth status with service');
               this.checkAuthStatus().then(() => {
+                debugLog('Auth status check result:', this.isAuthenticated);
                 resolve(this.isAuthenticated);
               }).catch(reject);
             }
