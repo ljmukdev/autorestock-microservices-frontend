@@ -25,6 +25,14 @@ class PurchasesView {
     debugLog('Initializing purchases view');
 
     try {
+      // Check OAuth status first
+      const oauthStatus = await this.checkOAuthStatus();
+      
+      if (!oauthStatus.authenticated) {
+        this.showOAuthPrompt();
+        return;
+      }
+      
       // Load purchases data
       await purchasesService.loadPurchases({ limit: 100 });
       
@@ -38,6 +46,125 @@ class PurchasesView {
       debugLog('Purchases view initialized');
     } catch (error) {
       debugLog('Error initializing purchases view', error);
+      this.showError(error.message);
+    }
+  }
+
+  /**
+   * Check OAuth status
+   * @returns {Promise<Object>} OAuth status
+   */
+  async checkOAuthStatus() {
+    try {
+      const response = await fetch('https://delightful-liberation-production.up.railway.app/oauth/status', {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        return {
+          authenticated: data.authenticated || false,
+          userId: data.userId || null,
+          message: data.message || 'OAuth status checked'
+        };
+      } else {
+        return {
+          authenticated: false,
+          userId: null,
+          message: 'OAuth service unavailable'
+        };
+      }
+    } catch (error) {
+      debugLog('Error checking OAuth status', error);
+      return {
+        authenticated: false,
+        userId: null,
+        message: 'Failed to check OAuth status'
+      };
+    }
+  }
+
+  /**
+   * Show OAuth prompt
+   */
+  showOAuthPrompt() {
+    if (!this.container) return;
+    
+    this.container.innerHTML = `
+      <div class="oauth-prompt">
+        <div class="oauth-prompt-content">
+          <div class="oauth-icon">🔐</div>
+          <h3>eBay Authentication Required</h3>
+          <p>To view your eBay purchases, you need to connect your eBay account.</p>
+          <div class="oauth-actions">
+            <button id="connect-ebay" class="btn btn-primary">
+              <span class="btn-icon">🛒</span>
+              Connect eBay Account
+            </button>
+            <button id="use-sample-data" class="btn btn-secondary">
+              <span class="btn-icon">🧪</span>
+              Use Sample Data
+            </button>
+          </div>
+          <div class="oauth-info">
+            <p><small>Connecting your eBay account allows us to sync your purchase history automatically.</small></p>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Bind OAuth events
+    this.bindOAuthEvents();
+  }
+
+  /**
+   * Bind OAuth events
+   */
+  bindOAuthEvents() {
+    // Connect eBay button
+    $('#connect-ebay')?.addEventListener('click', () => {
+      this.initiateEbayOAuth();
+    });
+    
+    // Use sample data button
+    $('#use-sample-data')?.addEventListener('click', () => {
+      this.useSampleData();
+    });
+  }
+
+  /**
+   * Initiate eBay OAuth
+   */
+  initiateEbayOAuth() {
+    debugLog('Initiating eBay OAuth');
+    
+    // Redirect to eBay OAuth service
+    window.location.href = 'https://delightful-liberation-production.up.railway.app/oauth/login';
+  }
+
+  /**
+   * Use sample data
+   */
+  async useSampleData() {
+    debugLog('Using sample data');
+    
+    try {
+      // Load sample purchases
+      await purchasesService.loadPurchases({ limit: 100, useSample: true });
+      
+      // Render UI
+      this.render();
+      
+      // Bind events
+      this.bindEvents();
+      
+      this.isInitialized = true;
+      debugLog('Purchases view initialized with sample data');
+    } catch (error) {
+      debugLog('Error using sample data', error);
       this.showError(error.message);
     }
   }
