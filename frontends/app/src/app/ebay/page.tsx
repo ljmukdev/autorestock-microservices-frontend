@@ -26,11 +26,38 @@ export default function EbayPage() {
   // Fetch purchases on mount
   useEffect(() => {
     fetchPurchases();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Apply filters whenever they change
   useEffect(() => {
-    applyFilters();
+    let filtered = [...purchases];
+
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(p => 
+        p.title.toLowerCase().includes(query) ||
+        p.sellerUserID.toLowerCase().includes(query)
+      );
+    }
+
+    // Date range filter
+    if (dateRange !== 'all') {
+      const days = parseInt(dateRange);
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - days);
+      
+      filtered = filtered.filter(p => 
+        new Date(p.transactionDate) >= cutoffDate
+      );
+    }
+
+    // Status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(p => p.itemStatus === statusFilter);
+    }
+
+    setFilteredPurchases(filtered);
   }, [purchases, searchQuery, dateRange, statusFilter]);
 
   const fetchPurchases = async (limit: number = 100) => {
@@ -79,37 +106,6 @@ export default function EbayPage() {
       console.error('Sync error:', error);
       throw error;
     }
-  };
-
-  const applyFilters = () => {
-    let filtered = [...purchases];
-
-    // Search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(p => 
-        p.title.toLowerCase().includes(query) ||
-        p.sellerUserID.toLowerCase().includes(query)
-      );
-    }
-
-    // Date range filter
-    if (dateRange !== 'all') {
-      const days = parseInt(dateRange);
-      const cutoffDate = new Date();
-      cutoffDate.setDate(cutoffDate.getDate() - days);
-      
-      filtered = filtered.filter(p => 
-        new Date(p.transactionDate) >= cutoffDate
-      );
-    }
-
-    // Status filter
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(p => p.itemStatus === statusFilter);
-    }
-
-    setFilteredPurchases(filtered);
   };
 
   // Calculate stats
