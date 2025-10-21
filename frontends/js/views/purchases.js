@@ -1,4 +1,4 @@
- exact replica of the program,. test functionality. aapi/**
+/**
  * AutoRestock Purchases View
  * Coordinates purchases service with UI
  */
