@@ -25,7 +25,7 @@ export default function HomePage() {
             </li>
             <li>
               <Link href="/purchases" className="nav-link">
-                Purchases (Coming Soon)
+                Purchases
               </Link>
             </li>
             <li>

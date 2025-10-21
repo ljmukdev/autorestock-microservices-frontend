@@ -1,0 +1,51 @@
+I just deployed a new eBay purchases frontend to Railway and need your help testing it systematically.
+
+WHAT WAS BUILT:
+- 5 new React/TypeScript components (Dashboard, Sync Controls, Filters, List, Detail)
+- 2 new Next.js pages: /ebay (main) and /ebay/purchase/[id] (detail)
+- Integrates with existing eBay microservice API (no backend changes)
+- Responsive design with search, filters, and manual sync
+
+TECH STACK:
+- Next.js 14, TypeScript, Tailwind CSS
+- Backend: https://delightful-liberation-production.up.railway.app
+- Frontend: https://autorestock-microservices-frontend-production.up.railway.app
+
+KEY FEATURES TO TEST:
+1. Dashboard with 4 stat cards (purchases, spending, shipped, in-transit)
+2. Manual sync button (7/30/90 days)
+3. Search by title/seller
+4. Filters (date range, status)
+5. Purchases list (table on desktop, cards on mobile)
+6. Purchase detail page with all 13 fields
+7. Links to eBay items and sellers
+8. Tracking number display
+9. Responsive design
+10. Loading/error states
+
+DATA STRUCTURE:
+Each purchase has 13 fields: itemId, title, sellerUserID, price, shippingCost, quantity, transactionDate, shippedTime, trackingNumber, shippingCarrier, itemStatus, orderId, transactionId
+
+YOUR TASK:
+Create a comprehensive, step-by-step test plan with:
+1. Exact URLs to visit
+2. Specific actions to perform
+3. Expected results for each action
+4. What to check in browser console/network tab
+5. Pass/fail criteria for each test
+6. How to diagnose issues
+
+TESTING SCENARIOS:
+- Basic navigation and routing
+- Dashboard functionality
+- Search and filters
+- Sync controls
+- Purchase detail page
+- Empty states
+- Error handling
+- OAuth integration
+- Responsive design (mobile/desktop)
+- Edge cases (invalid IDs, network errors, missing data)
+
+Please start by giving me the first 5 detailed tests to run with exact steps, expected results, and troubleshooting tips.
+
