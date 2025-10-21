@@ -177,11 +177,15 @@ class OAuthService {
    */
   openOAuthPopup(loginUrl, service) {
     return new Promise((resolve, reject) => {
+      debugLog('Opening OAuth popup with URL:', loginUrl);
+      
       // Calculate popup position (center on screen)
       const width = 600;
       const height = 700;
       const left = (screen.width - width) / 2;
       const top = (screen.height - height) / 2;
+      
+      debugLog('Popup dimensions:', { width, height, left, top });
       
       // Open popup window
       const popup = window.open(
@@ -191,9 +195,12 @@ class OAuthService {
       );
       
       if (!popup) {
+        debugLog('Popup was blocked by browser');
         reject(new Error('Popup blocked. Please allow popups for this site.'));
         return;
       }
+      
+      debugLog('Popup opened successfully');
       
       // Focus the popup
       popup.focus();
