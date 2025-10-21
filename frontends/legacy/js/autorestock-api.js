@@ -400,7 +400,7 @@ class AutoRestockAPI {
      * @returns {Promise} eBay purchase orders
      */
     async getEbayOrders(limit = 10) {
-        return this.request(`https://stockpilot-ebay-oauth-production.up.railway.app/api/ebay/default_user/purchases?limit=${limit}`);
+        return this.request(`https://delightful-liberation-production.up.railway.app/purchases?limit=${limit}`);
     }
 
     /**
@@ -418,7 +418,7 @@ class AutoRestockAPI {
      * @returns {Promise} eBay sales data
      */
     async getEbaySales(limit = 10) {
-        return this.request(`https://stockpilot-ebay-oauth-production.up.railway.app/api/ebay/default_user/sales?limit=${limit}`);
+        return this.request(`https://delightful-liberation-production.up.railway.app/sales?limit=${limit}`);
     }
 
     /**
@@ -426,7 +426,7 @@ class AutoRestockAPI {
      * @returns {Promise} eBay account data
      */
     async getEbayAccountSummary() {
-        return this.request('https://stockpilot-ebay-oauth-production.up.railway.app/api/ebay/default_user/account-summary');
+        return this.request('https://delightful-liberation-production.up.railway.app/health');
     }
 
     /**
@@ -434,7 +434,7 @@ class AutoRestockAPI {
      * @returns {Promise} eBay service test result
      */
     async testEbayService() {
-        return this.request('https://stockpilot-ebay-oauth-production.up.railway.app/api/ebay/default_user/test');
+        return this.request('https://delightful-liberation-production.up.railway.app/health');
     }
 
     // ===== UTILITY METHODS =====

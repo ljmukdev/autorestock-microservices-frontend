@@ -4,29 +4,30 @@
  */
 
 // Service base URLs
-export const EBAY_SERVICE_BASE = localStorage.getItem('STOCKPILOT_EBAY_SERVICE_BASE') || 
-  'https://stockpilot-ebay-service-production.up.railway.app';
+export const EBAY_SERVICE_BASE = localStorage.getItem('AUTORESTOCK_EBAY_SERVICE_BASE') || 
+  'https://delightful-liberation-production.up.railway.app';
 
 // Runtime flags from query params or localStorage
 const urlParams = new URLSearchParams(window.location.search);
 export const FORCE_LIVE = urlParams.get('live') === '1' || 
-  localStorage.getItem('STOCKPILOT_FORCE_LIVE') === '1';
+  localStorage.getItem('AUTORESTOCK_FORCE_LIVE') === '1';
 export const USE_SAMPLE = urlParams.get('sample') === '1' || 
-  localStorage.getItem('STOCKPILOT_SAMPLE_MODE') === '1';
+  localStorage.getItem('AUTORESTOCK_SAMPLE_MODE') === '1';
 
 // API endpoints
 export const API_ENDPOINTS = {
-  PURCHASES: `${EBAY_SERVICE_BASE}/ljmukdev/purchases`,
+  PURCHASES: `${EBAY_SERVICE_BASE}/purchases`,
   INVENTORY: '/api/inventory',
   SALES: '/api/sales',
-  AUTH: 'https://stockpilot-ebay-oauth-production.up.railway.app/ebay-oauth/login'
+  AUTH: 'https://delightful-liberation-production.up.railway.app/oauth/login'
 };
 
 // Default request options
 export const DEFAULT_REQUEST_OPTIONS = {
   headers: {
     'Content-Type': 'application/json'
-  }
+  },
+  credentials: 'include' // CRITICAL: Enable CORS with credentials for eBay service
 };
 
 // Sample data configuration

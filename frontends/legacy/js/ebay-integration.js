@@ -5,7 +5,7 @@
 
 class EbayIntegration {
   constructor() {
-    this.baseUrl = 'https://stockpilot-ebay-oauth-production.up.railway.app';
+    this.baseUrl = 'https://delightful-liberation-production.up.railway.app';
     this.isAuthenticated = false;
     this.tokenStatus = null;
     this.syncInterval = null;

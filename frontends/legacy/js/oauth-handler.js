@@ -5,9 +5,9 @@
 
 class OAuthHandler {
     constructor() {
-        this.oauthUrl = 'https://stockpilot-ebay-oauth-production.up.railway.app/ebay-oauth/login';
-        this.testUrl = 'https://stockpilot-ebay-oauth-production.up.railway.app/api/ebay/default_user/test';
-        this.callbackUrl = 'https://stockpilot-ebay-oauth-production.up.railway.app/ebay-oauth/callback';
+        this.oauthUrl = 'https://delightful-liberation-production.up.railway.app/oauth/login';
+        this.testUrl = 'https://delightful-liberation-production.up.railway.app/health';
+        this.callbackUrl = 'https://delightful-liberation-production.up.railway.app/oauth/callback';
         this.isAuthenticating = false;
         this.authWindow = null;
     }

@@ -4,7 +4,7 @@
  */
 
 import { getJSON, postJSON, putJSON, withRetry, withTimeout, handleHttpError } from '../../core/http.js';
-import { API_ENDPOINTS, debugLog } from '../../core/config.js';
+import { API_ENDPOINTS, EBAY_SERVICE_BASE, debugLog } from '../../core/config.js';
 
 /**
  * Get purchases from eBay service
@@ -164,7 +164,7 @@ export async function syncPurchases(params = {}) {
   try {
     const response = await withRetry(
       () => withTimeout(
-        getJSON(`${API_ENDPOINTS.PURCHASES}/sync`, params),
+        getJSON(`${EBAY_SERVICE_BASE}/sync/purchases`, params),
         30000 // 30 second timeout for sync
       ),
       1, // 1 retry for sync

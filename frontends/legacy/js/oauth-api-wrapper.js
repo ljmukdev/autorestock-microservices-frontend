@@ -5,7 +5,7 @@
 
 class OAuthApiWrapper {
     constructor() {
-        this.baseUrl = 'https://stockpilot-ebay-oauth-production.up.railway.app';
+        this.baseUrl = 'https://delightful-liberation-production.up.railway.app';
         this.oauthHandler = window.oauthHandler;
         this.pendingRequests = new Map();
     }

@@ -103,10 +103,10 @@ async function getFallbackPurchases() {
                 throw new Error('Local API failed');
             }
         } catch (error) {
-            purchases = JSON.parse(localStorage.getItem('stockpilot_purchases') || '[]');
+            purchases = JSON.parse(localStorage.getItem('autorestock_purchases') || '[]');
         }
     } else {
-        purchases = JSON.parse(localStorage.getItem('stockpilot_purchases') || '[]');
+        purchases = JSON.parse(localStorage.getItem('autorestock_purchases') || '[]');
     }
     
     return purchases;
@@ -174,7 +174,7 @@ function extractModel(title) {
  */
 async function syncPurchasesToInventory(purchases) {
     if (typeof window.inventoryData === 'undefined') {
-        window.inventoryData = JSON.parse(localStorage.getItem('stockpilot_inventory') || '[]');
+        window.inventoryData = JSON.parse(localStorage.getItem('autorestock_inventory') || '[]');
     }
     
     // Find delivered purchases that aren't already in inventory
@@ -211,7 +211,7 @@ async function syncPurchasesToInventory(purchases) {
     });
     
     // Save to localStorage
-    localStorage.setItem('stockpilot_inventory', JSON.stringify(window.inventoryData));
+    localStorage.setItem('autorestock_inventory', JSON.stringify(window.inventoryData));
     
     showMessage(`✅ Successfully synced ${syncedCount} items from purchases!`, 'success');
     

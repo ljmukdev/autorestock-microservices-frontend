@@ -21,13 +21,15 @@ export function mapEbayDataToPurchases(ebayData) {
     hasOrders: !!ebayData.orders, 
     hasRecentPurchases: !!ebayData.recentPurchases,
     hasItems: !!ebayData.items,
-    hasResults: !!ebayData.results
+    hasResults: !!ebayData.results,
+    hasPurchases: !!ebayData.purchases,
+    purchasesCount: ebayData.purchases?.length || 0
   });
 
   const purchases = [];
   
-  // Handle different eBay data structures
-  const orders = ebayData.orders || ebayData.recentPurchases || ebayData.items || ebayData.results || [];
+  // Handle different eBay data structures - prioritize 'purchases' array from our microservice
+  const orders = ebayData.purchases || ebayData.orders || ebayData.recentPurchases || ebayData.items || ebayData.results || [];
   
   if (!Array.isArray(orders)) {
     debugLog('Orders data is not an array', typeof orders);
@@ -66,24 +68,24 @@ function mapSingleOrder(order, index) {
   // Get first item for basic info
   const firstItem = lineItems[0] || {};
   
-  // Extract title from various possible fields
-  const title = extractTitle(firstItem, order);
+  // Extract title from various possible fields (prioritize eBay microservice format)
+  const title = order.title || extractTitle(firstItem, order);
   
   // Extract brand and model
   const brand = extractBrand(title);
   const model = extractModel(title, brand);
   
-  // Extract money values
-  const purchasePrice = extractMoney(firstItem.unitPrice || firstItem.price || firstItem.TotalTransactionPrice || 0);
-  const totalPaid = extractOrderTotal(order, lineItems);
-  const shippingCost = extractShippingCost(order, lineItems);
+  // Extract money values (prioritize eBay microservice format)
+  const purchasePrice = extractMoney(order.price || firstItem.unitPrice || firstItem.price || firstItem.TotalTransactionPrice || 0);
+  const shippingCost = extractMoney(order.shippingCost || 0);
+  const totalPaid = purchasePrice + shippingCost;
   
-  // Extract dates
-  const orderDate = extractDate(order);
+  // Extract dates (prioritize eBay microservice format)
+  const orderDate = order.transactionDate || extractDate(order);
   const purchaseDate = orderDate ? orderDate.split('T')[0] : new Date().toISOString().split('T')[0];
   
-  // Extract seller info
-  const sellerUsername = extractSeller(order);
+  // Extract seller info (prioritize eBay microservice format)
+  const sellerUsername = order.sellerUserID || extractSeller(order);
   
   // Generate unique identifier
   const identifier = generatePurchaseIdentifier(order, title, orderDate, index);
@@ -96,9 +98,12 @@ function mapSingleOrder(order, index) {
     brand,
     model,
     order_id: order.orderId || order.order_id || order.id,
+    transaction_id: order.transactionId || order.transaction_id,
+    item_id: order.itemId || order.item_id,
     orderDate,
     purchase_date: purchaseDate,
     seller_username: sellerUsername,
+    seller_id: order.sellerUserID || order.seller_id,
     items: lineItems.map(item => ({
       productName: item.productName || item.title || item.name || 'Unknown Item',
       sku: item.sku || item.itemId || '',
@@ -110,10 +115,14 @@ function mapSingleOrder(order, index) {
     total_paid: totalPaid,
     totalAmount: totalPaid,
     shipping_cost: shippingCost,
-    delivery_status: order.orderStatus || order.status || 'Delivered',
+    delivery_status: order.itemStatus || order.orderStatus || order.status || 'Despatched',
+    tracking_ref: order.trackingNumber || order.tracking_ref,
+    carrier: order.shippingCarrier || order.carrier,
+    shipped_time: order.shippedTime || order.shipped_time,
     source: 'ebay-oauth',
     created_at: new Date().toISOString(),
-    status: order.orderStatus || order.status || 'Delivered'
+    status: order.itemStatus || order.orderStatus || order.status || 'Despatched',
+    quantity: order.quantity || 1
   };
 
   debugLog(`Mapped purchase: ${identifier}`, {
