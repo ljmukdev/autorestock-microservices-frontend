@@ -32,18 +32,32 @@ export default function EbayPage() {
 
     const fetchPurchases = async () => {
       try {
-        console.log('Fetching purchases from:', ebayServiceUrl);
-        const response = await fetch(`${ebayServiceUrl}/purchases?limit=10`, {
+        console.log('Environment check:');
+        console.log('- NEXT_PUBLIC_EBAY_SERVICE_URL:', process.env.NEXT_PUBLIC_EBAY_SERVICE_URL);
+        console.log('- ebayServiceUrl:', ebayServiceUrl);
+        
+        const url = `${ebayServiceUrl}/purchases?limit=10`;
+        console.log('Fetching from URL:', url);
+        
+        const response = await fetch(url, {
+          method: 'GET',
+          mode: 'cors',
           credentials: 'include',
           headers: {
-            'Accept': 'application/json'
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
           }
         });
 
         if (!mounted) return;
 
+        console.log('Response status:', response.status);
+        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
         if (!response.ok) {
-          throw new Error(`API error: ${response.status}`);
+          const errorText = await response.text();
+          console.error('Response error:', errorText);
+          throw new Error(`API error: ${response.status} - ${errorText}`);
         }
 
         const data = await response.json();
