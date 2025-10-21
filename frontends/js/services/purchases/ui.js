@@ -1,67 +1,191 @@
 /**
- * AutoRestock Purchases UI
- * Renders purchase lists, cards, and status information
+ * AutoRestock Purchases UI Components
+ * Rendering functions for purchase-related UI elements
  */
 
-import { money, timeAgo, getPlatformEmoji, formatDate } from '../../core/utils.js';
 import { debugLog } from '../../core/config.js';
 
 /**
- * Render purchase cards
- * @param {Array} purchases - Array of purchase objects
+ * Render purchase history table
+ * @param {Array} purchases - Array of purchases
  * @param {Object} options - Render options
  * @returns {string} HTML string
  */
-export function renderPurchaseCards(purchases, options = {}) {
-  if (!purchases || purchases.length === 0) {
-    return renderEmptyState(options.emptyMessage || 'No purchases found');
+export function renderPurchaseHistory(purchases = [], options = {}) {
+  const { showStats = true, showFilters = true } = options;
+  
+  debugLog('Rendering purchase history', { purchaseCount: purchases.length });
+  
+  let html = '';
+  
+  // Statistics section
+  if (showStats) {
+    const stats = calculateStats(purchases);
+    html += renderStatsSection(stats);
   }
-
-  debugLog(`Rendering ${purchases.length} purchase cards`);
-
-  const cards = purchases.map(purchase => renderPurchaseCard(purchase, options));
-  return cards.join('');
+  
+  // Filters section
+  if (showFilters) {
+    html += renderFiltersSection();
+  }
+  
+  // Purchase table
+  html += renderPurchaseTable(purchases);
+  
+  return html;
 }
 
 /**
- * Render purchase list (table format)
- * @param {Array} purchases - Array of purchase objects
- * @param {Object} options - Render options
+ * Calculate purchase statistics
+ * @param {Array} purchases - Array of purchases
+ * @returns {Object} Statistics object
+ */
+function calculateStats(purchases) {
+  const totalInvestment = purchases.reduce((sum, p) => sum + (p.purchase_price || 0), 0);
+  const purchaseCount = purchases.length;
+  const averagePurchase = purchaseCount > 0 ? totalInvestment / purchaseCount : 0;
+  
+  return {
+    totalInvestment,
+    purchaseCount,
+    averagePurchase,
+    lastSync: new Date()
+  };
+}
+
+/**
+ * Render statistics section
+ * @param {Object} stats - Statistics object
  * @returns {string} HTML string
  */
-export function renderPurchaseList(purchases, options = {}) {
-  if (!purchases || purchases.length === 0) {
-    return renderEmptyState(options.emptyMessage || 'No purchases found');
-  }
-
-  debugLog(`Rendering ${purchases.length} purchases in list format`);
-
-  const {
-    showActions = true,
-    showDetails = true
-  } = options;
-
-  const tableRows = purchases.map(purchase => renderPurchaseListRow(purchase, options));
-
+function renderStatsSection(stats) {
   return `
-    <div class="purchase-list-container">
-      <table class="purchase-list-table">
+    <div class="stats-section">
+      <div class="stat-card">
+        <div class="stat-icon">💰</div>
+        <div class="stat-content">
+          <div class="stat-value">${formatCurrency(stats.totalInvestment)}</div>
+          <div class="stat-label">Total Investment</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📦</div>
+        <div class="stat-content">
+          <div class="stat-value">${stats.purchaseCount}</div>
+          <div class="stat-label">Total Purchases</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📊</div>
+        <div class="stat-content">
+          <div class="stat-value">${formatCurrency(stats.averagePurchase)}</div>
+          <div class="stat-label">Average Purchase</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🔄</div>
+        <div class="stat-content">
+          <div class="stat-value">${formatDate(stats.lastSync)}</div>
+          <div class="stat-label">Last Sync</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Render filters section
+ * @returns {string} HTML string
+ */
+function renderFiltersSection() {
+  return `
+    <div class="filters-section">
+      <div class="filter-group">
+        <label for="search-filter">Search:</label>
+        <input type="text" id="search-filter" placeholder="Search purchases...">
+      </div>
+      <div class="filter-group">
+        <label for="date-filter">Date Range:</label>
+        <select id="date-filter">
+          <option value="">All Time</option>
+          <option value="7">Last 7 Days</option>
+          <option value="30">Last 30 Days</option>
+          <option value="90">Last 90 Days</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="status-filter">Status:</label>
+        <select id="status-filter">
+          <option value="">All Status</option>
+          <option value="Delivered">Delivered</option>
+          <option value="Shipped">Shipped</option>
+          <option value="Processing">Processing</option>
+        </select>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Render purchase table
+ * @param {Array} purchases - Array of purchases
+ * @returns {string} HTML string
+ */
+function renderPurchaseTable(purchases) {
+  if (purchases.length === 0) {
+    return `
+      <div class="empty-state">
+        <div class="empty-icon">📦</div>
+        <h3>No purchases found</h3>
+        <p>Try syncing with eBay or check your connection.</p>
+        <button id="sync-now" class="btn btn-primary">Sync Now</button>
+      </div>
+    `;
+  }
+  
+  const rows = purchases.map(purchase => `
+    <tr class="purchase-row" data-purchase-id="${purchase._id}">
+      <td class="date-cell">${formatDate(purchase.purchase_date)}</td>
+      <td class="product-cell">
+        <div class="product-info">
+          <div class="product-name">${purchase.product_name}</div>
+          <div class="product-model">${purchase.model || ''}</div>
+        </div>
+      </td>
+      <td class="brand-cell">
+        <span class="brand-badge">${purchase.brand || 'Unknown'}</span>
+      </td>
+      <td class="seller-cell">${purchase.seller_username || 'Unknown'}</td>
+      <td class="price-cell">${formatCurrency(purchase.purchase_price)}</td>
+      <td class="status-cell">
+        <span class="status-badge status-${purchase.delivery_status?.toLowerCase().replace(' ', '-')}">
+          ${purchase.delivery_status || 'Unknown'}
+        </span>
+      </td>
+      <td class="actions-cell">
+        <button class="btn-icon" title="View Details" onclick="viewPurchase('${purchase._id}')">
+          👁️
+        </button>
+      </td>
+    </tr>
+  `).join('');
+  
+  return `
+    <div class="purchases-table-container">
+      <table class="purchases-table">
         <thead>
           <tr>
-            <th style="width: 40px;">
-              <input type="checkbox" id="select-all-purchases" class="purchase-checkbox" title="Select all purchases">
-            </th>
-            <th style="width: 40px;">📦</th>
+            <th>Date</th>
             <th>Product</th>
-            <th style="width: 100px;">Platform</th>
-            <th style="width: 100px;">Amount</th>
-            <th style="width: 120px;">Date</th>
-            <th style="width: 100px;">Status</th>
-            ${showActions ? '<th style="width: 200px;">Actions</th>' : ''}
+            <th>Brand</th>
+            <th>Seller</th>
+            <th>Price</th>
+            <th>Status</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          ${tableRows.join('')}
+          ${rows}
         </tbody>
       </table>
     </div>
@@ -69,176 +193,17 @@ export function renderPurchaseList(purchases, options = {}) {
 }
 
 /**
- * Render single purchase list row
- * @param {Object} purchase - Purchase object
- * @param {Object} options - Render options
+ * Render status bar
+ * @param {Object} status - Status object
  * @returns {string} HTML string
  */
-function renderPurchaseListRow(purchase, options = {}) {
-  const {
-    showActions = true,
-    showDetails = true
-  } = options;
-
-  const timeAgoStr = timeAgo(new Date(purchase.orderDate || purchase.purchase_date || purchase.createdAt));
-  const platformEmoji = getPlatformEmoji(purchase.platform || 'Unknown');
-  const total = calculateTotal(purchase);
-  const productName = purchase.product_name || purchase.items?.[0]?.productName || 'Unknown Item';
-  const brand = purchase.brand || purchase.supplier || 'Unknown';
-  const status = purchase.status || purchase.delivery_status || 'Unknown';
-  const purchaseDate = formatDate(purchase.purchase_date || purchase.orderDate, { dateStyle: 'short' });
-
-  const actionsHtml = showActions ? renderPurchaseListActions(purchase) : '';
-
-  return `
-    <tr class="purchase-list-row" data-id="${purchase._id || purchase.id}" style="cursor: pointer;" title="Click to view details">
-      <td class="purchase-checkbox-cell">
-        <input type="checkbox" class="purchase-checkbox" data-purchase-id="${purchase._id || purchase.id}" title="Select this purchase">
-      </td>
-      <td class="purchase-icon-cell">${platformEmoji}</td>
-      <td class="purchase-product-cell">
-        <div class="purchase-product-name"><strong>${brand} ${productName}</strong></div>
-        <div class="purchase-product-details">
-          ${purchase.seller_username ? `Seller: ${purchase.seller_username}` : ''}
-          ${purchase.order_id ? ` • Order: ${purchase.order_id}` : ''}
-        </div>
-      </td>
-      <td class="purchase-platform-cell">${purchase.platform || 'Unknown'}</td>
-      <td class="purchase-amount-cell"><strong>${money(total)}</strong></td>
-      <td class="purchase-date-cell">${purchaseDate}</td>
-      <td class="purchase-status-cell">
-        <span class="status-badge status-${status.toLowerCase().replace(/\s+/g, '-')}">${status}</span>
-      </td>
-      ${showActions ? `<td class="purchase-actions-cell">${actionsHtml}</td>` : ''}
-    </tr>
-  `;
-}
-
-/**
- * Render purchase actions for list view
- * @param {Object} purchase - Purchase object
- * @returns {string} HTML string
- */
-function renderPurchaseListActions(purchase) {
-  const purchaseId = purchase._id || purchase.id;
+export function renderStatusBar(status) {
+  const { message, type = 'info' } = status;
   
   return `
-    <div class="purchase-list-actions">
-      <button class="btn btn-small action-stage" data-action="stage" data-id="${purchaseId}" title="Stage for processing">🔍</button>
-      <button class="btn btn-small action-split" data-action="split" data-id="${purchaseId}" title="Split purchase">✂️</button>
-      <button class="btn btn-small action-inventory" data-action="inventory" data-id="${purchaseId}" title="Move to inventory">📦</button>
-      <button class="btn btn-small action-delete" data-action="delete" data-id="${purchaseId}" title="Delete purchase">🗑️</button>
-    </div>
-  `;
-}
-
-/**
- * Render single purchase card
- * @param {Object} purchase - Purchase object
- * @param {Object} options - Render options
- * @returns {string} HTML string
- */
-export function renderPurchaseCard(purchase, options = {}) {
-  const {
-    showActions = true,
-    showDetails = true,
-    compact = false
-  } = options;
-
-  const timeAgoStr = timeAgo(new Date(purchase.orderDate || purchase.purchase_date || purchase.createdAt));
-  const platformEmoji = getPlatformEmoji(purchase.platform || 'Unknown');
-  const total = calculateTotal(purchase);
-  const productName = purchase.product_name || purchase.items?.[0]?.productName || 'Unknown Item';
-  const brand = purchase.brand || purchase.supplier || 'Unknown';
-
-  const cardClass = compact ? 'purchase-card-compact' : 'purchase-card';
-  const actionsHtml = showActions ? renderPurchaseActions(purchase) : '';
-  const detailsHtml = showDetails ? renderPurchaseDetails(purchase, compact) : '';
-
-  return `
-    <div class="${cardClass}" data-id="${purchase._id || purchase.id}" style="cursor: pointer;" title="Click to view details">
-      <div class="purchase-icon">${platformEmoji}</div>
-      <div class="purchase-text">
-        <div><strong>${brand} ${productName}</strong></div>
-        <div style="font-size:11px; color:#666; margin-top:2px;">
-          ${purchase.platform || 'Unknown'} • ${timeAgoStr} • ${purchase.category || 'Uncategorized'}
-        </div>
-        ${detailsHtml}
-      </div>
-      <div class="purchase-amount">${money(total)}</div>
-      ${actionsHtml}
-    </div>
-  `;
-}
-
-/**
- * Render purchase actions
- * @param {Object} purchase - Purchase object
- * @returns {string} HTML string
- */
-function renderPurchaseActions(purchase) {
-  const purchaseId = purchase._id || purchase.id;
-  
-  return `
-    <div class="staging-controls">
-      <button class="btn btn-small action-stage" data-action="stage" data-id="${purchaseId}">🔍 Stage</button>
-      <button class="btn btn-small action-split" data-action="split" data-id="${purchaseId}">✂️ Split</button>
-      <button class="btn btn-small action-inventory" data-action="inventory" data-id="${purchaseId}">📦 Inventory</button>
-      <button class="btn btn-small action-delete" data-action="delete" data-id="${purchaseId}">🗑️ Delete</button>
-    </div>
-  `;
-}
-
-/**
- * Render purchase details
- * @param {Object} purchase - Purchase object
- * @param {boolean} compact - Compact mode
- * @returns {string} HTML string
- */
-function renderPurchaseDetails(purchase, compact = false) {
-  if (compact) {
-    return `
-      <div style="font-size:10px; color:#888; margin-top:1px;">
-        ${purchase.seller_username || 'Unknown seller'} • ${formatDate(purchase.purchase_date, { dateStyle: 'short' })}
-      </div>
-    `;
-  }
-
-  return `
-    <div style="font-size:10px; color:#888; margin-top:1px;">
-      <div>Seller: ${purchase.seller_username || 'Unknown'}</div>
-      <div>Order ID: ${purchase.order_id || 'N/A'}</div>
-      <div>Date: ${formatDate(purchase.purchase_date, { dateStyle: 'short' })}</div>
-      ${purchase.tracking_ref ? `<div>Tracking: ${purchase.tracking_ref}</div>` : ''}
-    </div>
-  `;
-}
-
-/**
- * Render empty state
- * @param {string} message - Empty state message
- * @param {string} type - Empty state type (auth, empty, error)
- * @returns {string} HTML string
- */
-export function renderEmptyState(message, type = 'empty') {
-  const icons = {
-    auth: '🔐',
-    empty: '📭',
-    error: '❌'
-  };
-  
-  const suggestions = {
-    auth: 'Try refreshing the page or check OAuth authentication.',
-    empty: 'Try refreshing or adding a new purchase.',
-    error: 'Check your connection and try again.'
-  };
-  
-  return `
-    <div style="text-align:center; padding:40px 20px; color:#1a365d;">
-      <div style="font-size: 3rem; margin-bottom: 1rem;">${icons[type] || icons.empty}</div>
-      <h4>${message}</h4>
-      <p>${suggestions[type] || suggestions.empty}</p>
-      ${type === 'auth' ? '<button class="btn btn-primary" id="refresh-page-btn">🔄 Refresh Page</button>' : ''}
+    <div class="status-bar status-${type}">
+      <span class="status-icon">${getStatusIcon(type)}</span>
+      <span class="status-message">${message}</span>
     </div>
   `;
 }
@@ -248,10 +213,10 @@ export function renderEmptyState(message, type = 'empty') {
  * @param {string} message - Loading message
  * @returns {string} HTML string
  */
-export function renderLoadingState(message = 'Loading purchases...') {
+export function renderLoadingState(message = 'Loading...') {
   return `
-    <div class="spa-loading">
-      <div class="spa-spinner"></div>
+    <div class="loading-state">
+      <div class="loading-spinner"></div>
       <p>${message}</p>
     </div>
   `;
@@ -260,1037 +225,69 @@ export function renderLoadingState(message = 'Loading purchases...') {
 /**
  * Render error state
  * @param {string} message - Error message
- * @param {Function} onRetry - Retry callback
- * @returns {Element} DOM element
- */
-export function renderErrorState(message, onRetry = null) {
-  const div = document.createElement('div');
-  div.className = 'spa-error';
-  div.innerHTML = `
-    <h4>❌ Failed to Load Purchases</h4>
-    <p><strong>Error:</strong> ${message}</p>
-    ${onRetry ? `<button class="btn btn-primary" data-action="purchases-retry">🔄 Try Again</button>` : ''}
-  `;
-  if (onRetry) {
-    const btn = div.querySelector('[data-action="purchases-retry"]');
-    btn?.addEventListener('click', () => onRetry());
-  }
-  return div;
-}
-
-/**
- * Render status bar
- * @param {Object} stats - Statistics object
  * @returns {string} HTML string
  */
-export function renderStatusBar(stats) {
-  const {
-    totalInvestment = 0,
-    purchaseCount = 0,
-    averagePurchase = 0,
-    lastSync = new Date(),
-    sourceBreakdown = { manual: 0, auto: 0 },
-    monthlyChange = '+12%'
-  } = stats;
-
+export function renderErrorState(message = 'An error occurred') {
   return `
-    <div class="spa-status-bar">
-      <div class="spa-status-item">
-        <span>💰</span>
-        <span>Total Investment: <strong>${money(totalInvestment)}</strong></span>
-        <span class="spa-status-badge">${monthlyChange}</span>
-      </div>
-      <div class="spa-status-item">
-        <span>🛒</span>
-        <span><strong>${purchaseCount}</strong> purchases</span>
-        <span class="spa-status-badge">${sourceBreakdown.manual} manual, ${sourceBreakdown.auto} auto</span>
-      </div>
-      <div class="spa-status-item">
-        <span>📊</span>
-        <span>Average: <strong>${money(averagePurchase)}</strong></span>
-      </div>
-      <div class="spa-status-item">
-        <span>🔄</span>
-        <span>Last sync: <span>${formatDate(lastSync, { timeStyle: 'short' })}</span></span>
-      </div>
+    <div class="error-state">
+      <div class="error-icon">⚠️</div>
+      <h3>Error</h3>
+      <p>${message}</p>
+      <button id="retry-load" class="btn btn-primary">Retry</button>
     </div>
   `;
 }
 
 /**
- * Render purchase history section
- * @param {Array} purchases - Array of purchases
- * @param {Object} options - Render options
+ * Render empty state
+ * @param {string} message - Empty state message
  * @returns {string} HTML string
  */
-export function renderPurchaseHistory(purchases, options = {}) {
-  const {
-    showHeader = true,
-    showActions = true,
-    title = '📊 Purchase History & Staging',
-    viewMode = 'list' // 'list' or 'cards'
-  } = options;
-
-  const headerHtml = showHeader ? `
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-      <h3 style="margin:0; color:#1a365d; font-size:18px; display:flex; align-items:center; gap:8px;">
-        ${title}
-        <span class="spa-status-badge">${purchases.length} items</span>
-      </h3>
-      ${showActions ? renderHistoryActions() : ''}
-    </div>
-  ` : '';
-
-  const contentHtml = viewMode === 'list' ? 
-    renderPurchaseList(purchases, options) : 
-    renderPurchaseCards(purchases, options);
-
+export function renderEmptyState(message = 'No data available') {
   return `
-    <div class="recent-activity">
-      ${headerHtml}
-      <div id="purchaseHistoryContent">
-        ${contentHtml}
-      </div>
+    <div class="empty-state">
+      <div class="empty-icon">📦</div>
+      <h3>No Data</h3>
+      <p>${message}</p>
     </div>
   `;
 }
 
 /**
- * Render history actions
- * @returns {string} HTML string
+ * Get status icon for status type
+ * @param {string} type - Status type
+ * @returns {string} Icon
  */
-function renderHistoryActions() {
-  return `
-    <div style="display:flex; gap:8px;">
-      <button id="btn-add-purchase" class="btn btn-primary btn-small">➕ Add Purchase</button>
-      <button id="btn-ebay-sync" class="btn btn-info btn-small">🛒 Sync eBay</button>
-      <button id="btn-ebay-login" class="btn btn-warning btn-small">🔐 eBay Login</button>
-      <button id="btn-refresh" class="btn btn-secondary btn-small">Refresh</button>
-    </div>
-  `;
-}
-
-/**
- * Calculate total for purchase
- * @param {Object} purchase - Purchase object
- * @returns {number} Total amount
- */
-function calculateTotal(purchase) {
-  // Try totalAmount first
-  if (purchase.totalAmount != null) {
-    return Number(purchase.totalAmount || 0);
-  }
-  
-  // Try total_paid
-  if (purchase.total_paid != null) {
-    return Number(purchase.total_paid || 0);
-  }
-  
-  // Calculate from components
-  const pricePaid = Number(purchase.price_paid || 0);
-  const shippingCost = Number(purchase.shipping_cost || 0);
-  const fees = Number(purchase.fees || 0);
-  
-  return pricePaid + shippingCost + fees;
-}
-
-/**
- * Render purchase details modal content
- * @param {Object} purchase - Purchase object
- * @returns {string} HTML string
- */
-export function renderPurchaseDetailsModal(purchase) {
-  const formatCurrency = (amount) => money(amount);
-  const formatDate = (date) => !date ? 'N/A' : new Date(date).toLocaleString();
-  const formatShortDate = (date) => !date ? 'N/A' : new Date(date).toLocaleDateString('en-GB');
-  const formatDateTime = (date) => !date ? 'N/A' : new Date(date).toLocaleString('en-GB');
-  
-  const formatItems = (items) => {
-    if (!items || !Array.isArray(items)) return '<p>No items</p>';
-    return items.map((item, index) => `
-      <div class="purchase-item">
-        <div class="purchase-item-header">
-          <div class="purchase-item-name">${item.productName || item.name || 'Unknown Item'}</div>
-          <div class="purchase-item-index">Item ${index + 1}</div>
-        </div>
-        <div class="purchase-item-details">
-          <div><strong>SKU:</strong> ${item.sku || 'N/A'}</div>
-          <div><strong>Qty:</strong> ${item.quantity || 1}</div>
-          <div><strong>Unit Price:</strong> ${formatCurrency(item.unitPrice)}</div>
-          <div><strong>Total:</strong> ${formatCurrency(item.totalPrice)}</div>
-        </div>
-        ${item.description ? `<div class="purchase-item-description">${item.description}</div>` : ''}
-      </div>
-    `).join('');
+function getStatusIcon(type) {
+  const icons = {
+    success: '✅',
+    error: '❌',
+    warning: '⚠️',
+    info: 'ℹ️'
   };
-
-  const total = calculateTotal(purchase);
-  const productName = purchase.product_name || purchase.items?.[0]?.productName || 'Unknown Item';
-  const brand = purchase.brand || purchase.supplier || 'Unknown';
-  
-  // Calculate additional financial metrics
-  const pricePaid = purchase.price_paid || 0;
-  const shippingCost = purchase.shipping_cost || 0;
-  const fees = purchase.fees || 0;
-  const tax = purchase.tax || 0;
-  const discount = purchase.discount || 0;
-  const subtotal = pricePaid + shippingCost + fees + tax - discount;
-
-  return `
-    <div class="purchase-details-grid">
-      <div class="purchase-details-section">
-        <h3>📦 Product Information</h3>
-        <table class="purchase-details-table">
-          <tr><td>Product Name:</td><td>${productName}</td></tr>
-          <tr><td>Brand:</td><td>${brand}</td></tr>
-          <tr><td>Model:</td><td>${purchase.model || 'N/A'}</td></tr>
-          <tr><td>Category:</td><td>${purchase.category || 'N/A'}</td></tr>
-          <tr><td>Platform:</td><td>${purchase.platform || 'N/A'}</td></tr>
-          <tr><td>Source:</td><td>${purchase.source || 'N/A'}</td></tr>
-          <tr><td>Product ID:</td><td>${purchase.product_id || purchase.itemId || 'N/A'}</td></tr>
-          <tr><td>Condition:</td><td>${purchase.condition || 'N/A'}</td></tr>
-        </table>
-      </div>
-
-      <div class="purchase-details-section">
-        <h3>💰 Financial Breakdown</h3>
-        <table class="purchase-details-table">
-          <tr><td>Item Price:</td><td>${formatCurrency(pricePaid)}</td></tr>
-          <tr><td>Unit Price:</td><td>${formatCurrency(pricePaid)}</td></tr>
-          <tr><td>Shipping Cost:</td><td>${formatCurrency(shippingCost)}</td></tr>
-          <tr><td>VAT:</td><td>${formatCurrency(purchase.vat || tax)}</td></tr>
-          <tr><td>Fees:</td><td>${formatCurrency(fees)}</td></tr>
-          <tr><td>Discount:</td><td style="color: #059669;">-${formatCurrency(discount)}</td></tr>
-          <tr><td><strong>Subtotal:</strong></td><td><strong>${formatCurrency(subtotal)}</strong></td></tr>
-          <tr><td><strong>Order Total:</strong></td><td><strong style="color: #059669; font-size: 1.1rem;">${formatCurrency(total)}</strong></td></tr>
-        </table>
-        ${purchase.vat ? `
-        <div class="vat-notice">
-          <small>*VAT collected on this transaction based on applicable laws.</small>
-        </div>
-        ` : ''}
-      </div>
-
-      <div class="purchase-details-section">
-        <h3>📋 Order Details</h3>
-        <table class="purchase-details-table">
-          <tr><td>Order ID:</td><td>${purchase.order_id || 'N/A'}</td></tr>
-          <tr><td>Purchase ID:</td><td>${purchase.identifier || purchase._id || purchase.id || 'N/A'}</td></tr>
-          <tr><td>Transaction ID:</td><td>${purchase.transaction_id || purchase.transactionId || 'N/A'}</td></tr>
-          <tr><td>Status:</td><td><span class="status-badge status-${(purchase.status || purchase.delivery_status || 'unknown').toLowerCase().replace(/\s+/g, '-')}">${purchase.status || purchase.delivery_status || 'Unknown'}</span></td></tr>
-          <tr><td>Payment Status:</td><td>${purchase.payment_status || 'N/A'}</td></tr>
-          <tr><td>Payment Method:</td><td>${purchase.payment_method || 'N/A'}</td></tr>
-        </table>
-      </div>
-
-      <div class="purchase-details-section">
-        <h3>📅 Timeline</h3>
-        <table class="purchase-details-table">
-          <tr><td>Order Date:</td><td>${formatShortDate(purchase.orderDate || purchase.purchase_date)}</td></tr>
-          <tr><td>Purchase Date:</td><td>${formatShortDate(purchase.purchase_date)}</td></tr>
-          <tr><td>Payment Date:</td><td>${formatShortDate(purchase.payment_date || purchase.paidDate)}</td></tr>
-          <tr><td>Shipped Date:</td><td>${formatShortDate(purchase.shipped_date || purchase.shipDate)}</td></tr>
-          <tr><td>Delivered Date:</td><td>${formatShortDate(purchase.delivered_date || purchase.deliveryDate)}</td></tr>
-          <tr><td>Created in System:</td><td>${formatShortDate(purchase.createdAt)}</td></tr>
-          <tr><td>Last Updated:</td><td>${formatShortDate(purchase.updatedAt || purchase.lastModified)}</td></tr>
-        </table>
-      </div>
-
-      <div class="purchase-details-section">
-        <h3>👤 Seller Information</h3>
-        <table class="purchase-details-table">
-          <tr><td>Seller Username:</td><td>${purchase.seller_username || 'N/A'}</td></tr>
-          <tr><td>Seller ID:</td><td>${purchase.seller_id || purchase.sellerId || 'N/A'}</td></tr>
-          <tr><td>Seller Rating:</td><td>${purchase.seller_rating || 'N/A'}</td></tr>
-          <tr><td>Item Number:</td><td>${purchase.item_number || purchase.itemId || 'N/A'}</td></tr>
-          <tr><td>Returns Accepted:</td><td>${purchase.returns_accepted ? 'Yes' : 'No'}</td></tr>
-        </table>
-    </div>
-
-      <div class="purchase-details-section">
-        <h3>📦 Tracking & Delivery</h3>
-        <table class="purchase-details-table">
-          <tr><td>Tracking Number:</td><td>${purchase.tracking_ref || purchase.trackingNumber || 'N/A'}</td></tr>
-          <tr><td>Carrier:</td><td>${purchase.carrier || purchase.shipping_carrier || 'N/A'}</td></tr>
-          <tr><td>Shipping Method:</td><td>${purchase.shipping_method || 'N/A'}</td></tr>
-          <tr><td>Delivery Status:</td><td>${purchase.delivery_status || 'N/A'}</td></tr>
-          <tr><td>Expected Delivery:</td><td>${purchase.expected_delivery || purchase.arriving_by || 'N/A'}</td></tr>
-          <tr><td>Delivery Progress:</td><td>${purchase.delivery_progress || 'N/A'}</td></tr>
-        </table>
-        ${purchase.tracking_ref ? `
-        <div class="tracking-actions">
-          <button class="btn btn-small btn-primary" onclick="window.open('https://www.royalmail.com/track-your-item#/tracking-results/${purchase.tracking_ref}', '_blank')">
-            📦 Track Package
-          </button>
-        </div>
-        ` : ''}
-    </div>
-
-      <div class="purchase-details-section">
-        <h3>📍 Delivery Address</h3>
-        <div class="address-display">
-          ${purchase.delivery_address ? `
-            <div class="address-block">
-              <strong>${purchase.delivery_name || 'Delivery Address'}</strong><br>
-              ${purchase.delivery_address.replace(/\n/g, '<br>')}
-            </div>
-          ` : `
-            <div class="address-block">
-              <strong>Shipping Address:</strong><br>
-              ${purchase.shipping_address || 'N/A'}
-            </div>
-          `}
-        </div>
-        <table class="purchase-details-table">
-          <tr><td>Country:</td><td>${purchase.country || 'N/A'}</td></tr>
-          <tr><td>Currency:</td><td>${purchase.currency || 'GBP'}</td></tr>
-          <tr><td>Language:</td><td>${purchase.language || 'en'}</td></tr>
-      </table>
-    </div>
-
-      <div class="purchase-details-section">
-        <h3>💳 Payment Details</h3>
-        <table class="purchase-details-table">
-          <tr><td>Payment Method:</td><td>${purchase.payment_method || 'N/A'}</td></tr>
-          <tr><td>Card Ending:</td><td>${purchase.card_ending || 'N/A'}</td></tr>
-          <tr><td>Payment Status:</td><td>${purchase.payment_status || 'N/A'}</td></tr>
-          <tr><td>Payment Date:</td><td>${formatShortDate(purchase.payment_date || purchase.paidDate)}</td></tr>
-          <tr><td>Payment Name:</td><td>${purchase.payment_name || 'N/A'}</td></tr>
-        </table>
-      </div>
-    </div>
-
-    <div class="purchase-details-section">
-      <h3>🛍️ Items in Purchase</h3>
-      <div class="purchase-items-list">
-        ${formatItems(purchase.items)}
-      </div>
-    </div>
-
-    ${purchase.notes || purchase.description ? `
-    <div class="purchase-notes">
-      <h4>📝 Additional Information</h4>
-      <p>${purchase.notes || purchase.description || 'No additional notes available.'}</p>
-    </div>
-    ` : ''}
-
-    <div class="purchase-details-section">
-      <h3>🔧 Technical Details</h3>
-      <table class="purchase-details-table">
-        <tr><td>Data Source:</td><td>${purchase.source || 'eBay OAuth'}</td></tr>
-        <tr><td>API Version:</td><td>${purchase.api_version || 'N/A'}</td></tr>
-        <tr><td>Raw Data Available:</td><td>${purchase.raw_data ? 'Yes' : 'No'}</td></tr>
-        <tr><td>Last Synced:</td><td>${formatDateTime(purchase.last_synced || purchase.syncedAt)}</td></tr>
-        <tr><td>Data Quality Score:</td><td>${purchase.data_quality_score || 'N/A'}</td></tr>
-      </table>
-    </div>
-  `;
+  return icons[type] || icons.info;
 }
-
-    totalInvestment = 0,
-
-    purchaseCount = 0,
-
-    averagePurchase = 0,
-
-    lastSync = new Date(),
-
-    sourceBreakdown = { manual: 0, auto: 0 },
-
-    monthlyChange = '+12%'
-
-  } = stats;
-
-
-
-  return `
-
-    <div class="spa-status-bar">
-
-      <div class="spa-status-item">
-
-        <span>💰</span>
-
-        <span>Total Investment: <strong>${money(totalInvestment)}</strong></span>
-
-        <span class="spa-status-badge">${monthlyChange}</span>
-
-      </div>
-
-      <div class="spa-status-item">
-
-        <span>🛒</span>
-
-        <span><strong>${purchaseCount}</strong> purchases</span>
-
-        <span class="spa-status-badge">${sourceBreakdown.manual} manual, ${sourceBreakdown.auto} auto</span>
-
-      </div>
-
-      <div class="spa-status-item">
-
-        <span>📊</span>
-
-        <span>Average: <strong>${money(averagePurchase)}</strong></span>
-
-      </div>
-
-      <div class="spa-status-item">
-
-        <span>🔄</span>
-
-        <span>Last sync: <span>${formatDate(lastSync, { timeStyle: 'short' })}</span></span>
-
-      </div>
-
-    </div>
-
-  `;
-
-}
-
-
 
 /**
-
- * Render purchase history section
-
- * @param {Array} purchases - Array of purchases
-
- * @param {Object} options - Render options
-
- * @returns {string} HTML string
-
+ * Format currency
+ * @param {number} amount - Amount to format
+ * @returns {string} Formatted currency
  */
-
-export function renderPurchaseHistory(purchases, options = {}) {
-
-  const {
-
-    showHeader = true,
-
-    showActions = true,
-
-    title = '📊 Purchase History & Staging'
-
-  } = options;
-
-
-
-  const headerHtml = showHeader ? `
-
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-
-      <h3 style="margin:0; color:#1a365d; font-size:18px; display:flex; align-items:center; gap:8px;">
-
-        ${title}
-
-        <span class="spa-status-badge">${purchases.length} items</span>
-
-      </h3>
-
-      ${showActions ? renderHistoryActions() : ''}
-
-    </div>
-
-  ` : '';
-
-
-
-  const cardsHtml = renderPurchaseCards(purchases, options);
-
-
-
-  return `
-
-    <div class="recent-activity">
-
-      ${headerHtml}
-
-      <div id="purchaseHistoryContent">
-
-        ${cardsHtml}
-
-      </div>
-
-    </div>
-
-  `;
-
+function formatCurrency(amount) {
+  if (typeof amount !== 'number') return '£0.00';
+  return new Intl.NumberFormat('en-GB', {
+    style: 'currency',
+    currency: 'GBP'
+  }).format(amount);
 }
-
-
 
 /**
-
- * Render history actions
-
- * @returns {string} HTML string
-
+ * Format date
+ * @param {string|Date} date - Date to format
+ * @returns {string} Formatted date
  */
-
-function renderHistoryActions() {
-
-  return `
-
-    <div style="display:flex; gap:8px;">
-
-      <button id="btn-add-purchase" class="btn btn-primary btn-small">➕ Add Purchase</button>
-
-      <button id="btn-ebay-sync" class="btn btn-info btn-small">🛒 Sync eBay</button>
-
-      <button id="btn-ebay-login" class="btn btn-warning btn-small">🔐 eBay Login</button>
-
-      <button id="btn-refresh" class="btn btn-secondary btn-small">Refresh</button>
-
-    </div>
-
-  `;
-
+function formatDate(date) {
+  if (!date) return 'N/A';
+  const dateObj = new Date(date);
+  return dateObj.toLocaleDateString();
 }
-
-
-
-/**
-
- * Calculate total for purchase
-
- * @param {Object} purchase - Purchase object
-
- * @returns {number} Total amount
-
- */
-
-function calculateTotal(purchase) {
-
-  // Try totalAmount first
-
-  if (purchase.totalAmount != null) {
-
-    return Number(purchase.totalAmount || 0);
-
-  }
-
-  
-
-  // Try total_paid
-
-  if (purchase.total_paid != null) {
-
-    return Number(purchase.total_paid || 0);
-
-  }
-
-  
-
-  // Calculate from components
-
-  const pricePaid = Number(purchase.price_paid || 0);
-
-  const shippingCost = Number(purchase.shipping_cost || 0);
-
-  const fees = Number(purchase.fees || 0);
-
-  
-
-  return pricePaid + shippingCost + fees;
-
-}
-
-
-
-/**
-
- * Render purchase details modal content
-
- * @param {Object} purchase - Purchase object
-
- * @returns {string} HTML string
-
- */
-
-export function renderPurchaseDetailsModal(purchase) {
-
-  const formatCurrency = (amount) => money(amount);
-
-  const formatDate = (date) => !date ? 'N/A' : new Date(date).toLocaleString();
-
-  
-
-  const formatItems = (items) => {
-
-    if (!items || !Array.isArray(items)) return '<p>No items</p>';
-
-    return items.map(item => `
-
-      <div style="padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px; margin: 4px 0;">
-
-        <strong>${item.productName || item.name || 'Unknown Item'}</strong><br>
-
-        <small>SKU: ${item.sku || 'N/A'} | Qty: ${item.quantity || 1} | Price: ${formatCurrency(item.unitPrice)} | Total: ${formatCurrency(item.totalPrice)}</small>
-
-      </div>
-
-    `).join('');
-
-  };
-
-
-
-  return `
-
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-
-      <div>
-
-        <h3 style="margin-top: 0; color: #1a365d;">Basic Information</h3>
-
-        <table style="width: 100%; border-collapse: collapse;">
-
-          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">ID:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.identifier || purchase._id || purchase.id || 'N/A'}</td></tr>
-
-          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Category:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.category || 'N/A'}</td></tr>
-
-          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Brand:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.brand || purchase.supplier || 'N/A'}</td></tr>
-
-          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Model:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.model || 'N/A'}</td></tr>
-
-          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Source:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.source || 'N/A'}</td></tr>
-
-          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Status:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.status || 'N/A'}</td></tr>
-
-        </table>
-
-      </div>
-
-
-
-      <div>
-
-        <h3 style="margin-top: 0; color: #1a365d;">Financial Information</h3>
-
-        <table style="width: 100%; border-collapse: collapse;">
-
-          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Price Paid:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatCurrency(purchase.price_paid)}</td></tr>
-
-          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Shipping Cost:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatCurrency(purchase.shipping_cost)}</td></tr>
-
-          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Fees:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatCurrency(purchase.fees)}</td></tr>
-
-          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Total Amount:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #059669;">${formatCurrency(purchase.totalAmount)}</td></tr>
-
-        </table>
-
-      </div>
-
-    </div>
-
-
-
-    <div style="margin-top: 20px;">
-
-      <h3 style="color: #1a365d;">Items</h3>
-
-      ${formatItems(purchase.items)}
-
-    </div>
-
-
-
-    <div style="margin-top: 20px;">
-
-      <h3 style="color: #1a365d;">Additional Information</h3>
-
-      <table style="width: 100%; border-collapse: collapse;">
-
-        <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Order ID:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.order_id || 'N/A'}</td></tr>
-
-        <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Seller:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.seller_username || 'N/A'}</td></tr>
-
-        <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Date of Purchase:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatDate(purchase.dateOfPurchase || purchase.orderDate)}</td></tr>
-
-        <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Created:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatDate(purchase.createdAt)}</td></tr>
-
-        <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Tracking Ref:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.tracking_ref || 'N/A'}</td></tr>
-
-      </table>
-
-    </div>
-
-
-
-    ${purchase.notes ? `
-
-    <div style="margin-top: 20px;">
-
-      <h3 style="color: #1a365d;">Notes</h3>
-
-      <div style="padding: 12px; background: #f9fafb; border-radius: 6px; border-left: 4px solid #3b82f6;">
-
-        ${purchase.notes}
-
-      </div>
-
-    </div>
-
-    ` : ''}
-
-  `;
-
-}
-
-
-
-    totalInvestment = 0,
-
-    purchaseCount = 0,
-
-    averagePurchase = 0,
-
-    lastSync = new Date(),
-
-    sourceBreakdown = { manual: 0, auto: 0 },
-
-    monthlyChange = '+12%'
-
-  } = stats;
-
-
-
-  return `
-
-    <div class="spa-status-bar">
-
-      <div class="spa-status-item">
-
-        <span>💰</span>
-
-        <span>Total Investment: <strong>${money(totalInvestment)}</strong></span>
-
-        <span class="spa-status-badge">${monthlyChange}</span>
-
-      </div>
-
-      <div class="spa-status-item">
-
-        <span>🛒</span>
-
-        <span><strong>${purchaseCount}</strong> purchases</span>
-
-        <span class="spa-status-badge">${sourceBreakdown.manual} manual, ${sourceBreakdown.auto} auto</span>
-
-      </div>
-
-      <div class="spa-status-item">
-
-        <span>📊</span>
-
-        <span>Average: <strong>${money(averagePurchase)}</strong></span>
-
-      </div>
-
-      <div class="spa-status-item">
-
-        <span>🔄</span>
-
-        <span>Last sync: <span>${formatDate(lastSync, { timeStyle: 'short' })}</span></span>
-
-      </div>
-
-    </div>
-
-  `;
-
-}
-
-
-
-/**
-
- * Render purchase history section
-
- * @param {Array} purchases - Array of purchases
-
- * @param {Object} options - Render options
-
- * @returns {string} HTML string
-
- */
-
-export function renderPurchaseHistory(purchases, options = {}) {
-
-  const {
-
-    showHeader = true,
-
-    showActions = true,
-
-    title = '📊 Purchase History & Staging'
-
-  } = options;
-
-
-
-  const headerHtml = showHeader ? `
-
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-
-      <h3 style="margin:0; color:#1a365d; font-size:18px; display:flex; align-items:center; gap:8px;">
-
-        ${title}
-
-        <span class="spa-status-badge">${purchases.length} items</span>
-
-      </h3>
-
-      ${showActions ? renderHistoryActions() : ''}
-
-    </div>
-
-  ` : '';
-
-
-
-  const cardsHtml = renderPurchaseCards(purchases, options);
-
-
-
-  return `
-
-    <div class="recent-activity">
-
-      ${headerHtml}
-
-      <div id="purchaseHistoryContent">
-
-        ${cardsHtml}
-
-      </div>
-
-    </div>
-
-  `;
-
-}
-
-
-
-/**
-
- * Render history actions
-
- * @returns {string} HTML string
-
- */
-
-function renderHistoryActions() {
-
-  return `
-
-    <div style="display:flex; gap:8px;">
-
-      <button id="btn-add-purchase" class="btn btn-primary btn-small">➕ Add Purchase</button>
-
-      <button id="btn-ebay-sync" class="btn btn-info btn-small">🛒 Sync eBay</button>
-
-      <button id="btn-ebay-login" class="btn btn-warning btn-small">🔐 eBay Login</button>
-
-      <button id="btn-refresh" class="btn btn-secondary btn-small">Refresh</button>
-
-    </div>
-
-  `;
-
-}
-
-
-
-/**
-
- * Calculate total for purchase
-
- * @param {Object} purchase - Purchase object
-
- * @returns {number} Total amount
-
- */
-
-function calculateTotal(purchase) {
-
-  // Try totalAmount first
-
-  if (purchase.totalAmount != null) {
-
-    return Number(purchase.totalAmount || 0);
-
-  }
-
-  
-
-  // Try total_paid
-
-  if (purchase.total_paid != null) {
-
-    return Number(purchase.total_paid || 0);
-
-  }
-
-  
-
-  // Calculate from components
-
-  const pricePaid = Number(purchase.price_paid || 0);
-
-  const shippingCost = Number(purchase.shipping_cost || 0);
-
-  const fees = Number(purchase.fees || 0);
-
-  
-
-  return pricePaid + shippingCost + fees;
-
-}
-
-
-
-/**
-
- * Render purchase details modal content
-
- * @param {Object} purchase - Purchase object
-
- * @returns {string} HTML string
-
- */
-
-export function renderPurchaseDetailsModal(purchase) {
-
-  const formatCurrency = (amount) => money(amount);
-
-  const formatDate = (date) => !date ? 'N/A' : new Date(date).toLocaleString();
-
-  
-
-  const formatItems = (items) => {
-
-    if (!items || !Array.isArray(items)) return '<p>No items</p>';
-
-    return items.map(item => `
-
-      <div style="padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px; margin: 4px 0;">
-
-        <strong>${item.productName || item.name || 'Unknown Item'}</strong><br>
-
-        <small>SKU: ${item.sku || 'N/A'} | Qty: ${item.quantity || 1} | Price: ${formatCurrency(item.unitPrice)} | Total: ${formatCurrency(item.totalPrice)}</small>
-
-      </div>
-
-    `).join('');
-
-  };
-
-
-
-  return `
-
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-
-      <div>
-
-        <h3 style="margin-top: 0; color: #1a365d;">Basic Information</h3>
-
-        <table style="width: 100%; border-collapse: collapse;">
-
-          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">ID:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.identifier || purchase._id || purchase.id || 'N/A'}</td></tr>
-
-          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Category:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.category || 'N/A'}</td></tr>
-
-          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Brand:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.brand || purchase.supplier || 'N/A'}</td></tr>
-
-          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Model:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.model || 'N/A'}</td></tr>
-
-          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Source:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.source || 'N/A'}</td></tr>
-
-          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Status:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.status || 'N/A'}</td></tr>
-
-        </table>
-
-      </div>
-
-
-
-      <div>
-
-        <h3 style="margin-top: 0; color: #1a365d;">Financial Information</h3>
-
-        <table style="width: 100%; border-collapse: collapse;">
-
-          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Price Paid:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatCurrency(purchase.price_paid)}</td></tr>
-
-          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Shipping Cost:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatCurrency(purchase.shipping_cost)}</td></tr>
-
-          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Fees:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatCurrency(purchase.fees)}</td></tr>
-
-          <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Total Amount:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #059669;">${formatCurrency(purchase.totalAmount)}</td></tr>
-
-        </table>
-
-      </div>
-
-    </div>
-
-
-
-    <div style="margin-top: 20px;">
-
-      <h3 style="color: #1a365d;">Items</h3>
-
-      ${formatItems(purchase.items)}
-
-    </div>
-
-
-
-    <div style="margin-top: 20px;">
-
-      <h3 style="color: #1a365d;">Additional Information</h3>
-
-      <table style="width: 100%; border-collapse: collapse;">
-
-        <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Order ID:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.order_id || 'N/A'}</td></tr>
-
-        <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Seller:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.seller_username || 'N/A'}</td></tr>
-
-        <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Date of Purchase:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatDate(purchase.dateOfPurchase || purchase.orderDate)}</td></tr>
-
-        <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Created:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatDate(purchase.createdAt)}</td></tr>
-
-        <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">Tracking Ref:</td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${purchase.tracking_ref || 'N/A'}</td></tr>
-
-      </table>
-
-    </div>
-
-
-
-    ${purchase.notes ? `
-
-    <div style="margin-top: 20px;">
-
-      <h3 style="color: #1a365d;">Notes</h3>
-
-      <div style="padding: 12px; background: #f9fafb; border-radius: 6px; border-left: 4px solid #3b82f6;">
-
-        ${purchase.notes}
-
-      </div>
-
-    </div>
-
-    ` : ''}
-
-  `;
-
-}
-
-
