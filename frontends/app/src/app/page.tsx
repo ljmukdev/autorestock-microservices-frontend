@@ -14,6 +14,11 @@ export default function HomePage() {
               </Link>
             </li>
             <li>
+              <Link href="/ebay" className="nav-link">
+                eBay Purchases
+              </Link>
+            </li>
+            <li>
               <Link href="/vinted" className="nav-link">
                 Vinted (Coming Soon)
               </Link>

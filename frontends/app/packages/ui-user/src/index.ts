@@ -12,6 +12,14 @@ export { default as EmailSetup } from './components/EmailSetup';
 export { default as CsvImport } from './components/CsvImport';
 export { default as MarketplaceEmailConnection } from './components/MarketplaceEmailConnection';
 
+// eBay Purchase Components
+export { default as EbayDashboard } from './components/EbayDashboard';
+export { default as EbaySyncControls } from './components/EbaySyncControls';
+export { default as EbayPurchaseFilters } from './components/EbayPurchaseFilters';
+export { default as EbayPurchasesList } from './components/EbayPurchasesList';
+export type { EbayPurchase } from './components/EbayPurchasesList';
+export { default as EbayPurchaseDetail } from './components/EbayPurchaseDetail';
+
 // Widgets
 export { UserRegister } from './widgets/UserRegister';
 export { ForwardingEmailSettings } from './widgets/ForwardingEmailSettings';
