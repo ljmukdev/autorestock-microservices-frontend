@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eBay Integration Demo - AutoRestock</title>
+    <link rel="stylesheet" href="css/autorestock-global.css">
+    <style>
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .status-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        
+        .status-card.success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        
+        .status-card.error {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        
+        .status-card.warning {
+            background: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            margin: 0.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        
+        .data-display {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .purchase-item {
+            border-bottom: 1px solid #eee;
+            padding: 0.5rem 0;
+        }
+        
+        .purchase-item:last-child {
+            border-bottom: none;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+        }
+        
+        .error {
+            color: #dc3545;
+            background: #f8d7da;
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+        }
+        
+        .success {
+            color: #155724;
+            background: #d4edda;
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1>🚀 eBay Integration Demo</h1>
+        <p>This demo shows how eBay data integration works with automatic token management.</p>
+        
+        <!-- Status Display -->
+        <div id="status-display" class="status-card">
+            <h3>📊 Integration Status</h3>
+            <div id="status-content">
+                <div class="loading">Checking integration status...</div>
+            </div>
+        </div>
+        
+        <!-- Control Buttons -->
+        <div style="text-align: center; margin: 2rem 0;">
+            <button id="init-btn" class="btn btn-primary">Initialize Integration</button>
+            <button id="auth-btn" class="btn btn-secondary" style="display: none;">Connect to eBay</button>
+            <button id="sync-btn" class="btn btn-success" style="display: none;">Sync Data</button>
+            <button id="purchases-btn" class="btn btn-primary" style="display: none;">Get Recent Purchases</button>
+            <button id="auto-sync-btn" class="btn btn-secondary" style="display: none;">Start Auto-Sync</button>
+        </div>
+        
+        <!-- Data Display -->
+        <div id="data-display" class="data-display" style="display: none;">
+            <h3>📦 Recent Purchases</h3>
+            <div id="purchases-content">
+                <div class="loading">Loading purchases...</div>
+            </div>
+        </div>
+        
+        <!-- Log Display -->
+        <div id="log-display" class="data-display">
+            <h3>📝 Activity Log</h3>
+            <div id="log-content">
+                <div>Ready to start...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include the eBay integration script -->
+    <script src="js/ebay-integration.js"></script>
+    
+    <script>
+        // Demo application
+        class EbayIntegrationDemo {
+            constructor() {
+                this.ebay = window.ebayIntegration;
+                this.initializeEventListeners();
+                this.updateStatus();
+            }
+            
+            initializeEventListeners() {
+                document.getElementById('init-btn').onclick = () => this.initialize();
+                document.getElementById('auth-btn').onclick = () => this.startAuth();
+                document.getElementById('sync-btn').onclick = () => this.syncData();
+                document.getElementById('purchases-btn').onclick = () => this.getPurchases();
+                document.getElementById('auto-sync-btn').onclick = () => this.toggleAutoSync();
+            }
+            
+            log(message, type = 'info') {
+                const logContent = document.getElementById('log-content');
+                const timestamp = new Date().toLocaleTimeString();
+                const logEntry = document.createElement('div');
+                logEntry.innerHTML = `<strong>${timestamp}:</strong> ${message}`;
+                
+                if (type === 'error') {
+                    logEntry.style.color = '#dc3545';
+                } else if (type === 'success') {
+                    logEntry.style.color = '#28a745';
+                } else if (type === 'warning') {
+                    logEntry.style.color = '#ffc107';
+                }
+                
+                logContent.appendChild(logEntry);
+                logContent.scrollTop = logContent.scrollHeight;
+            }
+            
+            async updateStatus() {
+                const statusContent = document.getElementById('status-content');
+                const status = this.ebay.getStatus();
+                
+                let statusHtml = `
+                    <p><strong>Authenticated:</strong> ${status.authenticated ? '✅ Yes' : '❌ No'}</p>
+                    <p><strong>Auto-sync:</strong> ${status.autoSyncEnabled ? '✅ Enabled' : '❌ Disabled'}</p>
+                    <p><strong>Last Sync:</strong> ${status.lastSync}</p>
+                `;
+                
+                if (status.tokenStatus) {
+                    statusHtml += `<p><strong>Token Expires:</strong> ${new Date(status.tokenStatus.expiresAt).toLocaleString()}</p>`;
+                }
+                
+                statusContent.innerHTML = statusHtml;
+                
+                // Update button visibility
+                const authBtn = document.getElementById('auth-btn');
+                const syncBtn = document.getElementById('sync-btn');
+                const purchasesBtn = document.getElementById('purchases-btn');
+                const autoSyncBtn = document.getElementById('auto-sync-btn');
+                
+                if (status.authenticated) {
+                    authBtn.style.display = 'none';
+                    syncBtn.style.display = 'inline-block';
+                    purchasesBtn.style.display = 'inline-block';
+                    autoSyncBtn.style.display = 'inline-block';
+                } else {
+                    authBtn.style.display = 'inline-block';
+                    syncBtn.style.display = 'none';
+                    purchasesBtn.style.display = 'none';
+                    autoSyncBtn.style.display = 'none';
+                }
+            }
+            
+            async initialize() {
+                this.log('Initializing eBay integration...', 'info');
+                
+                try {
+                    const result = await this.ebay.initialize();
+                    
+                    if (result.success) {
+                        this.log('✅ Integration initialized successfully', 'success');
+                        this.updateStatus();
+                    } else {
+                        this.log(`❌ Initialization failed: ${result.message}`, 'error');
+                    }
+                } catch (error) {
+                    this.log(`❌ Initialization error: ${error.message}`, 'error');
+                }
+            }
+            
+            async startAuth() {
+                this.log('Starting eBay OAuth flow...', 'info');
+                
+                try {
+                    const result = await this.ebay.startOAuthFlow();
+                    
+                    if (result.success) {
+                        this.log('✅ OAuth completed successfully', 'success');
+                        this.updateStatus();
+                    } else {
+                        this.log(`❌ OAuth failed: ${result.message}`, 'error');
+                    }
+                } catch (error) {
+                    this.log(`❌ OAuth error: ${error.message}`, 'error');
+                }
+            }
+            
+            async syncData() {
+                this.log('Syncing all eBay data...', 'info');
+                
+                try {
+                    const result = await this.ebay.syncAllData();
+                    
+                    if (result.success) {
+                        this.log('✅ Data sync completed successfully', 'success');
+                        
+                        if (result.purchases) {
+                            this.log(`📦 Purchases: ${result.purchases.summary.total_purchases || 0} items`, 'info');
+                        }
+                        
+                        if (result.sales) {
+                            this.log(`💰 Sales: ${result.sales.summary.total_sales || 0} items`, 'info');
+                        }
+                        
+                        this.updateStatus();
+                    } else {
+                        this.log(`❌ Data sync failed: ${result.errors.join(', ')}`, 'error');
+                    }
+                } catch (error) {
+                    this.log(`❌ Sync error: ${error.message}`, 'error');
+                }
+            }
+            
+            async getPurchases() {
+                this.log('Fetching recent purchases...', 'info');
+                
+                try {
+                    const result = await this.ebay.getRecentPurchases(10);
+                    
+                    if (result.success) {
+                        this.log('✅ Purchases retrieved successfully', 'success');
+                        this.displayPurchases(result.data);
+                    } else {
+                        this.log(`❌ Failed to get purchases: ${result.error}`, 'error');
+                    }
+                } catch (error) {
+                    this.log(`❌ Purchases error: ${error.message}`, 'error');
+                }
+            }
+            
+            displayPurchases(data) {
+                const dataDisplay = document.getElementById('data-display');
+                const purchasesContent = document.getElementById('purchases-content');
+                
+                dataDisplay.style.display = 'block';
+                
+                if (data.items && data.items.length > 0) {
+                    let html = `
+                        <div class="success">
+                            <strong>Summary:</strong> ${data.summary.totalPurchases} purchases, 
+                            Total: £${data.summary.totalSpent}, 
+                            Average: £${data.summary.averagePrice}
+                        </div>
+                    `;
+                    
+                    data.items.forEach((item, index) => {
+                        html += `
+                            <div class="purchase-item">
+                                <strong>${index + 1}. Order ${item.orderId}</strong><br>
+                                <small>Date: ${new Date(item.date).toLocaleDateString()}</small><br>
+                                <small>Status: ${item.status}</small><br>
+                                <small>Total: £${item.total}</small><br>
+                                <small>Items: ${item.items.length}</small>
+                            </div>
+                        `;
+                    });
+                    
+                    purchasesContent.innerHTML = html;
+                } else {
+                    purchasesContent.innerHTML = '<div class="error">No purchase data available</div>';
+                }
+            }
+            
+            toggleAutoSync() {
+                const status = this.ebay.getStatus();
+                
+                if (status.autoSyncEnabled) {
+                    this.ebay.stopAutoSync();
+                    this.log('⏹️ Auto-sync stopped', 'info');
+                } else {
+                    this.ebay.startAutoSync(1); // 1 minute for demo
+                    this.log('🔄 Auto-sync started (1 minute interval)', 'info');
+                }
+                
+                this.updateStatus();
+            }
+        }
+        
+        // Initialize demo when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            window.demo = new EbayIntegrationDemo();
+        });
+    </script>
+</body>
+</html>
