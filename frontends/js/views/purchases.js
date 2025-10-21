@@ -122,14 +122,10 @@ class PurchasesView {
         // Show loading state
         this.showOAuthLoading();
         
-        // Initiate OAuth with popup
-        const success = await oauthService.initiateLogin('ebay');
+        // Initiate OAuth (will redirect to eBay)
+        await oauthService.initiateLogin('ebay');
         
-        if (success) {
-          showSuccess('eBay account connected successfully!');
-          // Automatically refresh data and re-render
-          await this.refreshAfterOAuth();
-        }
+        // This won't be reached since we're redirecting
       } catch (error) {
         debugLog('OAuth failed:', error);
         showError(`Failed to connect eBay account: ${error.message}`);
@@ -153,11 +149,11 @@ class PurchasesView {
       <div class="oauth-prompt">
         <div class="oauth-prompt-content">
           <div class="oauth-icon">⏳</div>
-          <h3>Connecting to eBay...</h3>
-          <p>Please complete the authentication in the popup window.</p>
+          <h3>Redirecting to eBay...</h3>
+          <p>You will be redirected to eBay to complete authentication.</p>
           <div class="oauth-loading">
             <div class="spinner"></div>
-            <p>Waiting for authentication...</p>
+            <p>Redirecting to eBay login...</p>
           </div>
         </div>
       </div>

@@ -20,14 +20,14 @@ class OAuthService {
   async init() {
     debugLog('Initializing OAuth service');
     
+    // Check for OAuth callback parameters first
+    this.handleOAuthCallback();
+    
     // Check initial auth status
     await this.checkAuthStatus();
     
     // Set up periodic auth checks
     this.startPeriodicCheck();
-    
-    // Check for OAuth callback parameters
-    this.handleOAuthCallback();
   }
 
   /**
@@ -122,6 +122,11 @@ class OAuthService {
       this.userId = userId;
       this.notifyAuthCallbacks();
       
+      // Show success message
+      if (typeof window !== 'undefined' && window.showSuccess) {
+        window.showSuccess('eBay account connected successfully!');
+      }
+      
       // Clean up URL
       this.cleanupUrl();
     } else if (ebayError) {
@@ -129,6 +134,11 @@ class OAuthService {
       this.isAuthenticated = false;
       this.userId = null;
       this.notifyAuthCallbacks();
+      
+      // Show error message
+      if (typeof window !== 'undefined' && window.showError) {
+        window.showError(`eBay connection failed: ${ebayError}`);
+      }
       
       // Clean up URL
       this.cleanupUrl();
@@ -165,8 +175,12 @@ class OAuthService {
       throw new Error(`No OAuth URL configured for service: ${service}`);
     }
     
-    // Use popup window instead of redirect
-    return this.openOAuthPopup(loginUrl, service);
+    // Simple redirect to eBay login page
+    debugLog('Redirecting to eBay OAuth URL:', loginUrl);
+    window.location.href = loginUrl;
+    
+    // Return a promise that never resolves (since we're redirecting)
+    return new Promise(() => {});
   }
 
   /**
