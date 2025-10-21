@@ -34,9 +34,6 @@ app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files
-app.use(express.static(path.join(__dirname)));
-
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({
@@ -45,11 +42,6 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     version: '1.0.0'
   });
-});
-
-// Serve main SPA application
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'app.html'));
 });
 
 // Serve legacy pages for backward compatibility
@@ -61,7 +53,16 @@ app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'dashboard.html'));
 });
 
+// Serve static files (JS, CSS, images, etc.)
+app.use(express.static(path.join(__dirname)));
+
+// Serve main SPA application
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'app.html'));
+});
+
 // SPA fallback - serve app.html for any route that doesn't match static files
+// This should be LAST to avoid catching static file requests
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'app.html'));
 });
