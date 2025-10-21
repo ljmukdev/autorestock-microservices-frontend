@@ -291,3 +291,109 @@ function formatDate(date) {
   const dateObj = new Date(date);
   return dateObj.toLocaleDateString();
 }
+
+/**
+ * Render purchase details modal content
+ * @param {Object} purchase - Purchase object
+ * @returns {string} HTML string for modal content
+ */
+export function renderPurchaseDetailsModal(purchase) {
+  if (!purchase) {
+    return '<p>Purchase details not found.</p>';
+  }
+
+  const formatItems = (items) => {
+    if (!items || items.length === 0) return 'No items listed.';
+    return items.map(item => `
+      <div class="purchase-item">
+        <span>${item.quantity} x ${item.productName}</span>
+        <span>${formatCurrency(item.totalPrice)}</span>
+      </div>
+    `).join('');
+  };
+
+  return `
+    <div class="purchase-details-modal-content">
+      <h2>Purchase Details: ${purchase.product_name}</h2>
+      <div class="purchase-details-grid">
+        <div class="purchase-details-section">
+          <h3>General Info</h3>
+          <table class="purchase-details-table">
+            <tr><td>Order ID:</td><td>${purchase.order_id || 'N/A'}</td></tr>
+            <tr><td>Transaction ID:</td><td>${purchase.transaction_id || 'N/A'}</td></tr>
+            <tr><td>Item ID:</td><td>${purchase.item_id || 'N/A'}</td></tr>
+            <tr><td>Platform:</td><td>${purchase.platform}</td></tr>
+            <tr><td>Purchase Date:</td><td>${formatDate(purchase.purchase_date)}</td></tr>
+            <tr><td>Total Paid:</td><td>${formatCurrency(purchase.totalAmount)}</td></tr>
+            <tr><td>Shipping Cost:</td><td>${formatCurrency(purchase.shipping_cost)}</td></tr>
+          </table>
+        </div>
+
+        <div class="purchase-details-section">
+          <h3>Seller Info</h3>
+          <table class="purchase-details-table">
+            <tr><td>Seller Username:</td><td>${purchase.seller_username || 'N/A'}</td></tr>
+            <tr><td>Seller ID:</td><td>${purchase.seller_id || 'N/A'}</td></tr>
+          </table>
+        </div>
+
+        <div class="purchase-details-section">
+          <h3>Delivery Info</h3>
+          <table class="purchase-details-table">
+            <tr><td>Status:</td><td>${purchase.delivery_status}</td></tr>
+            <tr><td>Shipped Time:</td><td>${formatDate(purchase.shipped_time)}</td></tr>
+            <tr><td>Carrier:</td><td>${purchase.carrier || 'N/A'}</td></tr>
+            <tr><td>Tracking Ref:</td><td>${purchase.tracking_ref || 'N/A'}</td></tr>
+            ${purchase.tracking_ref && purchase.carrier ? `
+            <tr>
+              <td>Tracking Link:</td>
+              <td><a href="${getTrackingLink(purchase.carrier, purchase.tracking_ref)}" target="_blank" class="text-blue-500 hover:underline">Track Package</a></td>
+            </tr>
+            ` : ''}
+          </table>
+        </div>
+      </div>
+
+      <div class="purchase-details-section">
+        <h3>🛍️ Items in Purchase</h3>
+        <div class="purchase-items-list">
+          ${formatItems(purchase.items)}
+        </div>
+      </div>
+
+      ${purchase.notes || purchase.description ? `
+      <div class="purchase-notes">
+        <h4>📝 Additional Information</h4>
+        <p>${purchase.notes || purchase.description || 'No additional notes available.'}</p>
+      </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+/**
+ * Helper to get tracking link
+ * @param {string} carrier - Shipping carrier
+ * @param {string} trackingRef - Tracking number
+ * @returns {string} Tracking URL
+ */
+function getTrackingLink(carrier, trackingRef) {
+  if (!carrier || !trackingRef) return '#';
+  const lowerCarrier = carrier.toLowerCase();
+  if (lowerCarrier.includes('royal mail')) {
+    return `https://www.royalmail.com/track-your-item#/tracking-results/${trackingRef}`;
+  }
+  if (lowerCarrier.includes('hermes') || lowerCarrier.includes('evri')) {
+    return `https://www.evri.com/track/${trackingRef}`;
+  }
+  if (lowerCarrier.includes('dpd')) {
+    return `https://www.dpd.co.uk/apps/tracking/?reference=${trackingRef}`;
+  }
+  if (lowerCarrier.includes('ups')) {
+    return `https://www.ups.com/track?tracknum=${trackingRef}`;
+  }
+  if (lowerCarrier.includes('fedex')) {
+    return `https://www.fedex.com/fedextrack/?tracknumbers=${trackingRef}`;
+  }
+  return `https://www.google.com/search?q=track+package+${trackingRef}`;
+}
