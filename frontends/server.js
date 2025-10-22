@@ -1,3 +1,12 @@
+/**
+ * File: server.js
+ * Location: c:\development\Projects\autorestock\frontends\server.js
+ * 
+ * Express server for AutoRestock frontend
+ * 
+ * FIX: Updated CSP connectSrc to include eBay OAuth service URL
+ */
+
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
@@ -15,7 +24,12 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'"],
       scriptSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "https://autorestock-user-service-production.up.railway.app"],
+      // FIXED: Added eBay OAuth service URL
+      connectSrc: [
+        "'self'", 
+        "https://autorestock-user-service-production.up.railway.app",
+        "https://delightful-liberation-production.up.railway.app"
+      ],
     },
   },
 }));
@@ -92,6 +106,9 @@ app.listen(PORT, () => {
   console.log(`AutoRestock Frontend Server running on port ${PORT}`);
   console.log(`Health check: http://localhost:${PORT}/health`);
   console.log(`Registration form: http://localhost:${PORT}/registration`);
+  console.log('CSP allows connections to:');
+  console.log('  - https://autorestock-user-service-production.up.railway.app');
+  console.log('  - https://delightful-liberation-production.up.railway.app (eBay OAuth)');
 });
 
 module.exports = app;
