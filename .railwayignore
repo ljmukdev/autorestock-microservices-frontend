@@ -1,0 +1,30 @@
+# Railway ignore file
+# Ignore everything except the frontends directory
+
+# Ignore root-level files
+package.json
+package-lock.json
+pnpm-lock.yaml
+pnpm-workspace.yaml
+
+# Ignore all directories except frontends
+microservices/
+microservice-frontends/
+packages/
+shared/
+tools/
+docs/
+analysis_reports/
+cloudflare-workers/
+templates/
+
+# Ignore root-level files
+*.md
+*.html
+*.js
+*.ps1
+*.sh
+*.txt
+
+# Keep only frontends directory
+!frontends/

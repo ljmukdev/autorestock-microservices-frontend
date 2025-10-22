@@ -1,0 +1,13 @@
+# Railway Project Configuration
+# This tells Railway to deploy the frontend service
+
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "cd frontends && npm start"
+healthcheckPath = "/health"
+
+[environments.production]
+NODE_ENV = "production"
+RAILWAY_ENVIRONMENT = "production"
