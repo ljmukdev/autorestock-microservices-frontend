@@ -16,7 +16,7 @@ class PurchasesView {
 
   async init(container) {
     console.log('[PurchasesView] Initializing...');
-    this.container = container || document.getElementById('purchases-container');
+    this.container = container || document.getElementById('tab-purchases');
     const isConnected = await this.oauthService.checkConnection();
     if (isConnected) {
       await this.loadPurchases();
