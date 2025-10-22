@@ -143,13 +143,8 @@ class OAuthService {
   }
 }
 
-const oauthService = new OAuthService();
+// Create and export the OAuth service instance
+export const oauthService = new OAuthService();
 
 // Debug: Log that the service is being created and exported
-console.log('[OAuth] Service instance created and ready for export');
-
-// Export as named export to match existing imports
-export { oauthService };
-
-// Debug: Verify export
-console.log('[OAuth] Service exported successfully:', typeof oauthService);
+console.log('[OAuth] Service instance created and exported:', typeof oauthService);
