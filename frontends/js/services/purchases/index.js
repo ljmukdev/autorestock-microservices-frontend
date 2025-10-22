@@ -52,4 +52,6 @@ class PurchaseService {
 }
 
 const purchaseService = new PurchaseService();
-export default purchaseService;
+
+// Export as named export to match existing imports
+export { purchaseService };

@@ -3,8 +3,8 @@
  * Handles OAuth completion and purchase loading
  */
 
-import oauthService from '../services/auth/oauth.js';
-import purchaseService from '../services/purchases/index.js';
+import { oauthService } from '../services/auth/oauth.js';
+import { purchaseService } from '../services/purchases/index.js';
 
 class PurchasesView {
   constructor() {
@@ -155,4 +155,5 @@ class PurchasesView {
   }
 }
 
-export default PurchasesView;
+// Export as named export to match existing imports
+export { PurchasesView as purchasesView };

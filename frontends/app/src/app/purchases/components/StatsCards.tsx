@@ -77,3 +77,4 @@ export default function StatsCards({ stats }: StatsCardsProps) {
     </div>
   );
 }
+

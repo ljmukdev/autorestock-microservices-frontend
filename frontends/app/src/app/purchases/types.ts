@@ -49,3 +49,4 @@ export interface SyncResponse {
   failed: number;
   errors: string[];
 }
+

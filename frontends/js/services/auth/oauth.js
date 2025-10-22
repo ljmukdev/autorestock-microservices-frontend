@@ -86,7 +86,64 @@ class OAuthService {
       return false;
     }
   }
+
+  /**
+   * Initialize the OAuth service
+   */
+  async init() {
+    try {
+      console.log('[OAuth] Initializing OAuth service');
+      // Check for OAuth callback on initialization
+      const callbackResult = this.checkOAuthCallback();
+      return callbackResult;
+    } catch (error) {
+      console.error('[OAuth] Initialization failed:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Get current authentication status
+   * @returns {Object} Authentication status object
+   */
+  getAuthStatus() {
+    try {
+      // Check if we have any stored auth data or if we're in a callback state
+      const urlParams = new URLSearchParams(window.location.search);
+      const oauthStatus = urlParams.get('oauth');
+      
+      if (oauthStatus === 'success') {
+        return {
+          authenticated: true,
+          status: 'connected',
+          message: 'eBay account connected successfully'
+        };
+      } else if (oauthStatus === 'error') {
+        return {
+          authenticated: false,
+          status: 'error',
+          message: urlParams.get('message') || 'Authentication failed'
+        };
+      }
+      
+      // Default status - not authenticated
+      return {
+        authenticated: false,
+        status: 'disconnected',
+        message: 'Not connected to eBay'
+      };
+    } catch (error) {
+      console.error('[OAuth] Error getting auth status:', error);
+      return {
+        authenticated: false,
+        status: 'error',
+        message: 'Error checking authentication status'
+      };
+    }
+  }
 }
 
 const oauthService = new OAuthService();
-export default oauthService;
+
+// Export as named export to match existing imports
+export { oauthService };
