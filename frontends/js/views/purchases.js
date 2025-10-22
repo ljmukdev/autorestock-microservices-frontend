@@ -10,13 +10,13 @@ class PurchasesView {
   constructor() {
     this.purchaseService = purchaseService;
     this.oauthService = oauthService;
-    this.container = document.getElementById('purchases-container');
+    this.container = null; // Will be set by init()
     window.addEventListener('oauth-completed', this.handleOAuthComplete.bind(this));
-    this.init();
   }
 
-  async init() {
+  async init(container) {
     console.log('[PurchasesView] Initializing...');
+    this.container = container || document.getElementById('purchases-container');
     const isConnected = await this.oauthService.checkConnection();
     if (isConnected) {
       await this.loadPurchases();
@@ -155,5 +155,8 @@ class PurchasesView {
   }
 }
 
+// Create and export an instance
+const purchasesView = new PurchasesView();
+
 // Export as named export to match existing imports
-export { PurchasesView as purchasesView };
+export { purchasesView };
