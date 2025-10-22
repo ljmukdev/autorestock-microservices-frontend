@@ -15,7 +15,13 @@ import { logSaleService } from './services/log-sale/index.js';
 import { emailImportService } from './services/email-import/index.js';
 import { reportsService } from './services/reports/index.js';
 import { settingsService } from './services/settings/index.js';
+// Debug: Log before importing OAuth service
+console.log('[Main] About to import OAuth service...');
+
 import { oauthService } from './services/auth/oauth.js';
+
+// Debug: Log after importing OAuth service
+console.log('[Main] OAuth service imported successfully:', typeof oauthService);
 
 class AutoRestockApp {
   constructor() {
