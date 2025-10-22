@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["nodejs", "npm"]
+
+[phases.install]
+cmds = ["cd frontends && npm install"]
+
+[phases.build]
+cmds = ["echo 'No build step required for static frontend'"]
+
+[start]
+cmd = "cd frontends && npm start"
