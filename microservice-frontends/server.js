@@ -15,7 +15,12 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'"],
       scriptSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "https://autorestock-user-service-production.up.railway.app"],
+      connectSrc: [
+        "'self'", 
+        "https://autorestock-user-service-production.up.railway.app",
+        "https://delightful-liberation-production.up.railway.app",
+        "https://*.up.railway.app"
+      ],
     },
   },
 }));
