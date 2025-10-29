@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { 
   Search, 
@@ -88,6 +88,54 @@ export default function EbayPage() {
   };
 
   const stats = calculateStats(filteredPurchases);
+
+  // Fetch purchases function
+  const fetchPurchases = useCallback(async () => {
+    try {
+      console.log('Environment check:');
+      console.log('- NEXT_PUBLIC_EBAY_SERVICE_URL:', process.env.NEXT_PUBLIC_EBAY_SERVICE_URL);
+      console.log('- ebayServiceUrl:', ebayServiceUrl);
+      
+      const url = `${ebayServiceUrl}/purchases?limit=100`;
+      console.log('Fetching from URL:', url);
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        mode: 'cors',
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Response error:', errorText);
+        throw new Error(`API error: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('Received data:', data);
+      
+      if (data.success && data.purchases) {
+        setPurchases(data.purchases);
+        setFilteredPurchases(data.purchases);
+      } else {
+        setPurchases([]);
+        setFilteredPurchases([]);
+      }
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching purchases:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load purchases');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [ebayServiceUrl]);
 
   // Filter and sort purchases
   useEffect(() => {
@@ -196,67 +244,11 @@ export default function EbayPage() {
     window.URL.revokeObjectURL(url);
   };
 
+  // Initial load of purchases
   useEffect(() => {
-    let mounted = true;
-
-    const fetchPurchases = async () => {
-      try {
-        console.log('Environment check:');
-        console.log('- NEXT_PUBLIC_EBAY_SERVICE_URL:', process.env.NEXT_PUBLIC_EBAY_SERVICE_URL);
-        console.log('- ebayServiceUrl:', ebayServiceUrl);
-        
-        const url = `${ebayServiceUrl}/purchases?limit=10`;
-        console.log('Fetching from URL:', url);
-        
-        const response = await fetch(url, {
-          method: 'GET',
-          mode: 'cors',
-          credentials: 'include',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (!mounted) return;
-
-        console.log('Response status:', response.status);
-        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Response error:', errorText);
-          throw new Error(`API error: ${response.status} - ${errorText}`);
-        }
-
-        const data = await response.json();
-        console.log('Received data:', data);
-        
-        if (data.success && data.purchases) {
-          setPurchases(data.purchases);
-          setFilteredPurchases(data.purchases);
-        } else {
-          setPurchases([]);
-          setFilteredPurchases([]);
-        }
-      } catch (err) {
-        console.error('Error fetching purchases:', err);
-        if (mounted) {
-          setError(err instanceof Error ? err.message : 'Failed to load purchases');
-        }
-      } finally {
-        if (mounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
+    setIsLoading(true);
     fetchPurchases();
-
-    return () => {
-      mounted = false;
-    };
-  }, [ebayServiceUrl]);
+  }, [fetchPurchases]);
 
   if (isLoading) {
     return (
